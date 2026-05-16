@@ -22,7 +22,7 @@ http.interceptors.request.use((config) => {
   // already send Accept-Language, but the user's chosen UI language may
   // differ from the OS default — explicitly setting it keeps the two
   // in sync.
-  const locale = localStorage.getItem('mateclaw_locale')
+  const locale = localStorage.getItem('qingwenclaws_locale')
   if (locale) {
     config.headers['Accept-Language'] = locale
   }

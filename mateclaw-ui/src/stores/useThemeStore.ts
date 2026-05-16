@@ -3,7 +3,7 @@ import { ref, watch } from 'vue'
 
 export type ThemeMode = 'light' | 'dark' | 'system'
 
-const STORAGE_KEY = 'mateclaw-theme'
+const STORAGE_KEY = 'qingwenclaws-theme'
 
 export const useThemeStore = defineStore('theme', () => {
   function getInitialMode(): ThemeMode {

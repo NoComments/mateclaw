@@ -5,7 +5,7 @@ import { settingsApi } from '@/api'
 
 export type AppLocale = 'zh-CN' | 'en-US'
 
-const STORAGE_KEY = 'mateclaw_locale'
+const STORAGE_KEY = 'qingwenclaws_locale'
 const DEFAULT_LOCALE: AppLocale = 'zh-CN'
 
 export const currentLocale = ref<AppLocale>(DEFAULT_LOCALE)
