@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32" role="img" aria-label="QingwenClaws">
+  <defs>
+    <linearGradient id="b" x1="20%" y1="10%" x2="80%" y2="90%">
+      <stop offset="0%" stop-color="#48cae4"/>
+      <stop offset="100%" stop-color="#023e8a"/>
+    </linearGradient>
+    <linearGradient id="p" x1="20%" y1="5%" x2="80%" y2="95%">
+      <stop offset="0%" stop-color="#caf0f8"/>
+      <stop offset="100%" stop-color="#0077a8"/>
+    </linearGradient>
+  </defs>
+  <rect width="32" height="32" rx="6" fill="#0d1b2a"/>
+  <g transform="translate(4,4) rotate(-12, 12, 12)">
+    <path d="M 4 18 C -1 14, -1 6, 4 2 C 8 0, 12 1, 14 3" stroke="#48cae4" stroke-width="1.5" fill="none" stroke-linecap="round" opacity="0.85"/>
+    <path d="M 10 4 C 8 -1, 16 -2, 20 1 C 23 4, 24 9, 21 12 C 18 14, 14 14, 11 11 C 9 9, 8 7, 10 4 Z" fill="url(#b)"/>
+    <path d="M 20 2 C 23 -2, 26 -3, 27 0 C 28 3, 25 6, 21 6 L 21 4 Z" fill="url(#p)"/>
+    <path d="M 21 12 C 25 11, 28 10, 27 13 C 26 16, 22 16, 20 15 Z" fill="url(#p)"/>
+  </g>
+</svg>

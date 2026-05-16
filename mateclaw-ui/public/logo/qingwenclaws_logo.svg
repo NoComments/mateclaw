@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="320" height="80" viewBox="0 0 320 80" role="img" aria-label="QingwenClaws">
+  <defs>
+    <linearGradient id="bodyG" x1="25%" y1="10%" x2="75%" y2="95%">
+      <stop offset="0%" stop-color="#caf0f8"/>
+      <stop offset="38%" stop-color="#48cae4"/>
+      <stop offset="62%" stop-color="#00b4d8"/>
+      <stop offset="100%" stop-color="#023e8a"/>
+    </linearGradient>
+    <linearGradient id="pincerG" x1="20%" y1="5%" x2="80%" y2="95%">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="45%" stop-color="#48cae4"/>
+      <stop offset="100%" stop-color="#03045e"/>
+    </linearGradient>
+    <linearGradient id="textG" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#90e0ef"/>
+      <stop offset="50%" stop-color="#00b4d8"/>
+      <stop offset="100%" stop-color="#0077a8"/>
+    </linearGradient>
+    <radialGradient id="halo" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#00b4d8" stop-opacity="0.35"/>
+      <stop offset="100%" stop-color="#00b4d8" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <!-- Icon group, transform-rotated -15° -->
+  <g transform="translate(10,8) rotate(-12, 36, 32)">
+    <ellipse cx="36" cy="32" rx="38" ry="32" fill="url(#halo)"/>
+    <!-- Shell rings -->
+    <path d="M 8 50 C 0 45, -2 30, 6 18 C 12 10, 20 8, 28 12" stroke="#48cae4" stroke-width="2" fill="none" stroke-linecap="round" opacity="0.7"/>
+    <path d="M 14 52 C 6 45, 4 30, 12 20 C 18 12, 26 10, 34 14" stroke="#48cae4" stroke-width="2" fill="none" stroke-linecap="round" opacity="0.8"/>
+    <path d="M 22 54 C 14 46, 12 32, 20 22 C 26 14, 34 12, 42 16" stroke="#48cae4" stroke-width="2" fill="none" stroke-linecap="round" opacity="0.9"/>
+    <!-- Body -->
+    <path d="M 30 14 C 25 5, 45 0, 56 6 C 64 11, 68 22, 64 30 C 60 38, 50 42, 40 38 C 32 35, 26 26, 30 14 Z" fill="url(#bodyG)"/>
+    <!-- Rim light -->
+    <path d="M 30 14 C 28 6, 45 2, 56 8" stroke="#ffffff" stroke-width="1.5" fill="none" opacity="0.7"/>
+    <!-- Upper pincer hook -->
+    <path d="M 60 14 C 64 6, 70 0, 72 4 C 74 8, 70 14, 64 18 L 62 18 C 62 16, 60 16, 60 14 Z" fill="url(#pincerG)"/>
+    <!-- Lower pincer -->
+    <path d="M 64 30 C 72 28, 80 26, 78 30 C 76 34, 70 36, 66 36 L 64 36 Z" fill="url(#pincerG)"/>
+    <circle cx="72" cy="4" r="1.5" fill="#ffffff" opacity="0.9"/>
+    <circle cx="78" cy="30" r="1.5" fill="#ffffff" opacity="0.9"/>
+  </g>
+
+  <!-- Wordmark -->
+  <text x="100" y="50" font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Helvetica Neue', Arial, sans-serif" font-size="32" font-weight="700" fill="url(#textG)" letter-spacing="0.5">QingwenClaws</text>
+</svg>
