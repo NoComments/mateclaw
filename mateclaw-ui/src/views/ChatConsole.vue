@@ -453,9 +453,9 @@ const uploadingAttachment = ref(false)
 const agentCapabilities = ref<import('@/types').AgentCapabilities | null>(null)
 
 // 思考模式：只有两个状态 — 开或关
-const thinkingEnabled = ref(localStorage.getItem('mateclaw_thinking') !== 'off')
+const thinkingEnabled = ref(localStorage.getItem('qingwenclaws_thinking') !== 'off')
 const thinkingLevel = computed(() => thinkingEnabled.value ? 'high' : 'off')
-watch(thinkingEnabled, (v) => localStorage.setItem('mateclaw_thinking', v ? 'on' : 'off'))
+watch(thinkingEnabled, (v) => localStorage.setItem('qingwenclaws_thinking', v ? 'on' : 'off'))
 
 // Dropdowns & menus
 const agentDropdownOpen = ref(false)

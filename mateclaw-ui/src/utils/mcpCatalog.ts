@@ -1,7 +1,7 @@
 /**
  * Curated catalog of one-click MCP servers shown on the MCP connections page.
  *
- * Each entry maps to the MateClaw backend's MCP server schema:
+ * Each entry maps to the QingwenClaws backend's MCP server schema:
  *   - HTTP-based remote MCPs use transport = 'streamable_http' with a `url`
  *     and optional bearer-style `headersJson` (placeholders the user replaces).
  *   - Stdio MCPs use transport = 'stdio' with `command`, `argsJson`, and

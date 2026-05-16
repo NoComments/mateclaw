@@ -176,7 +176,7 @@
           <p>{{ t('skills.emptyDesc') }}</p>
         </div>
 
-        <!-- Pagination (RFC-042 §2.1) — MateClaw frosted-pill component. -->
+        <!-- Pagination (RFC-042 §2.1) — QingwenClaws frosted-pill component. -->
         <div class="skill-pagination">
           <McPagination
             v-model:page="query.page"
@@ -2170,7 +2170,7 @@ html.dark .scan-finding-item { background: rgba(255, 255, 255, 0.05); }
 }
 
 /* ============================================================
- * MateClaw frosted-glass drawer
+ * QingwenClaws frosted-glass drawer
  * Mirrors Settings/Models/AddProviderDrawer.vue so the skill
  * detail surface lives in the same visual language as the rest
  * of the app — depth via translucency, not borders.

@@ -10,7 +10,7 @@
     <!-- 头像 -->
     <div class="msg-avatar" :class="`${role}-avatar`">
       <slot name="avatar">
-        <img v-if="role === 'assistant'" src="/logo/mateclaw_logo_s.png" alt="" class="avatar-logo" />
+        <img v-if="role === 'assistant'" src="/logo/qingwenclaws_logo_s.svg" alt="" class="avatar-logo" />
         <span v-else>{{ avatarIcon }}</span>
       </slot>
     </div>

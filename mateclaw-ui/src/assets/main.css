@@ -4,6 +4,15 @@
    CSS Variables — Light / Dark theme
    ================================================================ */
 :root {
+  /* QingwenClaws brand tokens — primary palette */
+  --qwc-bg-deep:      #0d1b2a;
+  --qwc-bg-mid:       #1b2f4b;
+  --qwc-cyan-deep:    #0077a8;
+  --qwc-cyan-primary: #00b4d8;
+  --qwc-cyan-light:   #48cae4;
+  --qwc-cyan-pale:    #caf0f8;
+  --qwc-white:        #ffffff;
+
   /* font system */
   --mc-font-body: 'Inter', 'Avenir Next', 'SF Pro Display', 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
   --mc-font-mono: 'JetBrains Mono', 'Fira Code', 'SF Mono', Consolas, monospace;
