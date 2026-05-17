@@ -51,6 +51,19 @@ const router = createRouter({
           component: () => import('@/views/Memory/index.vue'),
           meta: { title: 'Memory' },
         },
+        // ==================== Work (promoted from Settings) ====================
+        {
+          path: 'workflows',
+          name: 'Workflows',
+          component: () => import('@/views/Workflows.vue'),
+          meta: { title: 'Workflows' },
+        },
+        {
+          path: 'cron-jobs',
+          name: 'CronJobs',
+          component: () => import('@/views/CronJobs.vue'),
+          meta: { title: 'Cron Jobs' },
+        },
         // ==================== Connect ====================
         {
           path: 'channels',
@@ -164,18 +177,8 @@ const router = createRouter({
               component: () => import('@/views/AgentContext.vue'),
               meta: { title: 'Settings - Agent Context' },
             },
-            {
-              path: 'cron-jobs',
-              name: 'SettingsCronJobs',
-              component: () => import('@/views/CronJobs.vue'),
-              meta: { title: 'Settings - Cron Jobs' },
-            },
-            {
-              path: 'workflows',
-              name: 'SettingsWorkflows',
-              component: () => import('@/views/Workflows.vue'),
-              meta: { title: 'Settings - Workflows' },
-            },
+            { path: 'cron-jobs', redirect: '/cron-jobs' },
+            { path: 'workflows', redirect: '/workflows' },
             {
               path: 'triggers',
               name: 'SettingsTriggers',
@@ -261,8 +264,7 @@ const router = createRouter({
         // RFC-090 Phase 4: Activity 提升到顶层
         { path: 'security/activity', redirect: '/activity' },
         { path: 'settings/activity', redirect: '/activity' },
-        { path: 'cron-jobs', redirect: '/settings/cron-jobs' },
-        { path: 'datasources', redirect: '/settings/datasources' },
+{ path: 'datasources', redirect: '/settings/datasources' },
         { path: 'mcp-servers', redirect: '/settings/mcp-servers' },
         { path: 'token-usage', redirect: '/settings/token-usage' },
         // RFC-090 Phase 1: Tools 顶层降级到 Settings
