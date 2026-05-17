@@ -156,7 +156,7 @@ public class AcpStdioClient implements AutoCloseable {
         // don't reject the request.
         params.set("clientCapabilities", mapper.createObjectNode());
         ObjectNode info = mapper.createObjectNode();
-        info.put("name", "mateclaw-acp-client");
+        info.put("name", "qingwenclaws-acp-client");
         info.put("version", "1.0.0");
         params.set("clientInfo", info);
         return sendRequest("initialize", params, timeoutMillis);

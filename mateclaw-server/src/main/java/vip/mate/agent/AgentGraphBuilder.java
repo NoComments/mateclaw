@@ -1573,7 +1573,7 @@ public class AgentGraphBuilder {
 
     private MultiValueMap<String, String> buildOpenAiHeaders(Map<String, Object> kwargs) {
         LinkedMultiValueMap<String, String> headers = new LinkedMultiValueMap<>();
-        headers.add("User-Agent", "MateClaw/1.0");
+        headers.add("User-Agent", "QingwenClaws/1.0");
         Object headerObject = kwargs.get("headers");
         if (headerObject instanceof Map<?, ?> headerMap) {
             headerMap.forEach((key, value) -> {

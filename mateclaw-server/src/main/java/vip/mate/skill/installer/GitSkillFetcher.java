@@ -42,7 +42,7 @@ public class GitSkillFetcher {
     public SkillBundle fetch(String repoUrl, String ref, String subPath) {
         Path tempDir = null;
         try {
-            tempDir = Files.createTempDirectory("mateclaw-skill-install-");
+            tempDir = Files.createTempDirectory("qingwenclaws-skill-install-");
             cloneRepo(repoUrl, ref, tempDir);
 
             // 定位 skill 根目录

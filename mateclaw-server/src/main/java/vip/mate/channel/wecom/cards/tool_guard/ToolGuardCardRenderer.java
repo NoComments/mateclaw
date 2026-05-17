@@ -105,7 +105,7 @@ public class ToolGuardCardRenderer implements WeComCardRenderer {
 
         Map<String, Object> cardAction = new LinkedHashMap<>();
         cardAction.put("type", 1);
-        cardAction.put("url", "https://mateclaw.vip");
+        cardAction.put("url", "https://qingwenclaws.com");
 
         Map<String, Object> card = new LinkedHashMap<>();
         card.put("card_type", "text_notice");

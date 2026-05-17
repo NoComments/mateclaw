@@ -1174,7 +1174,7 @@ public class FeishuChannelAdapter extends AbstractChannelAdapter {
             }
 
             // 构建目标目录
-            Path mediaDir = Path.of(System.getProperty("user.home"), ".mateclaw", "media", "feishu");
+            Path mediaDir = Path.of(System.getProperty("user.home"), ".qingwenclaws", "media", "feishu");
             Files.createDirectories(mediaDir);
 
             // 安全文件名

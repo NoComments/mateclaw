@@ -73,7 +73,7 @@ public class DatasourceConnectionManager implements DisposableBean {
         config.setConnectionTimeout(10000);
         config.setIdleTimeout(300000);
         config.setMaxLifetime(600000);
-        config.setPoolName("mateclaw-ds-" + entity.getId());
+        config.setPoolName("qingwenclaws-ds-" + entity.getId());
         log.info("创建数据源连接池: {} ({})", entity.getName(), entity.getDbType());
         return new HikariDataSource(config);
     }

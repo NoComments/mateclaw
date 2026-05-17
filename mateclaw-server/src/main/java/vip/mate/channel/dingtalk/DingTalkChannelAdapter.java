@@ -590,7 +590,7 @@ public class DingTalkChannelAdapter extends AbstractChannelAdapter implements St
             if ("markdown".equals(messageType) || "card".equals(messageType)) {
                 jsonBody = objectMapper.writeValueAsString(Map.of(
                         "msgtype", "markdown",
-                        "markdown", Map.of("title", "MateClaw", "text", content)
+                        "markdown", Map.of("title", "QingwenClaws", "text", content)
                 ));
             } else {
                 jsonBody = objectMapper.writeValueAsString(Map.of(
@@ -973,7 +973,7 @@ public class DingTalkChannelAdapter extends AbstractChannelAdapter implements St
             else if (contentType.contains("pdf")) ext = "pdf";
 
             java.nio.file.Path mediaDir = java.nio.file.Paths.get(
-                    System.getProperty("user.home"), ".mateclaw", "media", "dingtalk");
+                    System.getProperty("user.home"), ".qingwenclaws", "media", "dingtalk");
             java.nio.file.Files.createDirectories(mediaDir);
             String safeCode = downloadCode.replaceAll("[^a-zA-Z0-9_-]", "_");
             if (safeCode.length() > 32) safeCode = safeCode.substring(safeCode.length() - 32);
@@ -1054,7 +1054,7 @@ public class DingTalkChannelAdapter extends AbstractChannelAdapter implements St
             String msgKey;
             if ("markdown".equals(messageType) || "card".equals(messageType)) {
                 msgKey = "sampleMarkdown";
-                msgParam = Map.of("title", "MateClaw", "text", content);
+                msgParam = Map.of("title", "QingwenClaws", "text", content);
             } else {
                 msgKey = "sampleText";
                 msgParam = Map.of("content", content);

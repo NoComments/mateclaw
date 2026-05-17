@@ -33,7 +33,7 @@ public class AuthService {
     private final UserMapper userMapper;
     private final BCryptPasswordEncoder passwordEncoder;
 
-    @Value("${mateclaw.jwt.secret:MateClaw-Secret-Key-2024-Very-Long-String}")
+    @Value("${mateclaw.jwt.secret:QingwenClaws-Secret-Key-2026-Very-Long-String}")
     private String jwtSecret;
 
     @Value("${mateclaw.jwt.expiration:86400000}")

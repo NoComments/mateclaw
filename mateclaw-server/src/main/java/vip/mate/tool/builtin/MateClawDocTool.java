@@ -89,7 +89,7 @@ public class MateClawDocTool {
             }
 
             StringBuilder sb = new StringBuilder();
-            sb.append("MateClaw Documentation\n\n");
+            sb.append("QingwenClaws Documentation\n\n");
 
             sb.append("## 中文文档 (zh/)\n");
             if (zhDocs.isEmpty()) {

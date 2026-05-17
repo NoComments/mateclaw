@@ -1,15 +1,15 @@
--- MateClaw Seed Data - English (H2 MERGE INTO syntax, idempotent inserts)
+-- QingwenClaws Seed Data - English (H2 MERGE INTO syntax, idempotent inserts)
 
 -- Default admin (password: admin123, BCrypt encrypted)
 MERGE INTO mate_user (id, username, password, nickname, role, enabled, create_time, update_time, deleted)
 KEY (id)
-VALUES (1, 'admin', '$2a$10$7JB720yubVSZvUI0rEqK/.VqGOZTH.ulu33dHOiBE8ByOhJIrdAu2', 'MateClaw Admin', 'admin', TRUE, NOW(), NOW(), 0);
+VALUES (1, 'admin', '$2a$10$7JB720yubVSZvUI0rEqK/.VqGOZTH.ulu33dHOiBE8ByOhJIrdAu2', 'QingwenClaws Admin', 'admin', TRUE, NOW(), NOW(), 0);
 
 -- Default digital employee: General Assistant (ReAct mode)
 MERGE INTO mate_agent (id, name, description, agent_type, system_prompt, model_name, max_iterations, enabled, icon, tags, create_time, update_time, deleted)
 KEY (id)
 VALUES (1000000001, 'General Assistant', 'All-purpose helper for day-to-day questions, data analysis, and tool calling', 'react',
-        'You are MateClaw''s General Assistant. You can help users answer questions, analyze data, and call tools to get things done. Please respond professionally and in a friendly manner.',
+        'You are QingwenClaws''s General Assistant. You can help users answer questions, analyze data, and call tools to get things done. Please respond professionally and in a friendly manner.',
         NULL, 100, TRUE, 'pi:robot-face-happy', 'default,assistant', NOW(), NOW(), 0);
 
 -- Default digital employee: Task Planner (Plan-Execute mode)
@@ -463,10 +463,10 @@ MERGE INTO mate_tool (id, name, display_name, description, tool_type, bean_name,
 KEY (id)
 VALUES (1000000012, 'BrowserUseTool', 'Browser Control', 'Launch and control browser for web automation: navigate, screenshot, click, type, execute JS.', 'builtin', 'browserUseTool', '🌐', TRUE, TRUE, NOW(), NOW(), 0);
 
--- Built-in tool: MateClaw Docs
+-- Built-in tool: QingwenClaws Docs
 MERGE INTO mate_tool (id, name, display_name, description, tool_type, bean_name, icon, enabled, builtin, create_time, update_time, deleted)
 KEY (id)
-VALUES (1000000013, 'MateClawDocTool', 'MateClaw Docs', 'Read built-in MateClaw project documentation. action=list to list docs, action=read to read specific doc.', 'builtin', 'mateClawDocTool', '📚', TRUE, TRUE, NOW(), NOW(), 0);
+VALUES (1000000013, 'QingwenClawsDocTool', 'QingwenClaws Docs', 'Read built-in QingwenClaws project documentation. action=list to list docs, action=read to read specific doc.', 'builtin', 'mateClawDocTool', '📚', TRUE, TRUE, NOW(), NOW(), 0);
 
 -- Built-in tool: Agent Delegation (Multi-Agent Collaboration)
 MERGE INTO mate_tool (id, name, display_name, description, tool_type, bean_name, icon, enabled, builtin, create_time, update_time, deleted)
@@ -511,7 +511,7 @@ MERGE INTO mate_tool (id, name, display_name, description, tool_type, bean_name,
 KEY (id)
 VALUES (1000000022, 'PdfRenderTool', 'PDF Render', 'Render Markdown into a final-form .pdf and return a one-time download link. Two backends (LibreOffice subprocess preferred, OpenPDF + Flying Saucer fallback); supports YAML frontmatter for cover / page header / page footer.', 'builtin', 'pdfRenderTool', '📄', TRUE, TRUE, NOW(), NOW(), 0);
 
--- Example MCP Server: Filesystem (see MateClaw docs mcpServers.filesystem)
+-- Example MCP Server: Filesystem (see QingwenClaws Docs mcpServers.filesystem)
 MERGE INTO mate_mcp_server (
     id, name, description, transport, url, headers_json, command, args_json, env_json, cwd,
     enabled, connect_timeout_seconds, read_timeout_seconds, last_status, last_error,
@@ -521,7 +521,7 @@ KEY (id)
 VALUES (
     1000000901,
     'filesystem',
-    'Filesystem MCP for MateClaw workspace',
+    'Filesystem MCP for QingwenClaws workspace',
     'stdio',
     NULL,
     NULL,
@@ -581,79 +581,79 @@ VALUES (
 -- SKILL.md under skills/<name>/ and the seed service will register it.
 MERGE INTO mate_skill (id, name, description, skill_type, icon, version, author, config_json, enabled, builtin, tags, create_time, update_time, deleted)
 KEY (id)
-VALUES (1000000001, 'cron', 'Cron job management. Create, query, pause, resume, delete tasks via commands or console. Execute on schedule and send results to channels.', 'builtin', '⏰', '1.0.0', 'MateClaw', '{"upstream":"mateclaw","entryFile":"SKILL.md"}', TRUE, TRUE, 'cron,schedule,automation', NOW(), NOW(), 0);
+VALUES (1000000001, 'cron', 'Cron job management. Create, query, pause, resume, delete tasks via commands or console. Execute on schedule and send results to channels.', 'builtin', '⏰', '1.0.0', 'QingwenClaws', '{"upstream":"qingwenclaws","entryFile":"SKILL.md"}', TRUE, TRUE, 'cron,schedule,automation', NOW(), NOW(), 0);
 
 MERGE INTO mate_skill (id, name, description, skill_type, icon, version, author, config_json, enabled, builtin, tags, create_time, update_time, deleted)
 KEY (id)
-VALUES (1000000002, 'file_reader', 'Read and summarize text files such as txt, md, json, csv, log, and code files. PDF and Office files are handled by dedicated skills.', 'builtin', '📄', '1.0.0', 'MateClaw', '{"upstream":"mateclaw","entryFile":"SKILL.md"}', TRUE, TRUE, 'file,reader,text,summary', NOW(), NOW(), 0);
+VALUES (1000000002, 'file_reader', 'Read and summarize text files such as txt, md, json, csv, log, and code files. PDF and Office files are handled by dedicated skills.', 'builtin', '📄', '1.0.0', 'QingwenClaws', '{"upstream":"qingwenclaws","entryFile":"SKILL.md"}', TRUE, TRUE, 'file,reader,text,summary', NOW(), NOW(), 0);
 
 MERGE INTO mate_skill (id, name, description, skill_type, icon, version, author, config_json, enabled, builtin, tags, create_time, update_time, deleted)
 KEY (id)
-VALUES (1000000003, 'dingtalk_channel_connect', 'Assist with DingTalk channel setup, supporting visible browser, login pause, and pre-publish checks.', 'builtin', '🤖', '1.0.0', 'MateClaw', '{"upstream":"mateclaw","entryFile":"SKILL.md"}', TRUE, TRUE, 'dingtalk,channel,browser,automation', NOW(), NOW(), 0);
+VALUES (1000000003, 'dingtalk_channel_connect', 'Assist with DingTalk channel setup, supporting visible browser, login pause, and pre-publish checks.', 'builtin', '🤖', '1.0.0', 'QingwenClaws', '{"upstream":"qingwenclaws","entryFile":"SKILL.md"}', TRUE, TRUE, 'dingtalk,channel,browser,automation', NOW(), NOW(), 0);
 
 MERGE INTO mate_skill (id, name, description, skill_type, icon, version, author, config_json, enabled, builtin, tags, create_time, update_time, deleted)
 KEY (id)
-VALUES (1000000004, 'himalaya', 'Manage emails via CLI with multi-account IMAP/SMTP, search, read, reply, and attachment handling.', 'builtin', '📧', '1.0.0', 'MateClaw', '{"upstream":"mateclaw","entryFile":"SKILL.md","homepage":"https://github.com/pimalaya/himalaya"}', TRUE, TRUE, 'email,imap,smtp,cli', NOW(), NOW(), 0);
+VALUES (1000000004, 'himalaya', 'Manage emails via CLI with multi-account IMAP/SMTP, search, read, reply, and attachment handling.', 'builtin', '📧', '1.0.0', 'QingwenClaws', '{"upstream":"qingwenclaws","entryFile":"SKILL.md","homepage":"https://github.com/pimalaya/himalaya"}', TRUE, TRUE, 'email,imap,smtp,cli', NOW(), NOW(), 0);
 
 MERGE INTO mate_skill (id, name, description, skill_type, icon, version, author, config_json, enabled, builtin, tags, create_time, update_time, deleted)
 KEY (id)
-VALUES (1000000005, 'news', 'Query latest news from the internet. Supports politics, finance, society, international, tech, sports, entertainment categories. Auto-adapts to built-in and tool search.', 'builtin', '📰', '2.0.0', 'MateClaw', '{"upstream":"mateclaw","entryFile":"SKILL.md"}', TRUE, TRUE, 'news,web,search,summary', NOW(), NOW(), 0);
+VALUES (1000000005, 'news', 'Query latest news from the internet. Supports politics, finance, society, international, tech, sports, entertainment categories. Auto-adapts to built-in and tool search.', 'builtin', '📰', '2.0.0', 'QingwenClaws', '{"upstream":"qingwenclaws","entryFile":"SKILL.md"}', TRUE, TRUE, 'news,web,search,summary', NOW(), NOW(), 0);
 
 MERGE INTO mate_skill (id, name, description, skill_type, icon, version, author, config_json, enabled, builtin, tags, create_time, update_time, deleted)
 KEY (id)
-VALUES (1000000006, 'pdf', 'PDF operations: read, extract text and tables, merge/split, rotate, watermark, fill forms, encrypt/decrypt, OCR. Includes scripts for form field extraction, filling, bounding box validation, and PDF-to-image conversion.', 'builtin', '📕', '1.0.0', 'Anthropic Skills', '{"upstream":"mateclaw","entryFile":"SKILL.md"}', TRUE, TRUE, 'pdf,ocr,forms,document', NOW(), NOW(), 0);
+VALUES (1000000006, 'pdf', 'PDF operations: read, extract text and tables, merge/split, rotate, watermark, fill forms, encrypt/decrypt, OCR. Includes scripts for form field extraction, filling, bounding box validation, and PDF-to-image conversion.', 'builtin', '📕', '1.0.0', 'Anthropic Skills', '{"upstream":"qingwenclaws","entryFile":"SKILL.md"}', TRUE, TRUE, 'pdf,ocr,forms,document', NOW(), NOW(), 0);
 
 MERGE INTO mate_skill (id, name, description, skill_type, icon, version, author, config_json, enabled, builtin, tags, create_time, update_time, deleted)
 KEY (id)
-VALUES (1000000007, 'docx', 'Create, read, and edit Word documents with TOC, headers/footers, tables, images, revisions and comments. Includes scripts for XML unpack/pack, schema validation, tracked changes, and LibreOffice integration.', 'builtin', '📝', '1.0.0', 'Anthropic Skills', '{"upstream":"mateclaw","entryFile":"SKILL.md"}', TRUE, TRUE, 'docx,word,document,office', NOW(), NOW(), 0);
+VALUES (1000000007, 'docx', 'Create, read, and edit Word documents with TOC, headers/footers, tables, images, revisions and comments. Includes scripts for XML unpack/pack, schema validation, tracked changes, and LibreOffice integration.', 'builtin', '📝', '1.0.0', 'Anthropic Skills', '{"upstream":"qingwenclaws","entryFile":"SKILL.md"}', TRUE, TRUE, 'docx,word,document,office', NOW(), NOW(), 0);
 
 MERGE INTO mate_skill (id, name, description, skill_type, icon, version, author, config_json, enabled, builtin, tags, create_time, update_time, deleted)
 KEY (id)
-VALUES (1000000008, 'pptx', 'Create, read, and edit PowerPoint presentations with templates, layouts, notes and comments. Includes scripts for slide manipulation, thumbnail generation, XML validation, and LibreOffice integration.', 'builtin', '📊', '1.0.0', 'Anthropic Skills', '{"upstream":"mateclaw","entryFile":"SKILL.md"}', TRUE, TRUE, 'pptx,presentation,slides,office', NOW(), NOW(), 0);
+VALUES (1000000008, 'pptx', 'Create, read, and edit PowerPoint presentations with templates, layouts, notes and comments. Includes scripts for slide manipulation, thumbnail generation, XML validation, and LibreOffice integration.', 'builtin', '📊', '1.0.0', 'Anthropic Skills', '{"upstream":"qingwenclaws","entryFile":"SKILL.md"}', TRUE, TRUE, 'pptx,presentation,slides,office', NOW(), NOW(), 0);
 
 MERGE INTO mate_skill (id, name, description, skill_type, icon, version, author, config_json, enabled, builtin, tags, create_time, update_time, deleted)
 KEY (id)
-VALUES (1000000009, 'xlsx', 'Read, edit, create and format spreadsheets with formula support, data cleaning and analysis. Includes scripts for formula recalculation, XML unpack/pack, schema validation, and LibreOffice integration.', 'builtin', '📈', '1.0.0', 'Anthropic Skills', '{"upstream":"mateclaw","entryFile":"SKILL.md"}', TRUE, TRUE, 'xlsx,excel,csv,spreadsheet,data', NOW(), NOW(), 0);
+VALUES (1000000009, 'xlsx', 'Read, edit, create and format spreadsheets with formula support, data cleaning and analysis. Includes scripts for formula recalculation, XML unpack/pack, schema validation, and LibreOffice integration.', 'builtin', '📈', '1.0.0', 'Anthropic Skills', '{"upstream":"qingwenclaws","entryFile":"SKILL.md"}', TRUE, TRUE, 'xlsx,excel,csv,spreadsheet,data', NOW(), NOW(), 0);
 
 MERGE INTO mate_skill (id, name, description, skill_type, icon, version, author, config_json, enabled, builtin, tags, create_time, update_time, deleted)
 KEY (id)
-VALUES (1000000010, 'browser_visible', 'Launch a visible browser window for demos, debugging, or scenarios requiring human interaction.', 'builtin', '🖥️', '1.0.0', 'MateClaw', '{"upstream":"mateclaw","entryFile":"SKILL.md"}', TRUE, TRUE, 'browser,visible,headed,automation', NOW(), NOW(), 0);
+VALUES (1000000010, 'browser_visible', 'Launch a visible browser window for demos, debugging, or scenarios requiring human interaction.', 'builtin', '🖥️', '1.0.0', 'QingwenClaws', '{"upstream":"qingwenclaws","entryFile":"SKILL.md"}', TRUE, TRUE, 'browser,visible,headed,automation', NOW(), NOW(), 0);
 
 MERGE INTO mate_skill (id, name, description, skill_type, icon, version, author, config_json, enabled, builtin, tags, create_time, update_time, deleted)
 KEY (id)
-VALUES (1000000012, 'browser_cdp', 'Connect or launch Chrome via CDP for remote debugging, browser sharing, or external tool collaboration.', 'builtin', '🔌', '1.0.0', 'MateClaw', '{"upstream":"mateclaw","entryFile":"SKILL.md"}', TRUE, TRUE, 'browser,cdp,chrome,debugging,automation', NOW(), NOW(), 0);
+VALUES (1000000012, 'browser_cdp', 'Connect or launch Chrome via CDP for remote debugging, browser sharing, or external tool collaboration.', 'builtin', '🔌', '1.0.0', 'QingwenClaws', '{"upstream":"qingwenclaws","entryFile":"SKILL.md"}', TRUE, TRUE, 'browser,cdp,chrome,debugging,automation', NOW(), NOW(), 0);
 
 MERGE INTO mate_skill (id, name, description, skill_type, icon, version, author, config_json, enabled, builtin, tags, create_time, update_time, deleted)
 KEY (id)
-VALUES (1000000011, 'guidance', 'Answer user questions about MateClaw installation and configuration by reading local docs first.', 'builtin', '🧭', '1.0.0', 'MateClaw', '{"upstream":"mateclaw","entryFile":"SKILL.md"}', TRUE, TRUE, 'docs,guidance,configuration,qa', NOW(), NOW(), 0);
+VALUES (1000000011, 'guidance', 'Answer user questions about QingwenClaws installation and configuration by reading local docs first.', 'builtin', '🧭', '1.0.0', 'QingwenClaws', '{"upstream":"qingwenclaws","entryFile":"SKILL.md"}', TRUE, TRUE, 'docs,guidance,configuration,qa', NOW(), NOW(), 0);
 
 MERGE INTO mate_skill (id, name, description, skill_type, icon, version, author, config_json, enabled, builtin, tags, create_time, update_time, deleted)
 KEY (id)
-VALUES (1000000013, 'mateclaw_source_index', 'Map user questions to MateClaw doc paths and source code entry points to reduce blind searching.', 'builtin', '🗂️', '1.0.0', 'MateClaw', '{"upstream":"mateclaw","entryFile":"SKILL.md"}', TRUE, TRUE, 'docs,index,source,qa', NOW(), NOW(), 0);
+VALUES (1000000013, 'mateclaw_source_index', 'Map user questions to QingwenClaws Doc paths and source code entry points to reduce blind searching.', 'builtin', '🗂️', '1.0.0', 'QingwenClaws', '{"upstream":"qingwenclaws","entryFile":"SKILL.md"}', TRUE, TRUE, 'docs,index,source,qa', NOW(), NOW(), 0);
 
 MERGE INTO mate_skill (id, name, description, skill_type, icon, version, author, config_json, enabled, builtin, tags, create_time, update_time, deleted)
 KEY (id)
-VALUES (1000000014, 'sql_query', 'Query databases using natural language. Discover schemas, generate SQL, and execute read-only queries against configured external datasources.', 'builtin', '📊', '1.0.0', 'MateClaw', '{"upstream":"mateclaw","entryFile":"SKILL.md"}', TRUE, TRUE, 'sql,database,query,data', NOW(), NOW(), 0);
+VALUES (1000000014, 'sql_query', 'Query databases using natural language. Discover schemas, generate SQL, and execute read-only queries against configured external datasources.', 'builtin', '📊', '1.0.0', 'QingwenClaws', '{"upstream":"qingwenclaws","entryFile":"SKILL.md"}', TRUE, TRUE, 'sql,database,query,data', NOW(), NOW(), 0);
 
 MERGE INTO mate_skill (id, name, description, skill_type, icon, version, author, config_json, enabled, builtin, tags, create_time, update_time, deleted)
 KEY (id)
-VALUES (1000000015, 'steve_jobs_perspective', 'Steve Jobs thinking OS. Analyze products, evaluate decisions, and give feedback through Jobs'' perspective, using his six mental models and distinctive expression style.', 'builtin', '🍎', '1.0.0', 'MateClaw', '{"upstream":"mateclaw","entryFile":"SKILL.md"}', TRUE, TRUE, 'persona,jobs,product,strategy,thinking', NOW(), NOW(), 0);
+VALUES (1000000015, 'steve_jobs_perspective', 'Steve Jobs thinking OS. Analyze products, evaluate decisions, and give feedback through Jobs'' perspective, using his six mental models and distinctive expression style.', 'builtin', '🍎', '1.0.0', 'QingwenClaws', '{"upstream":"qingwenclaws","entryFile":"SKILL.md"}', TRUE, TRUE, 'persona,jobs,product,strategy,thinking', NOW(), NOW(), 0);
 
 MERGE INTO mate_skill (id, name, description, skill_type, icon, version, author, config_json, enabled, builtin, tags, create_time, update_time, deleted)
 KEY (id)
-VALUES (1000000016, 'make_plan', 'When a task requires multi-step breakdown or uncertain execution path, request a step-by-step actionable plan from a stronger Agent, then execute it yourself.', 'builtin', '🗺️', '1.3.0', 'MateClaw', '{"upstream":"mateclaw","entryFile":"SKILL.md"}', TRUE, TRUE, 'plan,delegate,agent,collaboration', NOW(), NOW(), 0);
+VALUES (1000000016, 'make_plan', 'When a task requires multi-step breakdown or uncertain execution path, request a step-by-step actionable plan from a stronger Agent, then execute it yourself.', 'builtin', '🗺️', '1.3.0', 'QingwenClaws', '{"upstream":"qingwenclaws","entryFile":"SKILL.md"}', TRUE, TRUE, 'plan,delegate,agent,collaboration', NOW(), NOW(), 0);
 
 MERGE INTO mate_skill (id, name, description, skill_type, icon, version, author, config_json, enabled, builtin, tags, create_time, update_time, deleted)
 KEY (id)
-VALUES (1000000017, 'chat_with_agent', 'When you need to consult another Agent, seek help, or the user explicitly requests an Agent to participate, use this skill for single or parallel delegation.', 'builtin', '💬', '1.2.0', 'MateClaw', '{"upstream":"mateclaw","entryFile":"SKILL.md"}', TRUE, TRUE, 'agent,chat,collaborate,delegate', NOW(), NOW(), 0);
+VALUES (1000000017, 'chat_with_agent', 'When you need to consult another Agent, seek help, or the user explicitly requests an Agent to participate, use this skill for single or parallel delegation.', 'builtin', '💬', '1.2.0', 'QingwenClaws', '{"upstream":"qingwenclaws","entryFile":"SKILL.md"}', TRUE, TRUE, 'agent,chat,collaborate,delegate', NOW(), NOW(), 0);
 
 MERGE INTO mate_skill (id, name, description, skill_type, icon, version, author, config_json, enabled, builtin, tags, create_time, update_time, deleted)
 KEY (id)
-VALUES (1000000018, 'channel_message', 'Use when you need to proactively push one-way messages to users, sessions, or channels. For task completion notifications, scheduled reminders, and async result delivery.', 'builtin', '📤', '1.3.0', 'MateClaw', '{"upstream":"mateclaw","entryFile":"SKILL.md"}', TRUE, TRUE, 'channel,message,push,notify,dingtalk,feishu', NOW(), NOW(), 0);
+VALUES (1000000018, 'channel_message', 'Use when you need to proactively push one-way messages to users, sessions, or channels. For task completion notifications, scheduled reminders, and async result delivery.', 'builtin', '📤', '1.3.0', 'QingwenClaws', '{"upstream":"qingwenclaws","entryFile":"SKILL.md"}', TRUE, TRUE, 'channel,message,push,notify,dingtalk,feishu', NOW(), NOW(), 0);
 
 MERGE INTO mate_skill (id, name, description, skill_type, icon, version, author, config_json, enabled, builtin, tags, create_time, update_time, deleted)
 KEY (id)
-VALUES (1000000019, 'multi_agent_collaboration', 'When a task requires the professional capabilities of multiple Agents, orchestrate parallel or serial multi-agent collaboration and integrate results.', 'builtin', '🤝', '1.4.0', 'MateClaw', '{"upstream":"mateclaw","entryFile":"SKILL.md"}', TRUE, TRUE, 'multi-agent,collaboration,orchestration,parallel', NOW(), NOW(), 0);
+VALUES (1000000019, 'multi_agent_collaboration', 'When a task requires the professional capabilities of multiple Agents, orchestrate parallel or serial multi-agent collaboration and integrate results.', 'builtin', '🤝', '1.4.0', 'QingwenClaws', '{"upstream":"qingwenclaws","entryFile":"SKILL.md"}', TRUE, TRUE, 'multi-agent,collaboration,orchestration,parallel', NOW(), NOW(), 0);
 
 -- RFC-042 §2.2 — bilingual display names for the 19 builtin skills.
 -- Identical across all four data-*.sql files because name_zh / name_en are
@@ -1102,7 +1102,7 @@ When neither of the above modes is available, use browser to visit authoritative
 
 UPDATE mate_skill SET skill_content = '---
 name: guidance
-description: "Answer user questions about MateClaw installation, configuration, and usage: read built-in docs first, then distill answers."
+description: "Answer user questions about QingwenClaws installation, configuration, and usage: read built-in docs first, then distill answers."
 metadata:
   builtin_skill_version: "1.0"
   mateclaw:
@@ -1110,9 +1110,9 @@ metadata:
     requires: {}
 ---
 
-# MateClaw Usage Q&A Guide
+# QingwenClaws Usage Q&A Guide
 
-Use this skill when users ask about **MateClaw installation, configuration, feature usage, or architecture**.
+Use this skill when users ask about **QingwenClaws installation, configuration, feature usage, or architecture**.
 
 Core principles:
 
@@ -1184,7 +1184,7 @@ Extract key information from docs, organize into actionable answers:
 
 UPDATE mate_skill SET skill_content = '---
 name: mateclaw_source_index
-description: "Map user question topics and keywords to MateClaw doc paths and Java source code entry points to reduce blind searching."
+description: "Map user question topics and keywords to QingwenClaws Doc paths and Java source code entry points to reduce blind searching."
 metadata:
   builtin_skill_version: "1.0"
   mateclaw:
@@ -1192,7 +1192,7 @@ metadata:
     requires: {}
 ---
 
-# MateClaw Docs & Source Quick Reference
+# QingwenClaws Docs & Source Quick Reference
 
 When answering **installation, configuration, behavior** questions, first **classify by keyword**, then **open 1-2 most likely paths** from the table below to read, avoiding aimless traversal.
 
@@ -1207,7 +1207,7 @@ When answering **installation, configuration, behavior** questions, first **clas
 | Topic or Keywords (examples) | Doc (docs/) | Java Source Entry (vip.mate.*) |
 |------------------------------|-------------|-------------------------------|
 | install, deploy, Docker | `quickstart.md` | README.md, docker-compose.yml |
-| project intro, architecture | `intro.md` | MateClaw_Design.md |
+| project intro, architecture | `intro.md` | QingwenClaws_Design.md |
 | config, env vars | `config.md` | application.yml, config/ |
 | Agent, ReAct, state machine | `agents.md` | agent/ReActAgent.java, agent/BaseAgent.java |
 | tool, @Tool | `tools.md` | tool/builtin/, tool/ToolRegistry.java |
@@ -1308,7 +1308,7 @@ VALUES (1000100012, 'Memory Consolidation', '0 2 * * *', 'Asia/Shanghai', 100000
 -- AGENTS.md / SOUL.md / PROFILE.md / MEMORY.md enabled=TRUE by default, included in system prompt
 -- PROFILE.md / MEMORY.md provide lightweight long-term memory; daily notes created as memory/YYYY-MM-DD.md
 --
--- Agent 1000000001 (MateClaw Assistant)
+-- Agent 1000000001 (QingwenClaws Assistant)
 
 MERGE INTO mate_workspace_file (id, agent_id, filename, content, file_size, enabled, sort_order, create_time, update_time, deleted)
 KEY (id)
@@ -1316,7 +1316,7 @@ VALUES (
     1000200001, 1000000001, 'AGENTS.md',
     '## Memory
 
-MateClaw''s persistent memory is based on database workspace files, not the local disk filesystem. The current Agent''s long-term context consists of:
+QingwenClaws''s persistent memory is based on database workspace files, not the local disk filesystem. The current Agent''s long-term context consists of:
 
 - `PROFILE.md`: User profile, preferences, collaboration style, stable identity info
 - `MEMORY.md`: Long-term memory, stable facts, lessons learned, workflows, recurring patterns
@@ -1541,7 +1541,7 @@ VALUES (
     1000200011, 1000000002, 'AGENTS.md',
     '## Memory
 
-MateClaw''s memory is stored in database workspace files. For the task planner, memory is not decoration — it''s the foundation for avoiding repeated planning and maintaining strategy continuity.
+QingwenClaws''s memory is stored in database workspace files. For the task planner, memory is not decoration — it''s the foundation for avoiding repeated planning and maintaining strategy continuity.
 
 - `PROFILE.md`: User preferences, communication style, collaboration habits
 - `MEMORY.md`: Long-term constraints, planning experience, stable decision patterns, common execution routines

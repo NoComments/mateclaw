@@ -213,7 +213,7 @@ public class BrowserLauncher {
         // what the openfang launcher does.
         Path userDataDir;
         try {
-            userDataDir = Files.createTempDirectory("mateclaw-cdp-profile-");
+            userDataDir = Files.createTempDirectory("qingwenclaws-cdp-profile-");
         } catch (Exception e) {
             trace.add(Attempt.fail(Strategy.EXTERNAL_CDP, browserBin.toString(),
                     System.currentTimeMillis() - t0,

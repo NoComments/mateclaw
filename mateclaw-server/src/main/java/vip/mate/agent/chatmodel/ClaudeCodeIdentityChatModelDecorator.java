@@ -264,9 +264,9 @@ public class ClaudeCodeIdentityChatModelDecorator implements ChatModel {
             return text;
         }
         return text
-                .replace("MateClaw", "Claude Code")
-                .replace("mateclaw", "claude-code")
-                .replace("Mate Claw", "Claude Code");
+                .replace("QingwenClaws", "Claude Code")
+                .replace("qingwenclaws", "claude-code")
+                .replace("Qingwen Claws", "Claude Code");
     }
 
     /* ====================================================================== */

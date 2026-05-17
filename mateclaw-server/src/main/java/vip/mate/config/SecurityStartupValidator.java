@@ -17,7 +17,7 @@ import org.springframework.stereotype.Component;
 @Order(1)
 public class SecurityStartupValidator implements ApplicationRunner {
 
-    private static final String DEFAULT_JWT_SECRET = "MateClaw-JWT-Secret-Key-2024-Please-Change-In-Production";
+    private static final String DEFAULT_JWT_SECRET = "QingwenClaws-JWT-Secret-Key-2026-Please-Change-In-Production";
 
     @Value("${mateclaw.jwt.secret}")
     private String jwtSecret;

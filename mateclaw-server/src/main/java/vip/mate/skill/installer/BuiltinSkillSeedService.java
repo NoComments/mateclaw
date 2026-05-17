@@ -61,7 +61,7 @@ import java.util.TreeMap;
 public class BuiltinSkillSeedService implements ApplicationRunner {
 
     private static final String SKILL_GLOB = "classpath*:skills/*/SKILL.md";
-    private static final String DEFAULT_AUTHOR = "MateClaw";
+    private static final String DEFAULT_AUTHOR = "QingwenClaws";
     private static final String DEFAULT_ICON = "🛠️";
     private static final String DEFAULT_VERSION = "1.0.0";
     private static final String SKILL_TYPE_BUILTIN = "builtin";
@@ -482,7 +482,7 @@ public class BuiltinSkillSeedService implements ApplicationRunner {
     private String buildConfigJson(SkillFrontmatterParser.ParsedSkillMd parsed) {
         // LinkedHashMap → stable key ordering → stable diff against existing.
         Map<String, Object> config = new LinkedHashMap<>();
-        config.put("upstream", "mateclaw");
+        config.put("upstream", "qingwenclaws");
         config.put("entryFile", "SKILL.md");
 
         SkillFrontmatterParser.SkillDependencies deps = parsed.getDependencies();
@@ -496,7 +496,7 @@ public class BuiltinSkillSeedService implements ApplicationRunner {
             return objectMapper.writeValueAsString(config);
         } catch (Exception e) {
             // Fall back to legacy shape — never break startup over JSON encoding.
-            return "{\"upstream\":\"mateclaw\",\"entryFile\":\"SKILL.md\"}";
+            return "{\"upstream\":\"qingwenclaws\",\"entryFile\":\"SKILL.md\"}";
         }
     }
 

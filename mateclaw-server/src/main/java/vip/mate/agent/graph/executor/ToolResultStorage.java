@@ -283,7 +283,7 @@ public class ToolResultStorage {
         if (!props.getStorageBaseDir().isEmpty()) {
             base = Paths.get(props.getStorageBaseDir());
         } else if (workspaceBasePath != null && !workspaceBasePath.isBlank()) {
-            base = Paths.get(workspaceBasePath, ".mateclaw", "tool-results");
+            base = Paths.get(workspaceBasePath, ".qingwenclaws", "tool-results");
         } else {
             String tmp = System.getProperty("java.io.tmpdir");
             if (tmp == null || tmp.isEmpty()) return null;
@@ -329,7 +329,7 @@ public class ToolResultStorage {
         }
         String tmp = System.getProperty("java.io.tmpdir");
         if (tmp != null && !tmp.isEmpty()) {
-            roots.add(Paths.get(tmp, "mateclaw", "tool-results"));
+            roots.add(Paths.get(tmp, "qingwenclaws", "tool-results"));
         }
 
         int deleted = 0;
@@ -405,7 +405,7 @@ public class ToolResultStorage {
         }
         String tmp = System.getProperty("java.io.tmpdir");
         if (tmp != null && !tmp.isEmpty()) {
-            roots.add(Paths.get(tmp, "mateclaw", "tool-results"));
+            roots.add(Paths.get(tmp, "qingwenclaws", "tool-results"));
         }
         int deleted = 0;
         for (Path root : roots) {
