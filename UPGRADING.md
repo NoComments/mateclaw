@@ -85,7 +85,7 @@ Then re-import your backup if you kept one.
 
 ```bash
 docker compose up -d
-docker compose logs -f mateclaw-server   # watch for "Flyway Successfully applied N migrations"
+docker compose logs -f qingwenclaws-server   # watch for "Flyway Successfully applied N migrations"
 ```
 
 Expected log lines during boot:

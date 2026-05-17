@@ -75,10 +75,10 @@ pom.xml.versionsBackup
 .cursor
 .gstack/
 
-# mateclaw static build output (do not commit)
+# qingwenclaws static build output (do not commit)
 mateclaw-server/src/main/resources/static/
 
-# mateclaw local runtime data (H2 DB, logs, etc. - do not commit)
+# qingwenclaws local runtime data (H2 DB, logs, etc. - do not commit)
 mateclaw-server/data/
 /data/
 
