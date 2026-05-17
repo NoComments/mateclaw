@@ -13,7 +13,7 @@
               <div class="welcome-logo__glow"></div>
               <img src="/logo/qingwenclaws_logo_s.svg" alt="QingwenClaws" class="welcome-logo__icon" />
             </div>
-            <h2 class="welcome-title">Mate<span class="welcome-title-highlight">Claw</span></h2>
+            <h2 class="welcome-title">Qingwen<span class="welcome-title-highlight">Claws</span></h2>
             <p class="welcome-subtitle">{{ subtitle }}</p>
             <div v-if="suggestions.length" class="welcome-suggestions">
               <button
