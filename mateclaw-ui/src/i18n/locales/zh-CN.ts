@@ -361,6 +361,8 @@ export default {
     control: '控制台',
     channels: '渠道',
     sessions: '会话',
+    work: '工作区',
+    business: '业务',
     core: '核心',
     connect: '连接',
     system: '系统',

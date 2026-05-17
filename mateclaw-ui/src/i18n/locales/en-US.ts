@@ -369,6 +369,8 @@ export default {
     enterprise: 'Enterprise',
     tools: 'Tools',
     plugins: 'Plugins',
+    work: 'Work',
+    business: 'Business',
     core: 'Core',
     connect: 'Connect',
     system: 'System',
