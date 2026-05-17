@@ -22,6 +22,20 @@
           </div>
         </div>
 
+        <PageIntro
+          storage-key="mc.activity.introHidden.v1"
+          :title="t('security.activity.intro.title')"
+          :body="t('security.activity.intro.body')"
+          :features="[
+            { icon: '👤', text: t('security.activity.intro.bullets.a') },
+            { icon: '✅', text: t('security.activity.intro.bullets.b') },
+            { icon: '🔍', text: t('security.activity.intro.bullets.c') },
+          ]"
+          :footer="t('security.activity.intro.footer')"
+          :hide-label="t('security.activity.intro.hide')"
+          :reopen-label="t('security.activity.intro.show')"
+        />
+
         <!-- Filter chips — minimal, source-only by default; extra
              filters tucked behind a kebab so the page stays uncluttered -->
         <div class="filter-chips">
@@ -205,6 +219,7 @@ import { computed, onBeforeUnmount, onMounted, reactive, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { activityApi } from '@/api'
 import McPagination from '@/components/common/McPagination.vue'
+import PageIntro from '@/components/common/PageIntro.vue'
 
 const { t } = useI18n()
 

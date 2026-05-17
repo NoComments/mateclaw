@@ -2,29 +2,57 @@
   <div class="about-page">
     <!-- Hero: Logo + Identity -->
     <section class="hero">
-      <img src="/logo/qingwenclaws_logo_s.svg" alt="QingwenClaws" class="hero-logo" />
+      <img
+        src="/logo/qingwenclaws_logo_s.svg"
+        alt="QingwenClaws"
+        class="hero-logo"
+      >
       <div class="hero-copy">
-        <h1 class="hero-title">Qingwen<span class="hero-accent">Claws</span></h1>
-        <div class="hero-version">v{{ appVersion }}</div>
-        <p class="hero-desc">{{ t('settings.about.heroDesc') }}</p>
+        <h1 class="hero-title">
+          Qingwen<span class="hero-accent">Claws</span>
+        </h1>
+        <div class="hero-version">
+          v{{ appVersion }}
+        </div>
+        <p class="hero-desc">
+          {{ t('settings.about.heroDesc') }}
+        </p>
       </div>
     </section>
 
     <!-- Three pillars — that's all you need to know -->
     <section class="pillars">
-      <div v-for="(pillar, i) in pillars" :key="i" class="pillar">
-        <div class="pillar-num">{{ String(i + 1).padStart(2, '0') }}</div>
-        <h3 class="pillar-title">{{ pillar.title }}</h3>
-        <p class="pillar-desc">{{ pillar.desc }}</p>
+      <div
+        v-for="(pillar, i) in pillars"
+        :key="i"
+        class="pillar"
+      >
+        <div class="pillar-num">
+          {{ String(i + 1).padStart(2, '0') }}
+        </div>
+        <h3 class="pillar-title">
+          {{ pillar.title }}
+        </h3>
+        <p class="pillar-desc">
+          {{ pillar.desc }}
+        </p>
       </div>
     </section>
 
     <!-- Tech stack — clean and honest -->
     <section class="stack">
-      <h3 class="stack-heading">{{ t('settings.about.foundationTitle') }}</h3>
+      <h3 class="stack-heading">
+        {{ t('settings.about.foundationTitle') }}
+      </h3>
       <div class="stack-grid">
-        <div v-for="tech in techStack" :key="tech.name" class="stack-item">
-          <el-icon class="stack-icon"><component :is="tech.icon" /></el-icon>
+        <div
+          v-for="tech in techStack"
+          :key="tech.name"
+          class="stack-item"
+        >
+          <el-icon class="stack-icon">
+            <component :is="tech.icon" />
+          </el-icon>
           <span class="stack-name">{{ tech.name }}</span>
           <span class="stack-ver">{{ tech.version }}</span>
         </div>

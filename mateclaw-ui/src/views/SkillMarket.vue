@@ -29,6 +29,12 @@
               </svg>
               {{ t('skills.importSkill') }}
             </button>
+            <button class="btn-secondary" @click="openSkillBuilderChat" :disabled="openingBuilder" :title="t('skills.aiCreateSkillTooltip')">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M12 2L9.91 8.26 3.27 8.27l5.46 3.94L6.82 18.5 12 14.77l5.18 3.73-1.91-6.29 5.46-3.94-6.64-.01L12 2z"/>
+              </svg>
+              {{ openingBuilder ? t('skills.aiCreateSkillOpening') : t('skills.aiCreateSkill') }}
+            </button>
             <button class="btn-primary" @click="openCreateModal">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
@@ -37,6 +43,21 @@
             </button>
           </div>
         </div>
+
+        <!-- 技能页面级介绍（小白引导） -->
+        <PageIntro
+          storage-key="mc.skills.introHidden.v1"
+          :title="t('skills.intro.title')"
+          :body="t('skills.intro.body')"
+          :features="[
+            { icon: '📄', text: t('skills.intro.bullets.a') },
+            { icon: '⚡', text: t('skills.intro.bullets.b') },
+            { icon: '🧩', text: t('skills.intro.bullets.c') },
+          ]"
+          :footer="t('skills.intro.footer')"
+          :hide-label="t('skills.intro.hide')"
+          :reopen-label="t('skills.intro.show')"
+        />
 
         <!-- 分类 Tab -->
         <div class="category-tabs mc-surface-card">
@@ -71,10 +92,85 @@
           </select>
         </div>
 
+        <!-- Grouped view: only when on the "All" tab with no active search/filter.
+             Each group folds its own card list; the long-tail "extension" group
+             starts collapsed so the page leads with the curated common skills. -->
+        <div class="skill-groups" v-if="groupedView && skills.length > 0">
+          <section
+            v-for="g in groupedSkills"
+            :key="g.key"
+            class="skill-group mc-surface-card"
+          >
+            <header class="skill-group__head" @click="toggleGroup(g.key)">
+              <span class="skill-group__icon">{{ g.icon }}</span>
+              <h3 class="skill-group__title">{{ t('skills.groups.' + g.i18nKey) }}</h3>
+              <span class="skill-group__count">{{ g.items.length }}</span>
+              <span v-if="g.hint" class="skill-group__hint">{{ g.hint }}</span>
+              <span class="skill-group__chev" :class="{ open: !isGroupCollapsed(g.key) }">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                  <polyline points="6 9 12 15 18 9"/>
+                </svg>
+              </span>
+            </header>
+            <div v-show="!isGroupCollapsed(g.key)" class="skill-grid skill-grid--in-group">
+              <div
+                v-for="skill in g.items"
+                :key="skill.id"
+                class="skill-card mc-surface-card"
+                :class="{ disabled: !skill.enabled }"
+                role="button"
+                tabindex="0"
+                @click="openDetailDrawer(skill)"
+                @keydown.enter="openDetailDrawer(skill)"
+              >
+                <div class="skill-header">
+                  <div class="skill-icon-wrap" :class="getSkillIconBg(skill.skillType)">
+                    <SkillIcon :value="skill.icon" :fallback="getSkillIcon(skill.skillType)" :size="22" />
+                  </div>
+                  <div class="skill-meta">
+                    <h3 class="skill-name">{{ resolveSkillName(skill) }}</h3>
+                    <div v-if="hasI18nName(skill)" class="skill-slug">{{ skill.name }}</div>
+                  </div>
+                  <label v-if="!isSkillRowVirtual(skill)" class="toggle-switch" @click.stop>
+                    <input type="checkbox" :checked="skill.enabled" @change="toggleSkill(skill)" />
+                    <span class="toggle-slider"></span>
+                  </label>
+                  <span v-else class="virtual-toggle-hint" :title="$t('skills.virtualReadonlyHint')">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                      <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                    </svg>
+                  </span>
+                </div>
+                <p class="skill-desc">{{ localizedDescription(skill) }}</p>
+                <div class="skill-status-row">
+                  <span class="status-pill" :class="getStatusPill(skill).cls">{{ getStatusPill(skill).label }}</span>
+                  <span class="source-label" :class="getSourceClass(skill)">{{ getSourceLabel(skill) }}</span>
+                  <span v-if="skill.version" class="skill-version">v{{ skill.version }}</span>
+                </div>
+                <div class="skill-footer" @click.stop>
+                  <span v-if="skill.author" class="skill-author">by {{ skill.author }}</span>
+                  <div class="skill-actions">
+                    <button v-if="needsSetup(skill)" class="skill-btn skill-btn-setup" :title="t('skills.actions.setUp')" @click="openPreflight(skill)">
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h.09a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9c0 .66.26 1.3.73 1.77.47.47 1.11.73 1.77.73H21a2 2 0 1 1 0 4h-.09c-.66 0-1.3.26-1.77.73-.47.47-.73 1.11-.73 1.77z"/></svg>
+                    </button>
+                    <button v-if="!isSkillRowVirtual(skill)" class="skill-btn" :title="t('skills.actions.configure')" @click="openEditFromCard(skill)">
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                    </button>
+                    <button v-if="skill.skillType !== 'builtin' && !isSkillRowVirtual(skill)" class="skill-btn danger" :title="t('skills.actions.delete')" @click="deleteSkill(skill)">
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+        </div>
+
         <!-- Skill grid — RFC-090 §4.2 (Phase 1 slim).
              Card surfaces 5 things: icon · name · status · description · actions.
              All findings, deps, paths, lessons, used-by are in the detail drawer. -->
-        <div class="skill-grid" v-if="skills.length > 0">
+        <div class="skill-grid" v-else-if="skills.length > 0">
           <div
             v-for="skill in skills"
             :key="skill.id"
@@ -119,7 +215,7 @@
               </span>
             </div>
 
-            <p class="skill-desc">{{ skill.description || t('skills.noDescription') }}</p>
+            <p class="skill-desc">{{ localizedDescription(skill) }}</p>
 
             <!-- Single status row: status pill (folds runtime/sec/deps/features) + source + version -->
             <div class="skill-status-row">
@@ -176,8 +272,9 @@
           <p>{{ t('skills.emptyDesc') }}</p>
         </div>
 
-        <!-- Pagination (RFC-042 §2.1) — QingwenClaws frosted-pill component. -->
-        <div class="skill-pagination">
+        <!-- Pagination (RFC-042 §2.1) — QingwenClaws frosted-pill component.
+             Hidden in grouped view because we fetch the full set at once. -->
+        <div v-if="!groupedView" class="skill-pagination">
           <McPagination
             v-model:page="query.page"
             v-model:size="query.size"
@@ -675,18 +772,26 @@
 
 <script setup lang="ts">
 import { ref, reactive, computed, onMounted, watch } from 'vue'
+import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
-import { ElMessage } from 'element-plus'
-import { skillApi, skillInstallApi } from '@/api/index'
+import { ElMessage, ElMessageBox } from 'element-plus'
+import { agentApi, skillApi, skillInstallApi } from '@/api/index'
 import type { Skill, SkillRuntimeStatus, SkillSecurityFinding } from '@/types/index'
 import ImportHubDialog from '@/components/skill/ImportHubDialog.vue'
 import PreflightInstallDialog from '@/components/skill/PreflightInstallDialog.vue'
 import SkillSecretsPanel from '@/components/skill/SkillSecretsPanel.vue'
 import McPagination from '@/components/common/McPagination.vue'
+import PageIntro from '@/components/common/PageIntro.vue'
 import SkillIcon from '@/components/common/SkillIcon.vue'
 import SkillIconPicker from '@/components/common/SkillIconPicker.vue'
 import { mcConfirm } from '@/components/common/useConfirm'
 import { useSkillName } from '@/composables/useSkillName'
+import {
+  SKILL_GROUPS,
+  categorizeSkill,
+  getZhDescription,
+  type SkillGroupKey,
+} from './skillCatalog'
 
 const { t } = useI18n()
 const { resolveSkillName, hasI18nName } = useSkillName()
@@ -698,6 +803,13 @@ const showModal = ref(false)
 const creating = ref(false)
 const refreshing = ref(false)
 const showImportDialog = ref(false)
+const openingBuilder = ref(false)
+
+// 与 V113__skill_builder_agent.sql 和 SkillBuilderAgentSeedService 保持一致。
+// 用户若手动删除该数字员工，会在 openSkillBuilderChat 中给出重建提示。
+const SKILL_BUILDER_AGENT_ID = 1000000010
+
+const router = useRouter()
 
 const query = reactive({
   page: 1,
@@ -707,6 +819,80 @@ const query = reactive({
   statusFilter: '' as string,
   sort: 'recommended' as string,
 })
+
+/**
+ * Per-group collapse state. Defaults come from SKILL_GROUPS
+ * (extension group starts collapsed); explicit user toggles win and
+ * persist for the session.
+ */
+const groupCollapseOverride = ref<Record<string, boolean>>({})
+function isGroupCollapsed(key: SkillGroupKey): boolean {
+  if (key in groupCollapseOverride.value) return groupCollapseOverride.value[key]
+  const def = SKILL_GROUPS.find(g => g.key === key)
+  return !!def?.collapsedByDefault
+}
+function toggleGroup(key: SkillGroupKey) {
+  groupCollapseOverride.value = {
+    ...groupCollapseOverride.value,
+    [key]: !isGroupCollapsed(key),
+  }
+}
+
+/**
+ * Show grouped layout only when the user is browsing the full catalog without
+ * narrowing it down. Once they type a query or pick a status filter, fall back
+ * to the flat list — grouping a 3-item search result hurts more than helps.
+ */
+const groupedView = computed(
+  () =>
+    query.skillType === 'all' &&
+    !query.keyword.trim() &&
+    !query.statusFilter,
+)
+
+interface RenderedGroup {
+  key: SkillGroupKey
+  i18nKey: string
+  icon: string
+  items: Skill[]
+  hint?: string
+}
+
+const groupedSkills = computed<RenderedGroup[]>(() => {
+  const buckets = new Map<SkillGroupKey, Skill[]>()
+  for (const s of skills.value) {
+    const k = categorizeSkill(s.name)
+    if (!buckets.has(k)) buckets.set(k, [])
+    buckets.get(k)!.push(s)
+  }
+  return SKILL_GROUPS
+    .map(def => {
+      const items = buckets.get(def.key) || []
+      if (!items.length) return null
+      const hintKey = `skills.groupHints.${def.i18nKey}`
+      const hint = (t as (k: string) => string)(hintKey)
+      return {
+        key: def.key,
+        i18nKey: def.i18nKey,
+        icon: def.icon,
+        items,
+        hint: hint === hintKey ? undefined : hint,
+      } as RenderedGroup
+    })
+    .filter((g): g is RenderedGroup => g !== null)
+})
+
+/**
+ * Prefer the catalog's Chinese description over the raw SKILL.md description
+ * when the user's locale is Chinese; fall back to whatever description the
+ * skill itself ships with. Keeps cards readable for non-technical users
+ * without rewriting every SKILL.md frontmatter.
+ */
+function localizedDescription(skill: Skill): string {
+  const zh = getZhDescription(skill.name)
+  if (zh) return zh
+  return skill.description || t('skills.noDescription')
+}
 
 /** Per-skill UI state for the RFC-042 §2.3 findings panel. */
 const expandedFindings = ref<Record<string, boolean>>({})
@@ -962,7 +1148,13 @@ function onPagerChange() {
 
 async function loadSkills(allowPageClamp = true) {
   try {
-    const params: Record<string, unknown> = { page: query.page, size: query.size }
+    // Grouped view renders all categories on one screen, so paginating the
+    // server response would scatter cards across pages. Ask for a big page
+    // (the full catalog is ~50 entries today) and let the client bucket it.
+    const inGrouped = groupedView.value
+    const effectiveSize = inGrouped ? 500 : query.size
+    const effectivePage = inGrouped ? 1 : query.page
+    const params: Record<string, unknown> = { page: effectivePage, size: effectiveSize }
     if (query.keyword) params.keyword = query.keyword.trim()
     if (query.skillType && query.skillType !== 'all') params.skillType = query.skillType
     if (query.sort) params.sort = query.sort
@@ -982,8 +1174,10 @@ async function loadSkills(allowPageClamp = true) {
     // successor; issue #48).
     const reportedTotal = Number(data.total) || 0
     if (reportedTotal > 0) {
+      // In grouped view we requested the full catalog on page 1, so the
+      // clamp loop (which assumes paginated fetches) doesn't apply.
       const pageCount = Math.max(1, Math.ceil(reportedTotal / query.size))
-      if (allowPageClamp && query.page > pageCount) {
+      if (!inGrouped && allowPageClamp && query.page > pageCount) {
         query.page = pageCount
         await loadSkills(false)
         return
@@ -1030,6 +1224,48 @@ async function loadRuntimeStatus() {
     runtimeStatusMap.value = map
   } catch (e) {
     runtimeStatusMap.value = {}
+  }
+}
+
+async function openSkillBuilderChat() {
+  if (openingBuilder.value) return
+  openingBuilder.value = true
+  try {
+    // 用 agent 详情接口判定该数字员工是否仍然存在且启用
+    const res: any = await agentApi.get(SKILL_BUILDER_AGENT_ID)
+    const agent = res?.data
+    if (!agent || agent.deleted) {
+      await showBuilderMissingDialog()
+      return
+    }
+    if (agent.enabled === false) {
+      ElMessage.warning(t('skills.aiCreateSkillDisabled'))
+      return
+    }
+    router.push({ path: '/chat', query: { agentId: String(SKILL_BUILDER_AGENT_ID) } })
+  } catch (e: any) {
+    // 404 / 403 / 其他均认定为不可用，给出重建指引
+    await showBuilderMissingDialog()
+  } finally {
+    openingBuilder.value = false
+  }
+}
+
+async function showBuilderMissingDialog() {
+  try {
+    await ElMessageBox.confirm(
+      t('skills.skillBuilderMissingDesc'),
+      t('skills.skillBuilderMissingTitle'),
+      {
+        confirmButtonText: t('skills.skillBuilderGoCreate'),
+        cancelButtonText: t('common.cancel'),
+        type: 'warning',
+        dangerouslyUseHTMLString: false,
+      },
+    )
+    router.push('/agents')
+  } catch {
+    // 用户点了取消，无操作
   }
 }
 
@@ -1578,6 +1814,18 @@ function getSkillTypeLabel(type: string) {
 .btn-secondary { display: flex; align-items: center; gap: 6px; padding: 9px 14px; background: var(--mc-bg-elevated); color: var(--mc-text-primary); border: 1px solid var(--mc-border); border-radius: 12px; font-size: 14px; cursor: pointer; }
 .btn-secondary:hover { background: var(--mc-bg-sunken); }
 .btn-secondary:disabled { opacity: 0.6; cursor: not-allowed; }
+
+/* Grouped sections */
+.skill-groups { display: flex; flex-direction: column; gap: 14px; }
+.skill-group { padding: 14px 16px; display: flex; flex-direction: column; gap: 12px; }
+.skill-group__head { display: flex; align-items: center; gap: 10px; cursor: pointer; user-select: none; }
+.skill-group__icon { font-size: 17px; }
+.skill-group__title { margin: 0; font-size: 14px; font-weight: 600; color: var(--mc-text-primary); }
+.skill-group__count { font-size: 11px; padding: 1px 8px; border-radius: 999px; background: var(--mc-bg-sunken); color: var(--mc-text-secondary); }
+.skill-group__hint { font-size: 12px; color: var(--mc-text-tertiary); margin-left: 4px; }
+.skill-group__chev { margin-left: auto; color: var(--mc-text-tertiary); display: inline-flex; transition: transform 0.2s; }
+.skill-group__chev.open { transform: rotate(180deg); }
+.skill-grid--in-group { margin-top: 4px; }
 
 /* 分类 Tab */
 .category-tabs { display: flex; gap: 8px; flex-wrap: wrap; padding: 14px; }

@@ -17,6 +17,20 @@
           </button>
         </div>
 
+        <PageIntro
+          storage-key="mc.plugins.introHidden.v1"
+          :title="t('plugins.intro.title')"
+          :body="t('plugins.intro.body')"
+          :features="[
+            { icon: '♻️', text: t('plugins.intro.bullets.a') },
+            { icon: '⚡', text: t('plugins.intro.bullets.b') },
+            { icon: '🏢', text: t('plugins.intro.bullets.c') },
+          ]"
+          :footer="t('plugins.intro.footer')"
+          :hide-label="t('plugins.intro.hide')"
+          :reopen-label="t('plugins.intro.show')"
+        />
+
         <!-- Loading -->
         <div v-if="loading" class="loading-state mc-surface-card">
           <div class="loading-spinner"></div>
@@ -115,6 +129,7 @@ import { ref, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { ElMessage } from 'element-plus'
 import { pluginApi } from '@/api'
+import PageIntro from '@/components/common/PageIntro.vue'
 
 const { t } = useI18n()
 

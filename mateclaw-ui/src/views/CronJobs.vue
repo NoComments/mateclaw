@@ -15,6 +15,20 @@
         </button>
       </div>
 
+      <PageIntro
+        storage-key="mc.cronJobs.introHidden.v1"
+        :title="t('cronJobs.intro.title')"
+        :body="t('cronJobs.intro.body')"
+        :features="[
+          { icon: '🔁', text: t('cronJobs.intro.bullets.a') },
+          { icon: '🔒', text: t('cronJobs.intro.bullets.b') },
+          { icon: '⏪', text: t('cronJobs.intro.bullets.c') },
+        ]"
+        :footer="t('cronJobs.intro.footer')"
+        :hide-label="t('cronJobs.intro.hide')"
+        :reopen-label="t('cronJobs.intro.show')"
+      />
+
       <div class="page-stage">
         <div class="table-wrap">
           <table class="data-table">
@@ -317,6 +331,7 @@ import { ref, computed, onMounted, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { ElMessage } from 'element-plus'
 import { mcConfirm } from '@/components/common/useConfirm'
+import PageIntro from '@/components/common/PageIntro.vue'
 import { useCronJobStore } from '@/stores/useCronJobStore'
 import { useAgentStore } from '@/stores/useAgentStore'
 import type { CronJob } from '@/types/index'

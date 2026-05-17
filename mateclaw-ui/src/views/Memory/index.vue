@@ -1,6 +1,20 @@
 <template>
   <div class="mc-page-shell memory-shell">
     <div class="mc-page-frame memory-frame">
+      <PageIntro
+        storage-key="mc.memory.introHidden.v1"
+        class="memory-intro"
+        :title="t('memory.intro.title')"
+        :body="t('memory.intro.body')"
+        :features="[
+          { icon: '🧑', text: t('memory.intro.bullets.a') },
+          { icon: '📒', text: t('memory.intro.bullets.b') },
+          { icon: '🌙', text: t('memory.intro.bullets.c') },
+        ]"
+        :footer="t('memory.intro.footer')"
+        :hide-label="t('memory.intro.hide')"
+        :reopen-label="t('memory.intro.show')"
+      />
       <div class="memory-layout mc-surface-card">
         <!-- Left: Timeline -->
         <div class="memory-sidebar">
@@ -185,6 +199,7 @@ import { http } from '@/api'
 import { useAgentStore } from '@/stores/useAgentStore'
 import { useMemoryStore, type DreamReportItem } from '@/stores/useMemoryStore'
 import SkillIcon from '@/components/common/SkillIcon.vue'
+import PageIntro from '@/components/common/PageIntro.vue'
 import MorningCard from './components/MorningCard.vue'
 import FactList from './components/FactList.vue'
 import MemoryBrowser from './components/MemoryBrowser.vue'
@@ -280,7 +295,8 @@ function fmtTime(iso: string) {
 
 <style scoped>
 /* ========== Shell ========== */
-.memory-frame { max-width: 1200px; }
+.memory-frame { max-width: 1200px; display: flex; flex-direction: column; gap: 16px; }
+.memory-intro { flex-shrink: 0; }
 .memory-layout {
   display: flex;
   min-height: calc(100vh - 120px);

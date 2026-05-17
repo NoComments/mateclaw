@@ -14,6 +14,20 @@
           </div>
         </div>
 
+        <PageIntro
+          storage-key="mc.workflows.introHidden.v1"
+          :title="t('workflows.intro.title')"
+          :body="t('workflows.intro.body')"
+          :features="[
+            { icon: '🧩', text: t('workflows.intro.bullets.a') },
+            { icon: '📝', text: t('workflows.intro.bullets.b') },
+            { icon: '⚡', text: t('workflows.intro.bullets.c') },
+          ]"
+          :footer="t('workflows.intro.footer')"
+          :hide-label="t('workflows.intro.hide')"
+          :reopen-label="t('workflows.intro.show')"
+        />
+
         <div class="workflows-grid">
           <!-- left: list -->
           <aside class="workflows-list">
@@ -217,6 +231,7 @@
 import { computed, defineAsyncComponent, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { mcConfirm } from '@/components/common/useConfirm'
+import PageIntro from '@/components/common/PageIntro.vue'
 import { ElMessage } from 'element-plus'
 import {
   agentApi,

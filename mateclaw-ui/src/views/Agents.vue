@@ -35,6 +35,20 @@
           </div>
         </div>
 
+        <PageIntro
+          storage-key="mc.agents.introHidden.v1"
+          :title="t('agents.intro.title')"
+          :body="t('agents.intro.body')"
+          :features="[
+            { icon: '🧠', text: t('agents.intro.bullets.a') },
+            { icon: '🔗', text: t('agents.intro.bullets.b') },
+            { icon: '📜', text: t('agents.intro.bullets.c') },
+          ]"
+          :footer="t('agents.intro.footer')"
+          :hide-label="t('agents.intro.hide')"
+          :reopen-label="t('agents.intro.show')"
+        />
+
         <div class="agents-toolbar mc-surface-card">
           <div class="filter-bar">
             <div class="search-box">
@@ -494,6 +508,7 @@ import { agentApi, agentBindingApi, modelApi, skillApi, toolApi, templateApi, ba
 import type { Agent } from '@/types/index'
 import SkillIcon from '@/components/common/SkillIcon.vue'
 import SkillIconPicker from '@/components/common/SkillIconPicker.vue'
+import PageIntro from '@/components/common/PageIntro.vue'
 import {
   emptyProfile,
   parsePrompt,
