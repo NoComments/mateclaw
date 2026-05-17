@@ -5,13 +5,13 @@ export default defineConfig({
   build: {
     lib: {
       entry: resolve(__dirname, 'src/index.ts'),
-      name: 'MateClawWebChat',
+      name: 'QingwenClawsWebChat',
       formats: ['es', 'umd'],
-      fileName: (format) => `mateclaw-webchat.${format}.js`,
+      fileName: (format) => `qingwenclaws-webchat.${format}.js`,
     },
     rollupOptions: {
       output: {
-        assetFileNames: 'mateclaw-webchat.[ext]',
+        assetFileNames: 'qingwenclaws-webchat.[ext]',
       },
     },
     cssCodeSplit: false,
