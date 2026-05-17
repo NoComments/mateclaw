@@ -1,57 +1,77 @@
 <template>
   <div class="login-page">
+    <!-- Dot-grid background -->
+    <div class="login-grid" aria-hidden="true"></div>
+    <!-- Top glow -->
+    <div class="login-glow" aria-hidden="true"></div>
+
     <div class="login-center">
-      <div class="login-logo">
-        <img src="/logo/qingwenclaws_logo_s.svg" alt="QingwenClaws" class="logo-image" />
-        <h1 class="logo-title">Qingwen<span class="logo-title-highlight">Claws</span></h1>
+      <!-- Status bar -->
+      <div class="status-bar">
+        <span class="status-dot"></span>
+        <span class="status-text">AUTH_SYSTEM · ONLINE</span>
+        <span class="status-line"></span>
+        <span class="status-ver">v{{ appVersion }}</span>
       </div>
 
-      <form class="login-form" @submit.prevent="handleLogin">
-        <div class="input-wrap">
+      <!-- Brand -->
+      <div class="login-brand">
+        <div class="brand-logo">
+          <img src="/logo/qingwenclaws_logo_s.svg" alt="QingwenClaws" class="logo-img" />
+        </div>
+        <div class="brand-copy">
+          <h1 class="brand-name">Qingwen<span class="brand-accent">Claws</span></h1>
+          <p class="brand-sub">enterprise intelligence platform</p>
+        </div>
+      </div>
+
+      <!-- Form card -->
+      <form class="login-card" @submit.prevent="handleLogin" novalidate>
+        <div class="card-top-rule" aria-hidden="true"></div>
+
+        <div class="field">
+          <label class="field-label" for="username">{{ t('login.fields.username') }}</label>
           <input
+            id="username"
             v-model="form.username"
             type="text"
-            class="form-input"
+            class="field-input"
             :placeholder="t('login.placeholders.username')"
-            :aria-label="t('login.fields.username')"
             autocomplete="username"
             required
           />
         </div>
 
-        <div class="input-wrap">
-          <input
-            v-model="form.password"
-            :type="showPassword ? 'text' : 'password'"
-            class="form-input form-input--has-eye"
-            :placeholder="t('login.placeholders.password')"
-            :aria-label="t('login.fields.password')"
-            autocomplete="current-password"
-            required
-          />
-          <button type="button" class="eye-btn" @click="showPassword = !showPassword">
-            <svg v-if="!showPassword" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-              <circle cx="12" cy="12" r="3"/>
-            </svg>
-            <svg v-else width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/>
-              <line x1="1" y1="1" x2="23" y2="23"/>
-            </svg>
-          </button>
+        <div class="field">
+          <label class="field-label" for="password">{{ t('login.fields.password') }}</label>
+          <div class="input-wrap">
+            <input
+              id="password"
+              v-model="form.password"
+              :type="showPassword ? 'text' : 'password'"
+              class="field-input"
+              :placeholder="t('login.placeholders.password')"
+              autocomplete="current-password"
+              required
+            />
+            <button type="button" class="eye-btn" @click="showPassword = !showPassword" :aria-label="showPassword ? '隐藏密码' : '显示密码'">
+              <svg v-if="!showPassword" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+              <svg v-else width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+            </button>
+          </div>
         </div>
 
-        <div v-if="errorMsg" class="error-msg">{{ errorMsg }}</div>
+        <div v-if="errorMsg" class="error-msg" role="alert">{{ errorMsg }}</div>
 
         <button type="submit" class="login-btn" :disabled="loading">
           <span v-if="!loading">{{ t('login.signIn') }}</span>
-          <span v-else class="loading-dots">
+          <span v-else class="loading-dots" aria-label="登录中">
             <span></span><span></span><span></span>
           </span>
         </button>
-      </form>
 
-      <p class="login-hint" v-html="t('login.hint')"></p>
+        <p class="login-hint" v-html="t('login.hint')"></p>
+      </form>
     </div>
   </div>
 </template>
@@ -61,6 +81,7 @@ import { reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { authApi } from '@/api/index'
+import { version as appVersion } from '../../package.json'
 
 const router = useRouter()
 const { t } = useI18n()
@@ -90,93 +111,214 @@ async function handleLogin() {
 </script>
 
 <style scoped>
+/* ── Page shell ── */
 .login-page {
   min-height: 100vh;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(160deg, #FAF5F0 0%, #F5EDE5 100%);
+  background: #0D0F14;
   padding: 24px;
+  position: relative;
+  overflow: hidden;
 }
 
-:root.dark .login-page,
-html.dark .login-page {
-  background: linear-gradient(160deg, var(--mc-bg) 0%, #1A1210 100%);
+/* Dot grid */
+.login-grid {
+  position: fixed;
+  inset: 0;
+  background-image: radial-gradient(rgba(79, 110, 247, 0.2) 1px, transparent 1px);
+  background-size: 28px 28px;
+  mask-image: radial-gradient(ellipse at center, black 20%, transparent 72%);
+  -webkit-mask-image: radial-gradient(ellipse at center, black 20%, transparent 72%);
+  pointer-events: none;
 }
 
+/* Top glow */
+.login-glow {
+  position: fixed;
+  top: -120px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 600px;
+  height: 400px;
+  background: radial-gradient(ellipse, rgba(79, 110, 247, 0.12) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+/* ── Center column ── */
 .login-center {
   width: 100%;
-  max-width: 380px;
+  max-width: 400px;
   display: flex;
   flex-direction: column;
+  gap: 28px;
+  position: relative;
+  z-index: 1;
+  animation: fadeUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Status bar ── */
+.status-bar {
+  display: flex;
   align-items: center;
-  gap: 40px;
-  animation: fadeUp 0.6s ease-out both;
+  gap: 8px;
 }
 
-/* Logo */
-.login-logo {
-  text-align: center;
+.status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #4F6EF7;
+  box-shadow: 0 0 8px rgba(79, 110, 247, 0.8);
+  flex-shrink: 0;
+  animation: pulse 2.4s ease-in-out infinite;
 }
 
-.logo-image {
-  display: block;
-  margin: 0 auto 16px;
-  width: 100px;
-  height: 100px;
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.5; }
+}
+
+.status-text {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  font-weight: 400;
+  letter-spacing: 0.1em;
+  color: rgba(79, 110, 247, 0.7);
+  white-space: nowrap;
+}
+
+.status-line {
+  flex: 1;
+  height: 1px;
+  background: rgba(79, 110, 247, 0.15);
+}
+
+.status-ver {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.15);
+  white-space: nowrap;
+}
+
+/* ── Brand ── */
+.login-brand {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.brand-logo {
+  width: 52px;
+  height: 52px;
+  border-radius: 14px;
+  background: rgba(79, 110, 247, 0.1);
+  border: 1px solid rgba(79, 110, 247, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 0 0 24px rgba(79, 110, 247, 0.12);
+}
+
+.logo-img {
+  width: 34px;
+  height: 34px;
   object-fit: contain;
-  filter: drop-shadow(0 6px 20px rgba(217, 119, 87, 0.3));
-  animation: breathe 3.5s ease-in-out infinite;
+  filter: drop-shadow(0 0 8px rgba(79, 110, 247, 0.4));
 }
 
-.logo-title {
-  font-size: 36px;
-  font-weight: 800;
-  color: var(--mc-text-primary);
+.brand-name {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 28px;
+  font-weight: 700;
+  color: #F0F2FF;
+  letter-spacing: -0.03em;
   margin: 0;
-  letter-spacing: -0.04em;
+  line-height: 1;
 }
 
-.logo-title-highlight {
-  color: var(--mc-primary);
+.brand-accent { color: #4F6EF7; }
+
+.brand-sub {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  font-weight: 300;
+  color: rgba(240, 242, 255, 0.25);
+  letter-spacing: 0.06em;
+  margin-top: 5px;
 }
 
-/* Form */
-.login-form {
-  width: 100%;
+/* ── Card ── */
+.login-card {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  padding: 28px 28px 24px;
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(20px);
+  position: relative;
   display: flex;
   flex-direction: column;
   gap: 16px;
 }
 
-.input-wrap {
-  position: relative;
-  display: flex;
-  align-items: center;
+/* Top gradient rule */
+.card-top-rule {
+  position: absolute;
+  top: 0; left: 50%;
+  transform: translateX(-50%);
+  width: 60%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(79, 110, 247, 0.5), transparent);
+  border-radius: 1px;
 }
 
-.form-input {
+/* ── Fields ── */
+.field { display: flex; flex-direction: column; gap: 6px; }
+
+.field-label {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 11px;
+  font-weight: 500;
+  color: rgba(240, 242, 255, 0.4);
+  letter-spacing: 0.04em;
+}
+
+.input-wrap { position: relative; display: flex; align-items: center; }
+
+.field-input {
   width: 100%;
-  padding: 14px 16px;
-  border: 1.5px solid var(--mc-border);
-  border-radius: 12px;
-  font-size: 15px;
-  color: var(--mc-text-primary);
-  background: var(--mc-bg-sunken);
+  padding: 11px 14px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 14px;
+  font-weight: 400;
+  color: #F0F2FF;
   outline: none;
   transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+  -webkit-appearance: none;
 }
 
-.form-input--has-eye {
-  padding-right: 44px;
+.input-wrap .field-input { padding-right: 42px; }
+
+.field-input::placeholder { color: rgba(240, 242, 255, 0.18); }
+
+.field-input:focus {
+  border-color: rgba(79, 110, 247, 0.5);
+  background: rgba(79, 110, 247, 0.04);
+  box-shadow: 0 0 0 3px rgba(79, 110, 247, 0.08);
 }
 
-.form-input:focus {
-  border-color: var(--mc-primary);
-  background: var(--mc-bg-elevated);
-  box-shadow: 0 0 0 3px rgba(217, 119, 87, 0.08);
-}
-
+/* Eye toggle */
 .eye-btn {
   position: absolute;
   right: 12px;
@@ -185,124 +327,90 @@ html.dark .login-page {
   border: none;
   background: none;
   cursor: pointer;
-  color: var(--mc-text-tertiary);
+  color: rgba(240, 242, 255, 0.25);
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 4px;
+  border-radius: 6px;
+  transition: color 0.15s;
 }
+.eye-btn:hover { color: rgba(79, 110, 247, 0.8); }
 
-.eye-btn:hover {
-  color: var(--mc-primary);
-}
-
-/* Error */
+/* ── Error ── */
 .error-msg {
   padding: 10px 14px;
-  background: var(--mc-danger-bg);
-  border: 1px solid var(--mc-danger);
-  border-radius: 10px;
+  background: rgba(224, 90, 74, 0.12);
+  border: 1px solid rgba(224, 90, 74, 0.3);
+  border-radius: 8px;
+  font-family: 'Plus Jakarta Sans', sans-serif;
   font-size: 13px;
-  color: var(--mc-danger);
+  color: #E05A4A;
 }
 
-/* Button */
+/* ── Button ── */
 .login-btn {
   width: 100%;
   padding: 12px;
-  background: linear-gradient(135deg, var(--mc-primary), var(--mc-primary-hover));
-  color: white;
+  background: #4F6EF7;
+  color: #ffffff;
   border: none;
-  border-radius: 12px;
-  font-size: 15px;
+  border-radius: 10px;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 14px;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.15s;
-  margin-top: 4px;
   height: 48px;
   display: flex;
   align-items: center;
   justify-content: center;
+  transition: opacity 0.15s, transform 0.15s, box-shadow 0.2s;
+  box-shadow: 0 4px 16px rgba(79, 110, 247, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  margin-top: 2px;
 }
 
 .login-btn:hover:not(:disabled) {
   transform: translateY(-1px);
-  box-shadow: 0 8px 20px rgba(217, 119, 87, 0.3);
+  box-shadow: 0 8px 24px rgba(79, 110, 247, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.12);
 }
 
-.login-btn:disabled {
-  opacity: 0.7;
-  cursor: not-allowed;
-}
+.login-btn:disabled { opacity: 0.6; cursor: not-allowed; }
 
-/* Loading */
-.loading-dots {
-  display: flex;
-  gap: 5px;
-  align-items: center;
-}
-
+/* Loading dots */
+.loading-dots { display: flex; gap: 5px; align-items: center; }
 .loading-dots span {
-  width: 6px;
-  height: 6px;
-  background: white;
-  border-radius: 50%;
+  width: 5px; height: 5px;
+  background: white; border-radius: 50%;
   animation: bounce 1.2s infinite;
 }
-
 .loading-dots span:nth-child(2) { animation-delay: 0.2s; }
 .loading-dots span:nth-child(3) { animation-delay: 0.4s; }
-
 @keyframes bounce {
   0%, 60%, 100% { transform: translateY(0); }
-  30% { transform: translateY(-5px); }
+  30%           { transform: translateY(-5px); }
 }
 
-/* Hint */
+/* ── Hint ── */
 .login-hint {
   text-align: center;
-  font-size: 12px;
-  color: var(--mc-text-tertiary);
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px;
+  color: rgba(240, 242, 255, 0.15);
   margin: 0;
-  opacity: 0.7;
+  line-height: 1.6;
 }
 
 .login-hint :deep(code) {
-  background: var(--mc-inline-code-bg);
+  background: rgba(79, 110, 247, 0.12);
+  color: rgba(107, 138, 251, 0.9);
   padding: 1px 6px;
   border-radius: 4px;
-  color: var(--mc-inline-code-color);
-  font-size: 12px;
+  font-size: 11px;
 }
 
-/* Breathing animation */
-@keyframes breathe {
-  0%, 100% {
-    transform: scale(1);
-    filter: drop-shadow(0 6px 20px rgba(217, 119, 87, 0.3));
-  }
-  50% {
-    transform: scale(1.06);
-    filter: drop-shadow(0 8px 28px rgba(217, 119, 87, 0.45));
-  }
-}
-
-/* Entrance animation */
-@keyframes fadeUp {
-  from {
-    opacity: 0;
-    transform: translateY(12px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-/* Mobile */
+/* ── Mobile ── */
 @media (max-width: 480px) {
-  .login-page {
-    padding: 16px;
-  }
+  .login-page { padding: 16px; }
+  .login-card { padding: 22px 20px 20px; }
+  .brand-name { font-size: 24px; }
 }
 </style>

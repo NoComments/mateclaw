@@ -196,7 +196,7 @@ function renderChart() {
   const style = getComputedStyle(document.documentElement)
   const textColor = style.getPropertyValue('--mc-text-secondary').trim() || '#999'
   const borderColor = style.getPropertyValue('--mc-border-light').trim() || '#eee'
-  const primaryColor = style.getPropertyValue('--mc-primary').trim() || '#D97757'
+  const primaryColor = style.getPropertyValue('--mc-primary').trim() || '#4F6EF7'
 
   chartInstance.setOption({
     tooltip: { trigger: 'axis' },
@@ -364,7 +364,7 @@ function calcDuration(run: any): string {
   align-items: center;
   justify-content: center;
   border-radius: 16px;
-  background: linear-gradient(135deg, rgba(217, 109, 70, 0.12), rgba(24, 74, 69, 0.08));
+  background: linear-gradient(135deg, rgba(79, 110, 247, 0.12), rgba(79, 110, 247, 0.06));
   font-size: 24px;
   color: var(--mc-primary);
 }
@@ -405,7 +405,7 @@ function calcDuration(run: any): string {
 }
 .runs-table td { padding: 9px 14px; border-bottom: 1px solid var(--mc-border-light); color: var(--mc-text-primary); }
 .runs-table tr:last-child td { border-bottom: none; }
-.runs-table tbody tr:hover { background: rgba(217, 109, 70, 0.04); }
+.runs-table tbody tr:hover { background: rgba(79, 110, 247, 0.04); }
 
 .cell-time { font-size: 12px; color: var(--mc-text-tertiary); white-space: nowrap; }
 .cell-job { font-family: 'SF Mono', monospace; font-size: 12px; color: var(--mc-text-secondary); }

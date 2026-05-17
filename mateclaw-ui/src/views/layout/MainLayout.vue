@@ -477,15 +477,15 @@ watch(() => workspaceStore.currentWorkspaceId, () => {
   position: absolute;
   inset: 0;
   background:
-    radial-gradient(circle at top left, rgba(217, 109, 70, 0.12), transparent 22%),
-    radial-gradient(circle at bottom right, rgba(24, 74, 69, 0.08), transparent 18%);
+    radial-gradient(circle at top left, rgba(79, 110, 247, 0.08), transparent 22%),
+    radial-gradient(circle at bottom right, rgba(79, 110, 247, 0.05), transparent 18%);
   pointer-events: none;
 }
 
 :global(html.dark) .app-layout::before {
   background:
-    radial-gradient(circle at top left, rgba(235, 143, 101, 0.14), transparent 24%),
-    radial-gradient(circle at bottom right, rgba(92, 166, 157, 0.08), transparent 20%);
+    radial-gradient(circle at top left, rgba(107, 138, 251, 0.1), transparent 24%),
+    radial-gradient(circle at bottom right, rgba(107, 138, 251, 0.06), transparent 20%);
 }
 
 /* ===== 侧边栏 ===== */
@@ -545,15 +545,15 @@ watch(() => workspaceStore.currentWorkspaceId, () => {
   justify-content: center;
   flex-shrink: 0;
   overflow: hidden;
-  background: linear-gradient(135deg, rgba(217, 109, 70, 0.18), rgba(24, 74, 69, 0.08));
-  border: 1px solid rgba(217, 109, 70, 0.14);
+  background: linear-gradient(135deg, rgba(79, 110, 247, 0.12), rgba(79, 110, 247, 0.06));
+  border: 1px solid rgba(79, 110, 247, 0.12);
 }
 
 .logo-img {
   width: 34px;
   height: 34px;
   object-fit: contain;
-  filter: drop-shadow(0 8px 18px rgba(217, 109, 70, 0.22));
+  filter: drop-shadow(0 8px 18px rgba(79, 110, 247, 0.25));
 }
 
 .logo-emoji { font-size: 16px; }
@@ -665,7 +665,7 @@ watch(() => workspaceStore.currentWorkspaceId, () => {
   background: var(--mc-sidebar-active);
   color: var(--mc-sidebar-text-active);
   font-weight: 600;
-  box-shadow: inset 0 0 0 1px rgba(217, 109, 70, 0.08);
+  box-shadow: inset 0 0 0 1px rgba(79, 110, 247, 0.12);
 }
 
 /* Active indicator bar removed — active state uses bg color + font weight only */
@@ -848,7 +848,7 @@ watch(() => workspaceStore.currentWorkspaceId, () => {
 }
 
 .language-btn.active {
-  border-color: rgba(217, 109, 70, 0.18);
+  border-color: rgba(79, 110, 247, 0.25);
   background: var(--mc-primary-bg);
   color: var(--mc-primary);
 }
@@ -984,7 +984,7 @@ watch(() => workspaceStore.currentWorkspaceId, () => {
 .footer-icon-btn--accent {
   color: var(--mc-primary);
   background: var(--mc-primary-bg);
-  border-color: rgba(217, 109, 70, 0.18);
+  border-color: rgba(79, 110, 247, 0.25);
 }
 
 .sidebar-utility-panel {
@@ -1039,7 +1039,7 @@ watch(() => workspaceStore.currentWorkspaceId, () => {
 .panel-option-btn.active {
   background: var(--mc-primary-bg);
   color: var(--mc-primary);
-  border-color: rgba(217, 109, 70, 0.18);
+  border-color: rgba(79, 110, 247, 0.25);
 }
 
 .panel-option-icon {
