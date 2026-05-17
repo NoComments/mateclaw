@@ -3,7 +3,7 @@
     <div class="login-center">
       <div class="login-logo">
         <img src="/logo/qingwenclaws_logo_s.svg" alt="QingwenClaws" class="logo-image" />
-        <h1 class="logo-title">Mate<span class="logo-title-highlight">Claw</span></h1>
+        <h1 class="logo-title">Qingwen<span class="logo-title-highlight">Claws</span></h1>
       </div>
 
       <form class="login-form" @submit.prevent="handleLogin">
