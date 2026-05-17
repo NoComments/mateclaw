@@ -14,21 +14,53 @@
           :aria-labelledby="`mc-confirm-title-${seq}`"
         >
           <div class="mc-confirm-head">
-            <span class="mc-confirm-icon" :class="`mc-confirm-icon--${current.tone || 'default'}`">
-              <svg v-if="current.tone === 'danger'" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M12 9v4"/><path d="M12 17h.01"/>
-                <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+            <span
+              class="mc-confirm-icon"
+              :class="`mc-confirm-icon--${current.tone || 'default'}`"
+            >
+              <svg
+                v-if="current.tone === 'danger'"
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2.4"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path d="M12 9v4" /><path d="M12 17h.01" />
+                <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
               </svg>
-              <svg v-else width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
-                <circle cx="12" cy="12" r="10"/>
-                <path d="M12 8v4"/><path d="M12 16h.01"/>
+              <svg
+                v-else
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2.4"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <circle
+                  cx="12"
+                  cy="12"
+                  r="10"
+                />
+                <path d="M12 8v4" /><path d="M12 16h.01" />
               </svg>
             </span>
-            <h3 :id="`mc-confirm-title-${seq}`" class="mc-confirm-title">
+            <h3
+              :id="`mc-confirm-title-${seq}`"
+              class="mc-confirm-title"
+            >
               {{ current.title || t('common.confirm') }}
             </h3>
           </div>
-          <p class="mc-confirm-message">{{ current.message }}</p>
+          <p class="mc-confirm-message">
+            {{ current.message }}
+          </p>
           <div class="mc-confirm-actions">
             <button
               ref="cancelBtnRef"
