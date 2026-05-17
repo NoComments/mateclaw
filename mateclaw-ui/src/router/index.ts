@@ -264,7 +264,7 @@ const router = createRouter({
         // RFC-090 Phase 4: Activity 提升到顶层
         { path: 'security/activity', redirect: '/activity' },
         { path: 'settings/activity', redirect: '/activity' },
-{ path: 'datasources', redirect: '/settings/datasources' },
+        { path: 'datasources', redirect: '/settings/datasources' },
         { path: 'mcp-servers', redirect: '/settings/mcp-servers' },
         { path: 'token-usage', redirect: '/settings/token-usage' },
         // RFC-090 Phase 1: Tools 顶层降级到 Settings
