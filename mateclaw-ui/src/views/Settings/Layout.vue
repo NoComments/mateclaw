@@ -52,7 +52,7 @@ const { t } = useI18n()
 
 // Routes that benefit from extra editor width — the sub-nav auto-collapses
 // to a 56px rail unless the user has explicitly toggled it open.
-const COMPACT_ROUTES = ['/settings/workflows', '/settings/triggers']
+const COMPACT_ROUTES = ['/settings/triggers']
 
 const navCollapsed = ref(localStorage.getItem('mc-settings-nav-collapsed') === 'true')
 const userExplicit = ref(localStorage.getItem('mc-settings-nav-collapsed') !== null)
@@ -162,18 +162,6 @@ const sections = computed(() => [
   // RFC-090 Phase 4: Activity 子项移除，提升至顶层 /activity
   // Divider: Advanced
   { id: 'divider-advanced', path: '', label: t('settings.sections.advanced'), icon: '', isDivider: true },
-  {
-    id: 'cron-jobs',
-    path: '/settings/cron-jobs',
-    label: t('nav.cronJobs'),
-    icon: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>',
-  },
-  {
-    id: 'workflows',
-    path: '/settings/workflows',
-    label: t('nav.workflows', 'Workflows'),
-    icon: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>',
-  },
   {
     id: 'triggers',
     path: '/settings/triggers',
