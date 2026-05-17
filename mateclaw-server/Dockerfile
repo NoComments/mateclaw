@@ -47,7 +47,7 @@ COPY mateclaw-plugin-api/pom.xml ./pom.xml
 COPY mateclaw-plugin-api/src ./src
 RUN mvn install -Dmaven.test.skip=true -q ${MAVEN_FLAGS}
 
-# Pre-fetch mateclaw-server dependencies (uses mirror, so this won't hang)
+# Pre-fetch qingwenclaws-server dependencies (uses mirror, so this won't hang)
 WORKDIR /build
 COPY mateclaw-server/pom.xml .
 RUN mvn dependency:go-offline -q ${MAVEN_FLAGS}
@@ -70,6 +70,11 @@ RUN mvn package -Dmaven.test.skip=true -q ${MAVEN_FLAGS}
 # tag with the matching driver, so mismatched versions cause the java driver to
 # re-download browsers at runtime (defeating the whole point of this image).
 FROM mcr.microsoft.com/playwright:v1.52.0-noble
+
+LABEL org.opencontainers.image.title="QingwenClaws Server"
+LABEL org.opencontainers.image.description="QingwenClaws - Enterprise Personal Agent Assistant"
+LABEL org.opencontainers.image.vendor="擎问科技 (Qingwen Tech)"
+
 WORKDIR /app
 
 # JDK 21 is NOT part of the base image (it ships Node for the JS driver).

@@ -5,7 +5,7 @@ server:
 
 spring:
   application:
-    name: mateclaw-server
+    name: qingwenclaws-server
   messages:
     basename: messages
     encoding: UTF-8
@@ -21,7 +21,7 @@ spring:
 
   # 数据源（默认 H2，生产切换为 mysql profile）
   datasource:
-    url: jdbc:h2:file:./data/mateclaw;MODE=MySQL;DATABASE_TO_LOWER=TRUE;CASE_INSENSITIVE_IDENTIFIERS=TRUE
+    url: jdbc:h2:file:./data/qingwenclaws;MODE=MySQL;DATABASE_TO_LOWER=TRUE;CASE_INSENSITIVE_IDENTIFIERS=TRUE
     driver-class-name: org.h2.Driver
     username: sa
     password:
@@ -55,7 +55,7 @@ spring:
     clean-disabled: true
     # Disable Flyway's built-in ${...} placeholder substitution. Some migrations
     # (e.g. V85 ckjia MCP seed) intentionally store ${ENV_VAR} literals so that
-    # mateclaw's runtime header parser (McpClientManager.parseHeaders) can
+    # qingwenclaws's runtime header parser (McpClientManager.parseHeaders) can
     # expand them at request time. Flyway would otherwise try to resolve those
     # tokens at migration time and fail with "No value provided for placeholder".
     # Safe to disable globally because no migration in this project relies on
@@ -122,10 +122,10 @@ springdoc:
   swagger-ui:
     path: /swagger-ui.html
 
-# MateClaw 自定义配置
+# QingwenClaws 自定义配置（注：内部 YAML 根键 mateclaw: 保留以维持 Java @ConfigurationProperties 绑定）
 mateclaw:
   jwt:
-    secret: ${JWT_SECRET:MateClaw-JWT-Secret-Key-2024-Please-Change-In-Production}
+    secret: ${JWT_SECRET:QingwenClaws-JWT-Secret-Key-2026-Please-Change-In-Production}
     expiration: 86400000
   # 搜索配置已迁移至数据库（mate_system_setting 表），通过 UI 系统设置管理
   # MCP server 配置已迁移至数据库（mate_mcp_server 表），通过 UI 管理
@@ -133,7 +133,7 @@ mateclaw:
     enabled: true
   skill:
     workspace:
-      root: ${user.home}/.mateclaw/skills
+      root: ${user.home}/.qingwenclaws/skills
       auto-init: true
       delete-policy: archive
     hub:
@@ -145,7 +145,7 @@ mateclaw:
       http-retries: 3
   plugin:
     enabled: true
-    user-dir: ${user.home}/.mateclaw/plugins
+    user-dir: ${user.home}/.qingwenclaws/plugins
   # RFC-017: 声明式 Hook 系统
   hooks:
     enabled: true
@@ -189,7 +189,7 @@ mateclaw:
     # when the child must produce multi-section structured output.
     parallel-timeout-seconds: 300
 
-# MateClaw Agent 配置
+# QingwenClaws Agent 配置
 mate:
   agent:
     graph:

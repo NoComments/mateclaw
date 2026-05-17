@@ -9,8 +9,8 @@
     <version>1.3.0</version>
     <packaging>jar</packaging>
 
-    <name>MateClaw Server</name>
-    <description>MateClaw - Java+Vue Personal AI Assistant powered by Spring AI Alibaba</description>
+    <name>QingwenClaws Server</name>
+    <description>QingwenClaws - Enterprise Personal Agent Assistant</description>
 
     <parent>
         <groupId>org.springframework.boot</groupId>
@@ -54,7 +54,7 @@
     </dependencyManagement>
 
     <dependencies>
-        <!-- ===== MateClaw Plugin API ===== -->
+        <!-- ===== QingwenClaws Plugin API ===== -->
         <dependency>
             <groupId>vip.mate</groupId>
             <artifactId>mateclaw-plugin-api</artifactId>
@@ -249,7 +249,7 @@
             <artifactId>JDA</artifactId>
             <version>5.2.3</version>
             <exclusions>
-                <!-- 排除 audio 相关依赖（MateClaw 不需要语音功能） -->
+                <!-- 排除 audio 相关依赖（QingwenClaws 不需要语音功能） -->
                 <exclusion>
                     <groupId>club.minnced</groupId>
                     <artifactId>opus-java</artifactId>
@@ -472,6 +472,7 @@
     </dependencies>
 
     <build>
+        <finalName>qingwenclaws-server</finalName>
         <plugins>
             <plugin>
                 <groupId>org.springframework.boot</groupId>
