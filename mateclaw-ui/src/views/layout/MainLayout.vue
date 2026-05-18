@@ -380,8 +380,18 @@ const navGroups = computed(() => [
         icon: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/><line x1="8" y1="7" x2="16" y2="7"/><line x1="8" y1="11" x2="14" y2="11"/></svg>`,
       },
       {
-        path: '/analytics',
-        label: t('nav.analytics'),
+        path: '/analytics/templates',
+        label: t('nav.analyticsTemplates'),
+        icon: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>`,
+      },
+      {
+        path: '/analytics/datasets',
+        label: t('nav.analyticsDatasets'),
+        icon: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>`,
+      },
+      {
+        path: '/analytics/chat',
+        label: t('nav.analyticsChat'),
         icon: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/><polyline points="2 20 22 20"/></svg>`,
       },
     ],
@@ -447,8 +457,14 @@ function isNavItemActive(item: { path: string; label: string }) {
   if (item.path === '/security') {
     return route.path.startsWith('/security')
   }
-  if (item.path === '/analytics') {
-    return route.path.startsWith('/analytics')
+  if (item.path === '/analytics/templates') {
+    return route.path.startsWith('/analytics/templates')
+  }
+  if (item.path === '/analytics/datasets') {
+    return route.path.startsWith('/analytics/datasets')
+  }
+  if (item.path === '/analytics/chat') {
+    return route.path === '/analytics/chat'
   }
   return route.path === item.path
 }

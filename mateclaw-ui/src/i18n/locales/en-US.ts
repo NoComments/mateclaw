@@ -401,6 +401,9 @@ export default {
     roleUser: 'User',
     roleAdmin: 'Admin',
     analytics: 'Analytics',
+    analyticsTemplates: 'Dataset Templates',
+    analyticsDatasets: 'Datasets',
+    analyticsChat: 'Data Analysis',
   },
   backstage: {
     kicker: 'Backstage',

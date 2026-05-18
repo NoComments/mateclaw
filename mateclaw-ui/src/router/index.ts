@@ -261,7 +261,7 @@ const router = createRouter({
           path: 'analytics',
           name: 'Analytics',
           component: () => import('@/views/analytics/index.vue'),
-          redirect: '/analytics/datasets',
+          redirect: '/analytics/templates',
           children: [
             {
               path: 'datasets',

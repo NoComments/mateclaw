@@ -401,6 +401,9 @@ export default {
     roleUser: '用户',
     roleAdmin: '管理员',
     analytics: '数据分析',
+    analyticsTemplates: '数据集模板',
+    analyticsDatasets: '数据集',
+    analyticsChat: '数据分析',
   },
   // Issue #81: provider-level hint / status text shared across chat popup and ModelSelector.
   provider: {
