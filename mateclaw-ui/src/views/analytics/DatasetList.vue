@@ -132,8 +132,8 @@ async function loadData() {
       listDatasets({ workspaceId: workspaceId() }),
       listTemplates({ workspaceId: workspaceId() }),
     ])
-    datasets.value = dsRes.data.records
-    templates.value = tplRes.data.records
+    datasets.value = dsRes.data
+    templates.value = tplRes.data
   } catch (e: unknown) {
     ElMessage.error(e instanceof Error ? e.message : String(e))
   } finally {

@@ -8,12 +8,10 @@ import type {
   CreateTemplateRequest,
   CreateTemplateFieldRequest,
   CreateDatasetRequest,
-  PageResult,
 } from '@/types/analytics'
 
-// Separate axios instance — analytics controllers live at /api/..., not /api/v1/...
 const analyticsHttp = axios.create({
-  baseURL: '/api',
+  baseURL: '/api/v1',
   timeout: 30000,
 })
 
@@ -62,11 +60,9 @@ analyticsHttp.interceptors.response.use(
 
 // ==================== Templates ====================
 
-export function listTemplates(params: {
+export function listTemplates(params?: {
   workspaceId?: number
-  page?: number
-  size?: number
-}): Promise<{ data: PageResult<DatasetTemplate> }> {
+}): Promise<{ data: DatasetTemplate[] }> {
   return analyticsHttp.get('/analytics/templates', { params })
 }
 
@@ -108,12 +104,10 @@ export function deleteTemplateField(
 
 // ==================== Datasets ====================
 
-export function listDatasets(params: {
+export function listDatasets(params?: {
   workspaceId?: number
   templateId?: number
-  page?: number
-  size?: number
-}): Promise<{ data: PageResult<Dataset> }> {
+}): Promise<{ data: Dataset[] }> {
   return analyticsHttp.get('/analytics/datasets', { params })
 }
 

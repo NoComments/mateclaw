@@ -139,11 +139,15 @@ public class ExcelParseService {
     /**
      * Converts a single cell to its Java representation according to the field type.
      *
-     * <p>Returns {@code null} for null or blank cells regardless of type.
+     * <p>Returns {@code null} for null, blank, or empty-string cells regardless of type.
      */
     @Nullable
     private Object convertCell(@Nullable Cell cell, @Nullable FieldType type) {
         if (cell == null || cell.getCellType() == CellType.BLANK) {
+            return null;
+        }
+        // STRING cells with empty content are treated as null (same as blank)
+        if (cell.getCellType() == CellType.STRING && cell.getStringCellValue().isBlank()) {
             return null;
         }
         if (type == null) {
@@ -166,27 +170,45 @@ public class ExcelParseService {
         };
     }
 
-    private long convertToInt(Cell cell) {
+    @Nullable
+    private Long convertToInt(Cell cell) {
         return switch (cell.getCellType()) {
             case NUMERIC -> (long) cell.getNumericCellValue();
-            case STRING  -> Long.parseLong(cell.getStringCellValue().trim());
-            default      -> Long.parseLong(cell.toString().trim());
+            case STRING  -> {
+                String s = cell.getStringCellValue().trim();
+                yield s.isEmpty() ? null : Long.parseLong(s);
+            }
+            default      -> {
+                String s = cell.toString().trim();
+                yield s.isEmpty() ? null : Long.parseLong(s);
+            }
         };
     }
 
+    @Nullable
     private BigDecimal convertToDecimal(Cell cell) {
         return switch (cell.getCellType()) {
             case NUMERIC -> BigDecimal.valueOf(cell.getNumericCellValue());
-            case STRING  -> new BigDecimal(cell.getStringCellValue().trim());
-            default      -> new BigDecimal(cell.toString().trim());
+            case STRING  -> {
+                String s = cell.getStringCellValue().trim();
+                yield s.isEmpty() ? null : new BigDecimal(s);
+            }
+            default      -> {
+                String s = cell.toString().trim();
+                yield s.isEmpty() ? null : new BigDecimal(s);
+            }
         };
     }
 
-    private int convertToBoolean(Cell cell) {
+    @Nullable
+    private Integer convertToBoolean(Cell cell) {
         return switch (cell.getCellType()) {
             case BOOLEAN -> cell.getBooleanCellValue() ? 1 : 0;
             case NUMERIC -> (int) cell.getNumericCellValue();
-            default      -> Integer.parseInt(cell.toString().trim());
+            default      -> {
+                String s = cell.toString().trim();
+                yield s.isEmpty() ? null : Integer.parseInt(s);
+            }
         };
     }
 

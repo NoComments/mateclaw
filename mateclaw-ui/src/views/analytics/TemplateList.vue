@@ -165,9 +165,9 @@ const formRules: FormRules = {
 async function loadTemplates() {
   loading.value = true
   try {
-    const res = await listTemplates({ workspaceId: workspaceId(), page: currentPage.value, size: pageSize })
-    templates.value = res.data.records
-    total.value = res.data.total
+    const res = await listTemplates({ workspaceId: workspaceId() })
+    templates.value = res.data
+    total.value = res.data.length
   } catch (e: unknown) {
     ElMessage.error(e instanceof Error ? e.message : String(e))
   } finally {
