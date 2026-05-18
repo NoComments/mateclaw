@@ -357,7 +357,7 @@ skills/data-analyst/
 
 | 阶段 | 状态 | 开始日期 | 完成日期 | 提交范围 | 备注 |
 |---|---|---|---|---|---|
-| Phase 1 — MVP 闭环 | 🚧 计划已制定，未开始实施 | 2026-05-18 | - | - | Plan: `docs/superpowers/plans/2026-05-18-data-analyst-phase-1.md` |
+| Phase 1 — MVP 闭环 | ✅ 完成 | 2026-05-18 | 2026-05-18 | feat/data-analyst-expert (T1–T25) | E2E smoke 通过：畜牧家禽 sheet 100 行全量写入，preview/upload-history/API 全部正常。Plan: `docs/superpowers/plans/2026-05-18-data-analyst-phase-1.md` |
 | Phase 2 — 数据校验 | ⏸ 待 Phase 1 完成 | - | - | - | - |
 | Phase 3 — 统计云对接 | ⏸ 待 Phase 2 完成 | - | - | - | 需要客户提供统计云 API 文档 |
 | Phase 4+ — 高级能力 | ⏸ 单独评估 | - | - | - | - |
