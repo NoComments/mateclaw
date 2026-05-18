@@ -400,6 +400,7 @@ export default {
     appearance: '外观与语言',
     roleUser: '用户',
     roleAdmin: '管理员',
+    analytics: '数据分析',
   },
   // Issue #81: provider-level hint / status text shared across chat popup and ModelSelector.
   provider: {
@@ -3583,5 +3584,14 @@ export default {
     status: '状态',
     analyst: '数据分析',
     deleteConfirm: '确认删除？',
+    uploadSub: '仅支持 .xlsx 文件',
+    sheetName: 'Sheet 名称',
+    sheetPlaceholder: '默认第一个 Sheet',
+    startUpload: '开始上传',
+    rowCount: '数据行数',
+    uploadTime: '上传时间',
+    fileName: '文件名',
+    fileSize: '文件大小',
+    errorSummary: '错误摘要',
   },
 } as const

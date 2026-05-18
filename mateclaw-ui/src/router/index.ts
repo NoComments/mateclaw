@@ -256,6 +256,63 @@ const router = createRouter({
             },
           ],
         },
+        // ==================== Analytics ====================
+        {
+          path: 'analytics',
+          name: 'Analytics',
+          component: () => import('@/views/analytics/index.vue'),
+          redirect: '/analytics/datasets',
+          children: [
+            {
+              path: 'datasets',
+              name: 'AnalyticsDatasets',
+              component: () => import('@/views/analytics/DatasetList.vue'),
+              meta: { title: 'Analytics - Datasets' },
+            },
+            {
+              path: 'datasets/:datasetId/preview',
+              name: 'AnalyticsDatasetPreview',
+              component: () => import('@/views/analytics/DatasetPreview.vue'),
+              meta: { title: 'Analytics - Dataset Preview' },
+            },
+            {
+              path: 'datasets/:datasetId/uploads',
+              name: 'AnalyticsDatasetUploads',
+              component: () => import('@/views/analytics/DatasetUploadHistory.vue'),
+              meta: { title: 'Analytics - Upload History' },
+            },
+            {
+              path: 'datasets/:datasetId/preview',
+              name: 'AnalyticsDatasetPreviewV2',
+              component: () => import('@/views/analytics/DatasetPreview.vue'),
+              meta: { title: 'Analytics - Dataset Preview' },
+            },
+            {
+              path: 'datasets/:datasetId/uploads',
+              name: 'AnalyticsDatasetUploads',
+              component: () => import('@/views/analytics/DatasetUploadHistory.vue'),
+              meta: { title: 'Analytics - Upload History' },
+            },
+            {
+              path: 'templates',
+              name: 'AnalyticsTemplates',
+              component: () => import('@/views/analytics/TemplateList.vue'),
+              meta: { title: 'Analytics - Templates' },
+            },
+            {
+              path: 'templates/:id/fields',
+              name: 'AnalyticsTemplateEditor',
+              component: () => import('@/views/analytics/TemplateEditor.vue'),
+              meta: { title: 'Analytics - Template Editor' },
+            },
+            {
+              path: 'chat',
+              name: 'AnalyticsChat',
+              component: () => import('@/views/analytics/AnalystChat.vue'),
+              meta: { title: 'Analytics - Chat' },
+            },
+          ],
+        },
         // ==================== Redirects (backward compatibility) ====================
         { path: 'sessions', redirect: '/chat' },
         { path: 'workspace', redirect: '/settings/agent-context' },

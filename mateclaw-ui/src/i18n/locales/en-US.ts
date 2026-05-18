@@ -400,6 +400,7 @@ export default {
     appearance: 'Appearance & Language',
     roleUser: 'User',
     roleAdmin: 'Admin',
+    analytics: 'Analytics',
   },
   backstage: {
     kicker: 'Backstage',
@@ -3491,5 +3492,14 @@ export default {
     status: 'Status',
     analyst: 'Data Analyst',
     deleteConfirm: 'Confirm delete?',
+    uploadSub: 'Only .xlsx files supported',
+    sheetName: 'Sheet Name',
+    sheetPlaceholder: 'Default: first sheet',
+    startUpload: 'Start Upload',
+    rowCount: 'Row Count',
+    uploadTime: 'Upload Time',
+    fileName: 'File Name',
+    fileSize: 'File Size',
+    errorSummary: 'Error Summary',
   },
 } as const
