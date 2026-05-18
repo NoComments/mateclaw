@@ -30,7 +30,7 @@ import org.springframework.scheduling.annotation.EnableScheduling;
     com.alibaba.cloud.ai.autoconfigure.dashscope.DashScopeAgentAutoConfiguration.class,
 })
 @EnableScheduling
-@MapperScan("vip.mate.**.repository")
+@MapperScan({"vip.mate.**.repository", "vip.mate.analytics.**"})
 public class MateClawApplication {
 
     public static void main(String[] args) {
