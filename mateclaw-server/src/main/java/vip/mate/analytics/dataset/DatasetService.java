@@ -85,6 +85,9 @@ public class DatasetService {
 
         String physicalTable = template.getPhysicalTable();
         if (physicalTable != null && !physicalTable.isBlank()) {
+            if (!physicalTable.matches("[a-z][a-z0-9_]{0,95}")) {
+                throw new IllegalArgumentException("Unsafe physical table name: " + physicalTable);
+            }
             // Parameterised update — dataset_id column is a safe fixed name from DDL
             jdbc.update("DELETE FROM " + physicalTable + " WHERE dataset_id = ?", id);
         }
