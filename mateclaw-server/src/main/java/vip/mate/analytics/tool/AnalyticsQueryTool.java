@@ -34,7 +34,7 @@ public class AnalyticsQueryTool {
      * @param sql SQL SELECT statement targeting dataset_* tables
      * @return map with keys: {@code executedSql}, {@code rowCount}, {@code rows}
      */
-    @Tool(description = "Execute a read-only SELECT on dataset_* tables. Always call analytics_schema first to know column names. Automatically enforces LIMIT 10000 and 30-second timeout.")
+    @Tool(description = "Execute a read-only SELECT on dataset_* tables. Always call analytics_schema first to know column names. Automatically enforces LIMIT 10000.")
     public Map<String, Object> analyticsQuery(
             @ToolParam(description = "SQL SELECT statement targeting dataset_* tables") String sql
     ) {
