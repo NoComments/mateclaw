@@ -1,5 +1,6 @@
 package vip.mate.analytics.template;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,6 +23,39 @@ public class DatasetTemplateService {
     private final DatasetTemplateRepository templateRepo;
     private final DatasetTemplateFieldRepository fieldRepo;
     private final DatasetRepository datasetRepo;
+
+    /**
+     * List all non-deleted templates belonging to the given workspace.
+     *
+     * @param workspaceId owning workspace
+     * @return templates ordered by create_time ascending
+     */
+    @Transactional(readOnly = true)
+    public List<DatasetTemplate> listByWorkspace(Long workspaceId) {
+        return templateRepo.selectList(new LambdaQueryWrapper<DatasetTemplate>()
+                .eq(DatasetTemplate::getWorkspaceId, workspaceId)
+                .orderByAsc(DatasetTemplate::getCreateTime));
+    }
+
+    /**
+     * Fetch a single template with its fields ordered by {@code ordinal}.
+     *
+     * @param templateId template to look up
+     * @return the template + ordered field list, or {@code null} if not found
+     */
+    @Transactional(readOnly = true)
+    public TemplateWithFields getWithFields(Long templateId) {
+        DatasetTemplate t = templateRepo.selectById(templateId);
+        if (t == null) return null;
+        List<DatasetTemplateField> fields = fieldRepo.selectList(
+                new LambdaQueryWrapper<DatasetTemplateField>()
+                        .eq(DatasetTemplateField::getTemplateId, templateId)
+                        .orderByAsc(DatasetTemplateField::getOrdinal));
+        return new TemplateWithFields(t, fields);
+    }
+
+    /** Projection returned by {@link #getWithFields(Long)}. */
+    public record TemplateWithFields(DatasetTemplate template, List<DatasetTemplateField> fields) {}
 
     /**
      * Create a template and atomically insert all its fields.
