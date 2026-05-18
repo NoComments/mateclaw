@@ -282,18 +282,6 @@ const router = createRouter({
               meta: { title: 'Analytics - Upload History' },
             },
             {
-              path: 'datasets/:datasetId/preview',
-              name: 'AnalyticsDatasetPreviewV2',
-              component: () => import('@/views/analytics/DatasetPreview.vue'),
-              meta: { title: 'Analytics - Dataset Preview' },
-            },
-            {
-              path: 'datasets/:datasetId/uploads',
-              name: 'AnalyticsDatasetUploads',
-              component: () => import('@/views/analytics/DatasetUploadHistory.vue'),
-              meta: { title: 'Analytics - Upload History' },
-            },
-            {
               path: 'templates',
               name: 'AnalyticsTemplates',
               component: () => import('@/views/analytics/TemplateList.vue'),

@@ -38,7 +38,7 @@ class AnalyticsExportToolTest {
 
         String url = tool.analyticsExport("SELECT city, stock FROM dataset_livestock");
 
-        assertThat(url).startsWith("/api/analytics/exports/");
+        assertThat(url).startsWith("/api/v1/analytics/exports/");
 
         String filename = url.substring(url.lastIndexOf('/') + 1);
         assertThat(Path.of(System.getProperty("java.io.tmpdir"), filename)).exists();
@@ -50,7 +50,7 @@ class AnalyticsExportToolTest {
 
         String url = tool.analyticsExport("SELECT city FROM dataset_x");
 
-        assertThat(url).startsWith("/api/analytics/exports/");
+        assertThat(url).startsWith("/api/v1/analytics/exports/");
     }
 
     @Test

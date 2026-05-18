@@ -49,7 +49,7 @@ import java.util.Objects;
  */
 @Tag(name = "数据集上传")
 @RestController
-@RequestMapping("/api/analytics/datasets")
+@RequestMapping("/api/v1/analytics/datasets")
 @RequiredArgsConstructor
 @Slf4j
 public class DatasetUploadController {

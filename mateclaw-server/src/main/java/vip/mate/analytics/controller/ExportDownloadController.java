@@ -27,7 +27,7 @@ public class ExportDownloadController {
      * @param filename the temp file name (no path separators allowed)
      * @param response the HTTP response to stream the file into
      */
-    @GetMapping("/api/analytics/exports/{filename}")
+    @GetMapping("/api/v1/analytics/exports/{filename}")
     public void download(
             @PathVariable String filename,
             HttpServletResponse response) throws IOException {

@@ -24,7 +24,7 @@ import java.util.List;
  */
 @Tag(name = "数据集模板管理")
 @RestController
-@RequestMapping("/api/analytics/templates")
+@RequestMapping("/api/v1/analytics/templates")
 @RequiredArgsConstructor
 public class DatasetTemplateController {
 

@@ -29,7 +29,7 @@ import java.util.Map;
  */
 @Tag(name = "数据集管理")
 @RestController
-@RequestMapping("/api/analytics/datasets")
+@RequestMapping("/api/v1/analytics/datasets")
 @RequiredArgsConstructor
 public class DatasetController {
 

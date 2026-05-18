@@ -88,6 +88,6 @@ public class AnalyticsExportTool {
 
         String filename = tempFile.getFileName().toString();
         log.info("[AnalyticsExport] exported {} rows to {}", rows.size(), filename);
-        return "/api/analytics/exports/" + filename;
+        return "/api/v1/analytics/exports/" + filename;
     }
 }
