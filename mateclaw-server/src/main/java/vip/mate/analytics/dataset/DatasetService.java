@@ -13,9 +13,8 @@ import java.util.List;
 /**
  * CRUD service for {@link Dataset}.
  *
- * <p>The {@code delete} operation is the only method that requires external
- * collaborators ({@link JdbcTemplate}, {@link DatasetTemplateRepository}) because it
- * must purge rows from the dynamic physical table whose name is resolved at runtime.
+ * <p>The {@code delete} operation purges rows from the dynamic physical table
+ * whose name is resolved at runtime via the template.
  */
 @Service
 @RequiredArgsConstructor
@@ -23,6 +22,8 @@ import java.util.List;
 public class DatasetService {
 
     private final DatasetRepository datasetRepo;
+    private final JdbcTemplate jdbc;
+    private final DatasetTemplateRepository templateRepo;
 
     /**
      * Insert a new empty dataset.
@@ -63,15 +64,13 @@ public class DatasetService {
      * dynamic physical table.
      *
      * <p>The physical table name is resolved by looking up the dataset's template
-     * via {@code templateRepo} and reading {@code physicalTable}.  The row purge
-     * uses a parameterised JDBC update to avoid SQL-injection risk.
+     * and reading {@code physicalTable}.  The row purge uses a parameterised JDBC
+     * update to avoid SQL-injection risk.
      *
-     * @param id           dataset id to delete
-     * @param jdbc         JDBC template for the dynamic-table purge
-     * @param templateRepo repository used to resolve the physical table name
+     * @param id dataset id to delete
      * @throws IllegalArgumentException if the dataset or its template cannot be found
      */
-    public void delete(Long id, JdbcTemplate jdbc, DatasetTemplateRepository templateRepo) {
+    public void delete(Long id) {
         Dataset ds = datasetRepo.selectById(id);
         if (ds == null) {
             throw new IllegalArgumentException("Dataset not found: " + id);

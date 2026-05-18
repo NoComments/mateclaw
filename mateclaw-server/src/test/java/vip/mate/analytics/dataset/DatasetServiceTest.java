@@ -3,10 +3,10 @@ package vip.mate.analytics.dataset;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.jdbc.core.JdbcTemplate;
 import vip.mate.analytics.template.DatasetTemplateRepository;
 
 import java.util.List;
@@ -22,6 +22,9 @@ class DatasetServiceTest {
 
     @Mock
     DatasetRepository datasetRepo;
+
+    @Mock
+    JdbcTemplate jdbc;
 
     @Mock
     DatasetTemplateRepository templateRepo;
