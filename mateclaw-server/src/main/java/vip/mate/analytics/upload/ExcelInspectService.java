@@ -13,6 +13,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Pattern;
 
 /**
  * Reads an .xlsx file and infers a {@link InspectResult} from its header row
@@ -29,6 +30,8 @@ import java.util.List;
  */
 @Service
 public class ExcelInspectService {
+
+    private static final Pattern DATE_STRING_PATTERN = Pattern.compile("\\d{4}[-/]\\d{2}[-/]\\d{2}.*");
 
     /**
      * Inspect the first sheet (or the named sheet) of the workbook.
@@ -110,7 +113,7 @@ public class ExcelInspectService {
 
         if (cell.getCellType() == CellType.STRING) {
             String s = cell.getStringCellValue().trim();
-            if (s.matches("\\d{4}[-/]\\d{2}[-/]\\d{2}.*")) return "DATE";
+            if (DATE_STRING_PATTERN.matcher(s).matches()) return "DATE";
         }
 
         return "STRING";
