@@ -11,7 +11,12 @@ import vip.mate.analytics.template.DatasetTemplateService;
 import vip.mate.analytics.template.DatasetTemplateService.TemplateWithFields;
 import vip.mate.analytics.controller.DatasetTemplateController.CreateTemplateRequest;
 import vip.mate.analytics.controller.DatasetTemplateController.EnabledRequest;
+import vip.mate.analytics.template.DatasetTemplateService.UpdateFieldMetaRequest;
+import vip.mate.analytics.upload.ExcelInspectService;
+import vip.mate.analytics.upload.ExcelInspectService.InspectResult;
+import vip.mate.analytics.upload.ExcelInspectService.InspectedField;
 import vip.mate.common.result.R;
+import org.springframework.mock.web.MockMultipartFile;
 
 import java.util.List;
 
@@ -27,12 +32,14 @@ import static org.mockito.Mockito.*;
 class DatasetTemplateControllerTest {
 
     private DatasetTemplateService service;
+    private ExcelInspectService inspectService;
     private DatasetTemplateController controller;
 
     @BeforeEach
     void setUp() {
         service = mock(DatasetTemplateService.class);
-        controller = new DatasetTemplateController(service);
+        inspectService = mock(ExcelInspectService.class);
+        controller = new DatasetTemplateController(service, inspectService);
     }
 
     // ------------------------------------------------------------------ happy path: list
@@ -76,7 +83,7 @@ class DatasetTemplateControllerTest {
     @Test
     @DisplayName("DELETE /api/analytics/templates/1/fields/1 returns 409 when service throws IllegalStateException")
     void removeField_returns409WhenServiceThrowsIllegalState() {
-        doThrow(new IllegalStateException("模板下已有数据集，禁止删除字段（仅允许追加）"))
+        doThrow(new IllegalStateException("模板下已有真实上传数据，禁止删除字段（仅允许追加）"))
                 .when(service).removeField(1L, 1L);
 
         ResponseEntity<R<Void>> response = controller.removeField(1L, 1L);
@@ -150,6 +157,32 @@ class DatasetTemplateControllerTest {
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
     }
 
+    // ------------------------------------------------------------------ updateFieldMeta
+
+    @Test
+    @DisplayName("PATCH /api/analytics/templates/1/fields/1 returns 200 when update succeeds")
+    void updateFieldMeta_returns200WhenSucceeds() {
+        var patch = new UpdateFieldMetaRequest("新名称", null, null, null, null, null);
+        doNothing().when(service).updateFieldMeta(1L, 1L, patch);
+
+        ResponseEntity<R<Void>> response = controller.updateFieldMeta(1L, 1L, patch);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        verify(service).updateFieldMeta(1L, 1L, patch);
+    }
+
+    @Test
+    @DisplayName("PATCH /api/analytics/templates/1/fields/99 returns 404 when field not found")
+    void updateFieldMeta_returns404WhenFieldNotFound() {
+        var patch = new UpdateFieldMetaRequest("名称", null, null, null, null, null);
+        doThrow(new IllegalArgumentException("Field not found: 99"))
+                .when(service).updateFieldMeta(1L, 99L, patch);
+
+        ResponseEntity<R<Void>> response = controller.updateFieldMeta(1L, 99L, patch);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+    }
+
     // ------------------------------------------------------------------ setEnabled
 
     @Test
@@ -158,5 +191,42 @@ class DatasetTemplateControllerTest {
         controller.setEnabled(5L, new EnabledRequest(false));
 
         verify(service).setEnabled(5L, false);
+    }
+
+    // ------------------------------------------------------------------ inspect-excel
+
+    @Test
+    @DisplayName("POST /inspect-excel returns 200 with inferred fields on success")
+    void inspectExcel_returns200WhenSucceeds() throws Exception {
+        var fields = List.of(
+                new InspectedField("日期", "DATE", 0),
+                new InspectedField("头数", "INT", 1));
+        var result = new InspectResult(List.of("日期", "头数"), fields, true);
+        when(inspectService.inspect(any(), any())).thenReturn(result);
+
+        MockMultipartFile file = new MockMultipartFile("file", "test.xlsx",
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                new byte[]{});
+
+        ResponseEntity<R<InspectResult>> response = controller.inspectExcel(file, null);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(response.getBody()).isNotNull();
+        assertThat(response.getBody().getData().suggestedFields()).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("POST /inspect-excel returns 400 when sheet not found")
+    void inspectExcel_returns400WhenSheetNotFound() throws Exception {
+        when(inspectService.inspect(any(), eq("missing")))
+                .thenThrow(new IllegalArgumentException("Sheet not found: missing"));
+
+        MockMultipartFile file = new MockMultipartFile("file", "test.xlsx",
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                new byte[]{});
+
+        ResponseEntity<R<InspectResult>> response = controller.inspectExcel(file, "missing");
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
     }
 }
