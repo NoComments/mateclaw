@@ -162,7 +162,7 @@ public class DatasetTemplateController {
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(R.fail(e.getMessage()));
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(R.fail("文件解析失败: " + e.getMessage()));
+            return ResponseEntity.badRequest().body(R.fail("文件解析失败，请检查文件格式"));
         }
     }
 
