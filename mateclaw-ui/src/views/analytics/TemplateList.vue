@@ -7,19 +7,27 @@
             <div class="mc-page-kicker">Analytics</div>
             <h1 class="mc-page-title">{{ t('analytics.templates') }}</h1>
           </div>
-          <button class="btn-primary" @click="openCreateDialog">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
-            </svg>
-            {{ t('analytics.createTemplate') }}
-          </button>
+          <div class="header-actions">
+            <button class="btn-secondary" @click="openCreateDialog">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+              </svg>
+              {{ t('analytics.manualCreate') }}
+            </button>
+            <button class="btn-primary" @click="showInspectDialog = true">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                <polyline points="14 2 14 8 20 8"/>
+              </svg>
+              {{ t('analytics.importFromExcel') }}
+            </button>
+          </div>
         </div>
 
         <div v-loading="loading" class="mc-surface-card table-wrap">
           <el-table :data="templates" style="width: 100%">
             <el-table-column prop="name" :label="t('analytics.templateName')" min-width="140" />
             <el-table-column prop="code" :label="t('analytics.templateCode')" min-width="130" />
-            <el-table-column prop="physicalTable" :label="t('analytics.physicalTable')" min-width="140" />
             <el-table-column prop="category" :label="t('analytics.category')" min-width="100" />
             <el-table-column :label="t('analytics.enabled')" width="90">
               <template #default="{ row }">
@@ -72,12 +80,6 @@
         <el-form-item :label="t('analytics.templateName')" prop="name">
           <el-input v-model="form.name" />
         </el-form-item>
-        <el-form-item :label="t('analytics.templateCode')" prop="code">
-          <el-input v-model="form.code" placeholder="e.g. livestock_daily" />
-        </el-form-item>
-        <el-form-item :label="t('analytics.physicalTable')" prop="physicalTable">
-          <el-input v-model="form.physicalTable" placeholder="e.g. dataset_livestock_daily" />
-        </el-form-item>
         <el-form-item :label="t('analytics.category')" prop="category">
           <el-input v-model="form.category" />
         </el-form-item>
@@ -92,6 +94,11 @@
         </el-button>
       </template>
     </el-dialog>
+
+    <InspectTemplateDialog
+      v-model="showInspectDialog"
+      @created="loadTemplates"
+    />
   </div>
 </template>
 
@@ -103,6 +110,7 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import type { FormInstance, FormRules } from 'element-plus'
 import { listTemplates, createTemplate, deleteTemplate } from '@/api/analytics'
 import type { DatasetTemplate } from '@/types/analytics'
+import InspectTemplateDialog from './InspectTemplateDialog.vue'
 
 const router = useRouter()
 const { t } = useI18n()
@@ -114,52 +122,22 @@ const total = ref(0)
 const currentPage = ref(1)
 const pageSize = 20
 const showDialog = ref(false)
+const showInspectDialog = ref(false)
 const formRef = ref<FormInstance>()
 
-const workspaceId = (): number => {
+const workspaceId = (): string => {
   const raw = localStorage.getItem('mc-workspace-id')
-  const parsed = raw ? parseInt(raw, 10) : NaN
-  return isNaN(parsed) ? 1 : parsed
+  return raw && raw.trim() ? raw : '1'
 }
-
-const identifierPattern = /^[a-z0-9_]+$/
 
 const form = reactive({
   name: '',
-  code: '',
-  physicalTable: '',
   category: '',
   description: '',
 })
 
 const formRules: FormRules = {
   name: [{ required: true, trigger: 'blur', message: t('analytics.templateName') }],
-  code: [
-    { required: true, trigger: 'blur', message: t('analytics.templateCode') },
-    {
-      trigger: 'blur',
-      validator: (_rule: unknown, value: string, callback: (err?: Error) => void) => {
-        if (!identifierPattern.test(value)) {
-          callback(new Error('Only lowercase letters, digits, underscores'))
-        } else {
-          callback()
-        }
-      },
-    },
-  ],
-  physicalTable: [
-    { required: true, trigger: 'blur', message: t('analytics.physicalTable') },
-    {
-      trigger: 'blur',
-      validator: (_rule: unknown, value: string, callback: (err?: Error) => void) => {
-        if (!identifierPattern.test(value)) {
-          callback(new Error('Only lowercase letters, digits, underscores'))
-        } else {
-          callback()
-        }
-      },
-    },
-  ],
 }
 
 async function loadTemplates() {
@@ -177,8 +155,6 @@ async function loadTemplates() {
 
 function openCreateDialog() {
   form.name = ''
-  form.code = ''
-  form.physicalTable = ''
   form.category = ''
   form.description = ''
   showDialog.value = true
@@ -189,13 +165,14 @@ async function handleCreate() {
   if (!valid) return
   saving.value = true
   try {
+    // Backend stamps workspaceId / creator from headers and auto-derives code + physicalTable.
     await createTemplate({
-      workspaceId: workspaceId(),
-      name: form.name,
-      code: form.code,
-      physicalTable: form.physicalTable,
-      category: form.category,
-      description: form.description || undefined,
+      template: {
+        name: form.name,
+        category: form.category || undefined,
+        description: form.description || undefined,
+      },
+      fields: [],
     })
     ElMessage.success(t('common.saved'))
     showDialog.value = false
@@ -276,4 +253,24 @@ onMounted(loadTemplates)
 }
 .action-btn:hover { border-color: var(--mc-primary); color: var(--mc-primary); }
 .action-btn.danger:hover { border-color: var(--mc-danger); color: var(--mc-danger); background: var(--mc-danger-bg); }
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.btn-secondary {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 9px 14px;
+  background: var(--mc-bg-elevated);
+  color: var(--mc-text-primary);
+  border: 1px solid var(--mc-border);
+  border-radius: 12px;
+  font-size: 14px;
+  cursor: pointer;
+}
+.btn-secondary:hover { background: var(--mc-bg-sunken); }
 </style>
