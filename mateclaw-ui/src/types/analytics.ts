@@ -5,8 +5,8 @@ export type FieldType = 'STRING' | 'INT' | 'DECIMAL' | 'BOOLEAN' | 'DATE'
 export type UploadStatus = 'PROCESSING' | 'SUCCESS' | 'PARTIAL' | 'FAILED'
 
 export interface DatasetTemplate {
-  id: number
-  workspaceId: number
+  id: string
+  workspaceId: string
   code: string
   name: string
   physicalTable: string
@@ -22,13 +22,13 @@ export interface DatasetTemplate {
 }
 
 export interface DatasetTemplateField {
-  id: number
-  templateId: number
+  id: string
+  templateId: string
   fieldCode: string
   fieldName: string
   fieldType: FieldType
   excelHeader: string
-  unit?: string
+  fieldUnit?: string
   semantic?: string
   ordinal: number
   isNullable: boolean
@@ -38,9 +38,9 @@ export interface DatasetTemplateField {
 }
 
 export interface Dataset {
-  id: number
-  workspaceId: number
-  templateId: number
+  id: string
+  workspaceId: string
+  templateId: string
   name: string
   description?: string
   rowCount: number
@@ -50,8 +50,8 @@ export interface Dataset {
 }
 
 export interface DatasetUploadLog {
-  id: number
-  datasetId: number
+  id: string
+  datasetId: string
   fileName: string
   fileSize: number
   status: UploadStatus
@@ -59,7 +59,7 @@ export interface DatasetUploadLog {
   rowsInserted: number
   rowsRejected: number
   errorSummary?: string
-  uploader?: number
+  uploader?: string
   uploadTime: string
   createTime: string
   updateTime: string
@@ -68,31 +68,61 @@ export interface DatasetUploadLog {
 
 // ==================== Request Types ====================
 
+/**
+ * Body shape for {@code POST /analytics/templates}.
+ *
+ * <p>Mirrors the backend's {@code CreateTemplateRequest(template, fields)} record:
+ * the server stamps {@code workspaceId} / {@code creator} from request headers and
+ * auto-derives {@code code} (from {@code name}) and {@code physicalTable} server-side,
+ * so the client only supplies user-facing schema metadata.
+ */
 export interface CreateTemplateRequest {
-  workspaceId: number
-  code: string
-  name: string
-  physicalTable: string
-  description?: string
-  category?: string
+  template: {
+    name: string
+    description?: string
+    category?: string
+  }
+  fields: CreateTemplateFieldRequest[]
 }
 
+export interface UpdateTemplateFieldRequest {
+  fieldName?: string
+  fieldUnit?: string
+  semantic?: string
+  ordinal?: number
+  isNullable?: boolean
+}
+
+/**
+ * Field definition payload. {@code fieldCode} and {@code excelHeader} are intentionally
+ * omitted — the server derives both from {@code fieldName} (slugify + default-to-name).
+ */
 export interface CreateTemplateFieldRequest {
-  fieldCode: string
   fieldName: string
   fieldType: FieldType
-  excelHeader: string
-  unit?: string
+  fieldUnit?: string
   semantic?: string
   ordinal: number
   isNullable?: boolean
 }
 
 export interface CreateDatasetRequest {
-  workspaceId: number
-  templateId: number
+  workspaceId: string | number
+  templateId: string | number
   name: string
   description?: string
+}
+
+export interface InspectedField {
+  fieldName: string
+  fieldType: FieldType
+  ordinal: number
+}
+
+export interface InspectResult {
+  headers: string[]
+  suggestedFields: InspectedField[]
+  sampleRowAvailable: boolean
 }
 
 // ==================== Pagination ====================

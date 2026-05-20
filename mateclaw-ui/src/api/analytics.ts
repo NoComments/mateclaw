@@ -7,7 +7,9 @@ import type {
   DatasetUploadLog,
   CreateTemplateRequest,
   CreateTemplateFieldRequest,
+  UpdateTemplateFieldRequest,
   CreateDatasetRequest,
+  InspectResult,
 } from '@/types/analytics'
 
 const analyticsHttp = axios.create({
@@ -61,7 +63,7 @@ analyticsHttp.interceptors.response.use(
 // ==================== Templates ====================
 
 export function listTemplates(params?: {
-  workspaceId?: number
+  workspaceId?: string | number
 }): Promise<{ data: DatasetTemplate[] }> {
   return analyticsHttp.get('/analytics/templates', { params })
 }
@@ -72,32 +74,40 @@ export function createTemplate(
   return analyticsHttp.post('/analytics/templates', data)
 }
 
-export function getTemplate(id: number): Promise<{ data: DatasetTemplate }> {
+export function getTemplate(id: string | number): Promise<{ data: DatasetTemplate }> {
   return analyticsHttp.get(`/analytics/templates/${id}`)
 }
 
-export function deleteTemplate(id: number): Promise<{ data: void }> {
+export function deleteTemplate(id: string | number): Promise<{ data: void }> {
   return analyticsHttp.delete(`/analytics/templates/${id}`)
 }
 
 // ==================== Template Fields ====================
 
 export function listTemplateFields(
-  templateId: number
+  templateId: string | number
 ): Promise<{ data: DatasetTemplateField[] }> {
   return analyticsHttp.get(`/analytics/templates/${templateId}/fields`)
 }
 
 export function createTemplateField(
-  templateId: number,
+  templateId: string | number,
   data: CreateTemplateFieldRequest
 ): Promise<{ data: DatasetTemplateField }> {
   return analyticsHttp.post(`/analytics/templates/${templateId}/fields`, data)
 }
 
+export function updateTemplateField(
+  templateId: string | number,
+  fieldId: string | number,
+  data: UpdateTemplateFieldRequest
+): Promise<{ data: void }> {
+  return analyticsHttp.patch(`/analytics/templates/${templateId}/fields/${fieldId}`, data)
+}
+
 export function deleteTemplateField(
-  templateId: number,
-  fieldId: number
+  templateId: string | number,
+  fieldId: string | number
 ): Promise<{ data: void }> {
   return analyticsHttp.delete(`/analytics/templates/${templateId}/fields/${fieldId}`)
 }
@@ -105,8 +115,8 @@ export function deleteTemplateField(
 // ==================== Datasets ====================
 
 export function listDatasets(params?: {
-  workspaceId?: number
-  templateId?: number
+  workspaceId?: string | number
+  templateId?: string | number
 }): Promise<{ data: Dataset[] }> {
   return analyticsHttp.get('/analytics/datasets', { params })
 }
@@ -117,30 +127,44 @@ export function createDataset(
   return analyticsHttp.post('/analytics/datasets', data)
 }
 
-export function getDataset(id: number): Promise<{ data: Dataset }> {
+export function getDataset(id: string | number): Promise<{ data: Dataset }> {
   return analyticsHttp.get(`/analytics/datasets/${id}`)
 }
 
-export function deleteDataset(id: number): Promise<{ data: void }> {
+export function deleteDataset(id: string | number): Promise<{ data: void }> {
   return analyticsHttp.delete(`/analytics/datasets/${id}`)
 }
 
 export function previewDataset(
-  id: number
+  id: string | number
 ): Promise<{ data: Record<string, unknown>[] }> {
   return analyticsHttp.get(`/analytics/datasets/${id}/preview`)
 }
 
 export function listDatasetUploads(
-  id: number
+  id: string | number
 ): Promise<{ data: DatasetUploadLog[] }> {
   return analyticsHttp.get(`/analytics/datasets/${id}/uploads`)
+}
+
+// ==================== Template Inspect ====================
+
+export function inspectExcel(
+  file: File,
+  sheetName?: string
+): Promise<{ data: InspectResult }> {
+  const formData = new FormData()
+  formData.append('file', file)
+  return analyticsHttp.post('/analytics/templates/inspect-excel', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+    params: sheetName ? { sheetName } : undefined,
+  })
 }
 
 // ==================== Upload ====================
 
 export function uploadExcel(
-  datasetId: number,
+  datasetId: string | number,
   file: File,
   sheet?: string
 ): Promise<{ data: DatasetUploadLog }> {
