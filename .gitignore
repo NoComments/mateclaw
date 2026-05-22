@@ -62,7 +62,7 @@ mateclaw-server/logs/
 Thumbs.db
 Servers
 .metadata
-upload
+/upload
 gen_code
 
 ### node ###

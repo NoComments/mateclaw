@@ -43,7 +43,7 @@ const router = createRouter({
           path: 'enterprise',
           name: 'Enterprise',
           component: () => import('@/views/Enterprise/index.vue'),
-          meta: { title: 'Enterprise Scenarios' },
+          meta: { title: 'Enterprise Scenarios', requireAdmin: true },
         },
         {
           path: 'memory',
@@ -94,12 +94,6 @@ const router = createRouter({
           name: 'SkillTemplates',
           component: () => import('@/views/SkillTemplates.vue'),
           meta: { title: 'Skill Templates' },
-        },
-        {
-          path: 'plugins',
-          name: 'Plugins',
-          component: () => import('@/views/Plugins.vue'),
-          meta: { title: 'Plugins' },
         },
         // ==================== Settings (absorbs advanced pages) ====================
         {
@@ -185,12 +179,7 @@ const router = createRouter({
               component: () => import('@/views/Triggers.vue'),
               meta: { title: 'Settings - Triggers' },
             },
-            {
-              path: 'datasources',
-              name: 'SettingsDatasources',
-              component: () => import('@/views/Datasources.vue'),
-              meta: { title: 'Settings - Datasources' },
-            },
+            { path: 'datasources', redirect: '/analytics/datasources' },
             {
               path: 'mcp-servers',
               name: 'SettingsMcpServers',
@@ -209,6 +198,12 @@ const router = createRouter({
               name: 'SettingsAcpEndpoints',
               component: () => import('@/views/AcpEndpoints.vue'),
               meta: { title: 'Settings - ACP Endpoints' },
+            },
+            {
+              path: 'plugins',
+              name: 'SettingsPlugins',
+              component: () => import('@/views/Plugins.vue'),
+              meta: { title: 'Settings - Plugins' },
             },
             {
               path: 'token-usage',
@@ -256,6 +251,51 @@ const router = createRouter({
             },
           ],
         },
+        // ==================== Analytics ====================
+        {
+          path: 'analytics',
+          name: 'Analytics',
+          component: () => import('@/views/analytics/index.vue'),
+          redirect: '/analytics/datasets',
+          children: [
+            {
+              path: 'datasets',
+              name: 'AnalyticsDatasets',
+              component: () => import('@/views/analytics/DatasetList.vue'),
+              meta: { title: 'Analytics - Datasets' },
+            },
+            {
+              path: 'datasets/:datasetId/preview',
+              name: 'AnalyticsDatasetPreview',
+              component: () => import('@/views/analytics/DatasetPreview.vue'),
+              meta: { title: 'Analytics - Dataset Preview' },
+            },
+            {
+              path: 'datasets/:datasetId/uploads',
+              name: 'AnalyticsDatasetUploads',
+              component: () => import('@/views/analytics/DatasetUploadHistory.vue'),
+              meta: { title: 'Analytics - Upload History' },
+            },
+            {
+              path: 'templates',
+              name: 'AnalyticsTemplates',
+              component: () => import('@/views/analytics/TemplateList.vue'),
+              meta: { title: 'Analytics - Templates' },
+            },
+            {
+              path: 'templates/:id/fields',
+              name: 'AnalyticsTemplateEditor',
+              component: () => import('@/views/analytics/TemplateEditor.vue'),
+              meta: { title: 'Analytics - Template Editor' },
+            },
+            {
+              path: 'datasources',
+              name: 'AnalyticsDatasources',
+              component: () => import('@/views/analytics/DatasourceList.vue'),
+              meta: { title: 'Analytics - External Sources' },
+            },
+          ],
+        },
         // ==================== Redirects (backward compatibility) ====================
         { path: 'sessions', redirect: '/chat' },
         { path: 'workspace', redirect: '/settings/agent-context' },
@@ -264,11 +304,12 @@ const router = createRouter({
         // RFC-090 Phase 4: Activity 提升到顶层
         { path: 'security/activity', redirect: '/activity' },
         { path: 'settings/activity', redirect: '/activity' },
-        { path: 'datasources', redirect: '/settings/datasources' },
+        { path: 'datasources', redirect: '/analytics/datasources' },
         { path: 'mcp-servers', redirect: '/settings/mcp-servers' },
         { path: 'token-usage', redirect: '/settings/token-usage' },
         // RFC-090 Phase 1: Tools 顶层降级到 Settings
         { path: 'tools', redirect: '/settings/tools' },
+        { path: 'plugins', redirect: '/settings/plugins' },
       ],
     },
     {
@@ -295,6 +336,9 @@ router.beforeEach((to, _from, next) => {
     next({ path: '/' })
   } else if (to.name !== 'Login' && !token) {
     next({ name: 'Login' })
+  } else if (to.meta?.requireAdmin && (localStorage.getItem('role') || 'user') !== 'admin') {
+    // Non-admin users cannot access admin-only pages
+    next({ path: '/' })
   } else {
     next()
   }
