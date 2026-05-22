@@ -149,7 +149,10 @@ const { t } = useI18n()
 function modeOptionLabel(type: string): string {
   const key = `workflows.canvas.modeLabels.${type}`
   const localized = t(key, '')
-  return localized && localized !== key ? localized : type
+  const label = localized && localized !== key ? localized : type
+  const hintKey = `workflows.canvas.modeHints.${type}`
+  const hint = t(hintKey, '')
+  return hint && hint !== hintKey ? `${label} — ${hint}` : label
 }
 
 const direction = ref<'LR' | 'TB'>('LR')

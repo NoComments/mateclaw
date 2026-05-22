@@ -30,6 +30,10 @@ export interface DatasetTemplateField {
   excelHeader: string
   fieldUnit?: string
   semantic?: string
+  role?: 'DIMENSION' | 'MEASURE' | 'TIME_KEY'
+  timeGranularity?: 'DAY' | 'WEEK' | 'MONTH' | 'QUARTER' | 'YEAR'
+  aggregation?: 'SUM' | 'AVG' | 'COUNT' | 'MAX' | 'MIN'
+  computeHint?: string
   ordinal: number
   isNullable: boolean
   createTime: string
@@ -91,6 +95,10 @@ export interface UpdateTemplateFieldRequest {
   semantic?: string
   ordinal?: number
   isNullable?: boolean
+  role?: 'DIMENSION' | 'MEASURE' | 'TIME_KEY'
+  timeGranularity?: 'DAY' | 'WEEK' | 'MONTH' | 'QUARTER' | 'YEAR'
+  aggregation?: 'SUM' | 'AVG' | 'COUNT' | 'MAX' | 'MIN'
+  computeHint?: string
 }
 
 /**
@@ -104,6 +112,10 @@ export interface CreateTemplateFieldRequest {
   semantic?: string
   ordinal: number
   isNullable?: boolean
+  role?: 'DIMENSION' | 'MEASURE' | 'TIME_KEY'
+  timeGranularity?: 'DAY' | 'WEEK' | 'MONTH' | 'QUARTER' | 'YEAR'
+  aggregation?: 'SUM' | 'AVG' | 'COUNT' | 'MAX' | 'MIN'
+  computeHint?: string
 }
 
 export interface CreateDatasetRequest {

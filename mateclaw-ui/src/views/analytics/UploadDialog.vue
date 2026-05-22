@@ -84,7 +84,7 @@ import { uploadExcel } from '@/api/analytics'
 import type { DatasetUploadLog } from '@/types/analytics'
 
 const props = defineProps<{
-  datasetId: number
+  datasetId: string
   modelValue: boolean
 }>()
 

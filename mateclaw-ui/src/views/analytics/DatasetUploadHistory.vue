@@ -85,7 +85,7 @@ const route = useRoute()
 const router = useRouter()
 const { t } = useI18n()
 
-const datasetId = parseInt(route.params['datasetId'] as string, 10)
+const datasetId = route.params['datasetId'] as string
 
 const loading = ref(false)
 const logs = ref<DatasetUploadLog[]>([])

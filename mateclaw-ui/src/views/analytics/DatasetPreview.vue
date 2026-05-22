@@ -89,8 +89,7 @@ const route = useRoute()
 const router = useRouter()
 const { t } = useI18n()
 
-const rawId = (route.params['datasetId'] ?? route.params['id']) as string
-const datasetId = parseInt(rawId, 10)
+const datasetId = (route.params['datasetId'] ?? route.params['id']) as string
 
 const dataset = ref<Dataset | null>(null)
 const previewLoading = ref(false)

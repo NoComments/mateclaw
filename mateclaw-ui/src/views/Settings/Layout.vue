@@ -168,12 +168,7 @@ const sections = computed(() => [
     label: t('nav.triggers', 'Triggers'),
     icon: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>',
   },
-  {
-    id: 'datasources',
-    path: '/settings/datasources',
-    label: t('nav.datasources'),
-    icon: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>',
-  },
+  // Datasources moved to Analytics module — /analytics/datasources
   {
     id: 'mcp-servers',
     path: '/settings/mcp-servers',
@@ -192,6 +187,12 @@ const sections = computed(() => [
     path: '/settings/acp',
     label: t('nav.acpEndpoints'),
     icon: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>',
+  },
+  {
+    id: 'plugins',
+    path: '/settings/plugins',
+    label: t('nav.plugins'),
+    icon: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 3h-8v4h8V3z"/></svg>',
   },
   {
     id: 'token-usage',

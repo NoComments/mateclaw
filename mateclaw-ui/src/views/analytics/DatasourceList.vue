@@ -1,12 +1,6 @@
 <template>
-  <div class="page-container">
-    <div class="page-shell">
-      <div class="page-header">
-        <div class="page-lead">
-          <div class="page-kicker">{{ t('datasources.kicker') }}</div>
-          <h1 class="page-title">{{ t('datasources.title') }}</h1>
-          <p class="page-desc">{{ t('datasources.desc') }}</p>
-        </div>
+  <div>
+      <div class="sub-page-header">
         <button class="btn-primary" @click="openCreateModal">
           <el-icon><Plus /></el-icon>
           {{ t('datasources.addButton') }}
@@ -88,7 +82,6 @@
         </tbody>
           </table>
         </div>
-    </div>
 
     <div v-if="detailDs" class="modal-overlay">
       <div class="modal">
@@ -444,22 +437,6 @@ async function testConnection(ds: Datasource) {
 </script>
 
 <style scoped>
-/* ===== Shell ===== */
-.page-container { height: 100%; overflow-y: auto; }
-.page-shell { padding: 24px; }
-
-/* ===== Header ===== */
-.page-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 20px; }
-.page-lead { display: flex; flex-direction: column; gap: 6px; }
-.page-kicker {
-  display: inline-flex; width: fit-content;
-  padding: 4px 10px; border-radius: 999px;
-  font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase;
-  color: var(--mc-primary); background: var(--mc-primary-bg);
-}
-.page-title { font-size: clamp(24px, 3.5vw, 36px); font-weight: 800; color: var(--mc-text-primary); margin: 0; }
-.page-desc { font-size: 14px; color: var(--mc-text-secondary); margin: 0; }
-
 /* ===== Buttons ===== */
 .btn-primary { display: flex; align-items: center; gap: 6px; padding: 9px 16px; background: var(--mc-primary); color: #fff; border: none; border-radius: 10px; font-size: 14px; font-weight: 600; cursor: pointer; white-space: nowrap; }
 .btn-primary:hover { background: var(--mc-primary-hover); }
@@ -589,8 +566,6 @@ async function testConnection(ds: Datasource) {
 
 /* Responsive */
 @media (max-width: 900px) {
-  .page-header { flex-direction: column; }
-  .btn-primary { width: 100%; justify-content: center; }
   .detail-grid { grid-template-columns: 1fr; }
 }
 </style>
