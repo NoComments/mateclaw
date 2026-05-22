@@ -162,7 +162,7 @@ class DatasetTemplateControllerTest {
     @Test
     @DisplayName("PATCH /api/analytics/templates/1/fields/1 returns 200 when update succeeds")
     void updateFieldMeta_returns200WhenSucceeds() {
-        var patch = new UpdateFieldMetaRequest("新名称", null, null, null, null, null);
+        var patch = new UpdateFieldMetaRequest("新名称", null, null, null, null, null, null, null, null, null);
         doNothing().when(service).updateFieldMeta(1L, 1L, patch);
 
         ResponseEntity<R<Void>> response = controller.updateFieldMeta(1L, 1L, patch);
@@ -174,7 +174,7 @@ class DatasetTemplateControllerTest {
     @Test
     @DisplayName("PATCH /api/analytics/templates/1/fields/99 returns 404 when field not found")
     void updateFieldMeta_returns404WhenFieldNotFound() {
-        var patch = new UpdateFieldMetaRequest("名称", null, null, null, null, null);
+        var patch = new UpdateFieldMetaRequest("名称", null, null, null, null, null, null, null, null, null);
         doThrow(new IllegalArgumentException("Field not found: 99"))
                 .when(service).updateFieldMeta(1L, 99L, patch);
 

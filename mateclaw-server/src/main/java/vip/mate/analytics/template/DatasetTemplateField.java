@@ -56,6 +56,18 @@ public class DatasetTemplateField {
      */
     private String excelHeader;
 
+    /** Semantic role: DIMENSION, MEASURE, or TIME_KEY. Nullable. */
+    private String role;
+
+    /** Time granularity (DAY/WEEK/MONTH/QUARTER/YEAR). Only meaningful when role = TIME_KEY. */
+    private String timeGranularity;
+
+    /** Default aggregation (SUM/AVG/COUNT/MAX/MIN). Only meaningful when role = MEASURE. */
+    private String aggregation;
+
+    /** Free-text hint for derived-metric computation logic. */
+    private String computeHint;
+
     @TableField(fill = FieldFill.INSERT)
     private LocalDateTime createTime;
 
