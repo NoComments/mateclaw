@@ -1090,7 +1090,7 @@ export default {
       desc: '谁做了什么，一句话讲清楚。点开任意一行看完整故事。',
       intro: {
         title: '什么是活动记录？',
-        body: '活动记录是 MateClaw 的"黑匣子"：所有用户操作、员工调用、工具触发、审批结果都按时间顺序记下来，便于回溯问题、做合规审计、复盘业务效果。',
+        body: '活动记录是 QingwenClaws 的"黑匣子"：所有用户操作、员工调用、工具触发、审批结果都按时间顺序记下来，便于回溯问题、做合规审计、复盘业务效果。',
         bullets: {
           a: '审计事件（谁改了什么、何时、从哪个 IP）',
           b: '审批事件（敏感工具调用是否被人工放行）',
@@ -1629,7 +1629,7 @@ export default {
     desc: '管理从 JAR 文件加载的外部插件',
     intro: {
       title: '什么是插件？',
-      body: '插件是用 Java 写的外部扩展包（.jar），通过 mateclaw-plugin-api SDK 编译，被 MateClaw 主服务在运行时动态加载，给数字员工增加自定义工具和能力。',
+      body: '插件是用 Java 写的外部扩展包（.jar），通过 plugin-api SDK 编译，被 QingwenClaws 主服务在运行时动态加载，给数字员工增加自定义工具和能力。',
       bullets: {
         a: '可重用：一份 JAR 可在多个数字员工、多个项目复用',
         b: '可热插拔：上传 JAR 即生效，不必重启服务',
@@ -3048,7 +3048,7 @@ export default {
     },
     intro: {
       title: '什么是技能（Skill）？',
-      body: '技能是 MateClaw 给数字员工的「专长包」。一个技能 = 一段领域知识 + 一组可调用的工具 + 使用规则，告诉 AI 在遇到特定场景时该怎么做。',
+      body: '技能是 QingwenClaws 给数字员工的「专长包」。一个技能 = 一段领域知识 + 一组可调用的工具 + 使用规则，告诉 AI 在遇到特定场景时该怎么做。',
       bullets: {
         a: '让 AI 学会处理 Word、Excel、PDF 等具体格式的文件',
         b: '让 AI 在合适的时候自动调用浏览器、SQL、API 等工具',
@@ -3067,7 +3067,7 @@ export default {
       browser: '浏览器 / RPA',
       devops: '研发与调试',
       design: '设计与可视化',
-      mateclaw: 'MateClaw 自助',
+      mateclaw: 'QingwenClaws 自助',
       extension: '更多扩展',
     },
     groupHints: {

@@ -1,14 +1,14 @@
 ---
 name: mateclaw_source_index
 version: "1.0.0"
-description: "将用户问题映射到 MateClaw 文档路径与源码入口，减少盲目搜索。回答'XX 功能在哪里实现'、'怎么修改 YY 逻辑'等源码定位问题。"
+description: "将用户问题映射到 QingwenClaws 文档路径与源码入口，减少盲目搜索。回答'XX 功能在哪里实现'、'怎么修改 YY 逻辑'等源码定位问题。"
 dependencies:
   tools:
     - readMateClawDoc
     - read_file
 ---
 
-# MateClaw 源码导航
+# QingwenClaws 源码导航
 
 当用户询问"XX 功能在哪里实现"、"Agent 流程入口在哪"、"如何修改 YY 逻辑"等源码定位问题时使用本技能。
 
@@ -105,4 +105,4 @@ read_file(filePath="CLAUDE.md")
 ## 注意
 
 - 路径均相对于 `mateclaw-server/src/main/java/vip/mate/`（Java 文件）或 `mateclaw-server/src/main/resources/`（资源文件）
-- 如找不到精确文件，先用 `readMateClawDoc` 搜索，再用 `read_file` 读取 CLAUDE.md 获取最新架构描述
+- 如找不到精确文件，先用 `readMateClawDoc` 搜索，再用 `read_file` 读取 CLAUDE.md 获取最新架构描述（readMateClawDoc 为内置工具名，不对外展示）

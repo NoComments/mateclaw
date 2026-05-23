@@ -1192,7 +1192,7 @@ export default {
       desc: 'Who did what, in plain English. Click any event to see the full story.',
       intro: {
         title: 'What is the Activity Log?',
-        body: 'The activity log is MateClaw\'s black box. Every user action, agent decision, tool invocation, and approval outcome is recorded in time order — for triage, compliance, and after-the-fact reviews.',
+        body: 'The activity log is QingwenClaws\'s black box. Every user action, agent decision, tool invocation, and approval outcome is recorded in time order — for triage, compliance, and after-the-fact reviews.',
         bullets: {
           a: 'Audit events — who changed what, when, from where',
           b: 'Approval events — which sensitive tool calls were gated',
@@ -1731,7 +1731,7 @@ export default {
     desc: 'Manage external plugins loaded from JAR files',
     intro: {
       title: 'What is a Plugin?',
-      body: 'A plugin is an external Java extension (.jar) built against the mateclaw-plugin-api SDK and hot-loaded by the main server at runtime. It hands custom tools and capabilities to your digital employees.',
+      body: 'A plugin is an external Java extension (.jar) built against the plugin-api SDK and hot-loaded by the main server at runtime. It hands custom tools and capabilities to your digital employees.',
       bullets: {
         a: 'Reusable across multiple employees and projects',
         b: 'Hot-pluggable: drop in the JAR, no server restart needed',
@@ -2975,7 +2975,7 @@ export default {
       browser: 'Browser / RPA',
       devops: 'Engineering & Debug',
       design: 'Design & Visualization',
-      mateclaw: 'MateClaw Self-Help',
+      mateclaw: 'QingwenClaws Self-Help',
       extension: 'More Extensions',
     },
     groupHints: {
