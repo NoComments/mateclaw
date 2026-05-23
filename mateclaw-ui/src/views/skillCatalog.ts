@@ -147,7 +147,7 @@ const ZH_DESCRIPTION: Record<string, string> = {
   channel_message: '主动向用户/会话/渠道单向推送消息，用于通知、提醒、异步结果回推',
   chat_with_agent: '咨询其他数字员工，支持单次委托或多任务并行委托',
   multi_agent_collaboration: '编排多个数字员工并行或串行协作，整合各方结果',
-  dingtalk_channel_connect: '使用可见浏览器自动完成 MateClaw 钉钉渠道接入',
+  dingtalk_channel_connect: '使用可见浏览器自动完成 QingwenClaws 钉钉渠道接入',
 
   // Schedule
   cron: '创建/管理定时任务：未来某时刻执行或按周期重复执行',
@@ -176,9 +176,9 @@ const ZH_DESCRIPTION: Record<string, string> = {
   'popular-web-designs': '54 套真实设计系统范例（Stripe / Linear / Vercel 等）',
   sketch: '快速产出 2-3 套 HTML 设计稿用于对比',
 
-  // MateClaw self
-  guidance: '回答关于 MateClaw 安装与配置的问题，优先查本地文档',
-  mateclaw_source_index: '把用户问题映射到 MateClaw 文档路径与源码入口，回答"XX 功能在哪里实现"',
+  // QingwenClaws self
+  guidance: '回答关于 QingwenClaws 安装与配置的问题，优先查本地文档',
+  mateclaw_source_index: '把用户问题映射到 QingwenClaws 文档路径与源码入口，回答"XX 功能在哪里实现"',
 }
 
 /**
