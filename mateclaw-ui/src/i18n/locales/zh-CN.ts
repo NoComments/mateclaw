@@ -1,6 +1,6 @@
 export default {
   app: {
-    title: 'QingwenClaws - AI 助手',
+    title: 'SurveyMind - AI 助手',
   },
   common: {
     save: '保存',
@@ -493,7 +493,7 @@ export default {
     modelDesc: '管理模型预设与默认模型选择',
     systemTitle: '系统设置',
     systemDesc: '语言与运行行为配置',
-    aboutTitle: '关于 QingwenClaws',
+    aboutTitle: '关于 SurveyMind',
     aboutDesc: '版本与系统信息',
     about: {
       heroDesc: '一套个人 AI 操作系统，让模型真正进入上下文、记忆、执行、知识和交付的连续流程。',
@@ -632,7 +632,7 @@ export default {
       claudeCodeOauthDetect: '检测 Claude Code 登录态',
       claudeCodeOauthHint: '复用本地 Claude Code Pro/Max 订阅。请先在 Claude Code 客户端中登录，再点击"检测"读取凭据。',
       claudeCodeOauthInstructions: '未检测到 Claude Code 凭据。请安装 Claude Code 客户端，使用 Pro/Max 账号登录后再点击检测。',
-      claudeCodeOauthRevokeHint: '请在 Claude Code 客户端中退出登录。QingwenClaws 不会修改 Claude Code 的本地凭据。',
+      claudeCodeOauthRevokeHint: '请在 Claude Code 客户端中退出登录。SurveyMind 不会修改 Claude Code 的本地凭据。',
       providerIdPlaceholder: '例如：my-local-gemma',
       providerIdHint: 'ID 仅作内部 key 使用，建议小写英文/数字，可含 . _ -，不要含斜杠或空格（创建后不可修改）。',
       providerIdInvalid: 'Provider ID 只能包含字母、数字、点、下划线、连字符（不允许斜杠或空格），首字符必须是字母或数字，长度 1-64。',
@@ -1097,7 +1097,7 @@ export default {
       desc: '谁做了什么，一句话讲清楚。点开任意一行看完整故事。',
       intro: {
         title: '什么是活动记录？',
-        body: '活动记录是 QingwenClaws 的"黑匣子"：所有用户操作、员工调用、工具触发、审批结果都按时间顺序记下来，便于回溯问题、做合规审计、复盘业务效果。',
+        body: '活动记录是 SurveyMind 的"黑匣子"：所有用户操作、员工调用、工具触发、审批结果都按时间顺序记下来，便于回溯问题、做合规审计、复盘业务效果。',
         bullets: {
           a: '审计事件（谁改了什么、何时、从哪个 IP）',
           b: '审批事件（敏感工具调用是否被人工放行）',
@@ -1451,7 +1451,7 @@ export default {
       hints: {
         anthropic: 'Anthropic API key（sk-ant-…）。申请: https://console.anthropic.com/settings/keys',
         openai: 'OpenAI API key（sk-…）。申请: https://platform.openai.com/api-keys',
-        dashscope: '阿里云 DashScope key — 跟 QingwenClaws .env 里的 DASHSCOPE_API_KEY 同一个值',
+        dashscope: '阿里云 DashScope key — 跟 SurveyMind .env 里的 DASHSCOPE_API_KEY 同一个值',
         google: 'Google AI Studio API key。申请: https://aistudio.google.com/apikey',
         claudeOauth: '注意: claude-code 的 OAuth 登录（~/.claude/ 里那个）在这里不能用——更糟的是 Claude Agent SDK 会"优先读 OAuth、再读 API key"，导致你下面填的 key 被静默忽略。如果你这台机器上跑过 `claude login`，先清钥匙串: (macOS) `claude logout` 或 `security delete-generic-password -s "Claude Code-credentials"`；(Linux/Windows) 删 ~/.claude/credentials.json。然后再回来填真正的 API key（sk-ant-…）。或者改用 qwen-code / opencode 复用各自 CLI 的本地登录态。',
       },
@@ -1636,7 +1636,7 @@ export default {
     desc: '管理从 JAR 文件加载的外部插件',
     intro: {
       title: '什么是插件？',
-      body: '插件是用 Java 写的外部扩展包（.jar），通过 plugin-api SDK 编译，被 QingwenClaws 主服务在运行时动态加载，给数字员工增加自定义工具和能力。',
+      body: '插件是用 Java 写的外部扩展包（.jar），通过 plugin-api SDK 编译，被 SurveyMind 主服务在运行时动态加载，给数字员工增加自定义工具和能力。',
       bullets: {
         a: '可重用：一份 JAR 可在多个数字员工、多个项目复用',
         b: '可热插拔：上传 JAR 即生效，不必重启服务',
@@ -2523,7 +2523,7 @@ export default {
     kicker: 'AI Operating System',
     subtitle: '你的智能 AI 助手',
     heroTitle: '让 AI 不止会回答，而是真正进入持续工作的系统。',
-    heroDesc: 'QingwenClaws 的重点不是把更多能力堆进聊天框，而是把上下文、知识、执行和记忆收拢成一个可靠的工作面。',
+    heroDesc: 'SurveyMind 的重点不是把更多能力堆进聊天框，而是把上下文、知识、执行和记忆收拢成一个可靠的工作面。',
     pointContext: '上下文保持连续',
     pointKnowledge: '知识被组织起来',
     pointExecution: '能力真正能执行',
@@ -2841,7 +2841,7 @@ export default {
       authFailed: '授权失败',
     },
     webHint: 'Web 渠道使用内置 SSE 通信，无需额外配置。',
-    webchatHint: 'WebChat 用于把 QingwenClaws 聊天挂件嵌入外部网站。请配置 API Key、标题和主题色，然后在网站中引入 WebChat SDK。',
+    webchatHint: 'WebChat 用于把 SurveyMind 聊天挂件嵌入外部网站。请配置 API Key、标题和主题色，然后在网站中引入 WebChat SDK。',
     webchatApiKeyGenerated: '保存后平台会自动生成 API Key。创建完成后返回此页面即可复制。',
     webchatApiKeyReadOnly: '该 API Key 由平台自动生成并托管，你只能复制，不能手动修改。',
     webhookHint: 'Webhook 渠道配置请在下方「原始 JSON」标签页中编辑。',
@@ -3055,7 +3055,7 @@ export default {
     },
     intro: {
       title: '什么是技能（Skill）？',
-      body: '技能是 QingwenClaws 给数字员工的「专长包」。一个技能 = 一段领域知识 + 一组可调用的工具 + 使用规则，告诉 AI 在遇到特定场景时该怎么做。',
+      body: '技能是 SurveyMind 给数字员工的「专长包」。一个技能 = 一段领域知识 + 一组可调用的工具 + 使用规则，告诉 AI 在遇到特定场景时该怎么做。',
       bullets: {
         a: '让 AI 学会处理 Word、Excel、PDF 等具体格式的文件',
         b: '让 AI 在合适的时候自动调用浏览器、SQL、API 等工具',
@@ -3074,7 +3074,7 @@ export default {
       browser: '浏览器 / RPA',
       devops: '研发与调试',
       design: '设计与可视化',
-      mateclaw: 'QingwenClaws 自助',
+      mateclaw: 'SurveyMind 自助',
       extension: '更多扩展',
     },
     groupHints: {
@@ -3311,7 +3311,7 @@ export default {
     },
   },
   onboarding: {
-    title: '欢迎使用 QingwenClaws',
+    title: '欢迎使用 SurveyMind',
     subtitle: '配置你的第一个 AI 模型',
     stepPath: '选择方式',
     stepConfigure: '配置模型',
@@ -3331,7 +3331,7 @@ export default {
     verifyTitle: '验证你的模型',
     verifyMessage: '你好！简单介绍一下你自己。',
     send: '发送',
-    startUsing: '开始使用 QingwenClaws',
+    startUsing: '开始使用 SurveyMind',
     skip: '跳过',
     back: '返回',
   },
@@ -3541,7 +3541,7 @@ export default {
     extract_pdf_text: '提取 PDF 内容',
     extract_docx_text: '提取文档内容',
     detect_file_type: '识别文件类型',
-    readQingwenClawsDoc: '查阅系统文档',
+    readSurveyMindDoc: '查阅系统文档',
 
     // Generative
     image_generate: '生成图片',
@@ -3640,5 +3640,17 @@ export default {
     guidanceUploadDesc: '手里有 Excel/CSV？上传后即可让 AI 分析',
     guidanceConnect: '连接数据库',
     guidanceConnectDesc: '已有 MySQL、PostgreSQL、ClickHouse？直接连上让 AI 查数',
+  },
+  license: {
+    trialActive: '试用版',
+    daysRemaining: '剩余 {days} 天',
+    expiredTitle: '试用已到期',
+    expiredMessage: '您的 SurveyMind 试用授权已到期，请联系供应商获取正式授权。',
+    contactVendor: '联系供应商',
+    clockTampered: '系统时钟异常',
+    clockTamperedMessage: '检测到系统时钟被修改，授权校验失败。请恢复正确的系统时间后重启应用。',
+    missing: '未授权',
+    missingMessage: '未找到授权文件，请联系供应商获取 license.lic 文件。',
+    invalid: '授权无效',
   },
 } as const

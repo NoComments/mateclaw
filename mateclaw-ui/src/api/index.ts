@@ -45,6 +45,11 @@ http.interceptors.response.use(
         handleAuthFailure()
         return Promise.reject(new Error(data.msg || 'Unauthorized'))
       }
+      // LICENSE_EXPIRED — trial license no longer valid
+      if (data.code === 403 && data.msg === 'LICENSE_EXPIRED') {
+        // Don't show generic error — TrialBanner overlay handles the UI
+        return Promise.reject(new Error('LICENSE_EXPIRED'))
+      }
       return Promise.reject(new Error(data.msg || 'Request failed'))
     }
     return data

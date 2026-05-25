@@ -1,5 +1,6 @@
 <template>
   <div class="app-layout">
+    <TrialBanner />
     <!-- 移动端背景遮罩 -->
     <Transition name="fade">
       <div v-if="isMobile && mobileMenuOpen" class="sidebar-backdrop" @click="mobileMenuOpen = false"></div>
@@ -10,11 +11,11 @@
       <!-- Logo -->
       <div class="sidebar-logo">
         <div class="logo-icon">
-          <img src="/logo/qingwenclaws_logo_s.svg" alt="QingwenClaws" class="logo-img" />
+          <img src="/logo/surveymind_logo_s.png" alt="SurveyMind" class="logo-img" />
         </div>
         <transition name="fade">
           <div v-if="!effectiveCollapsed" class="logo-text">
-            <span class="logo-name">Qingwen<span class="logo-name-highlight">Claws</span></span>
+            <span class="logo-name">SurveyMind</span>
             <span class="logo-version">v{{ appVersion }}</span>
           </div>
         </transition>
@@ -197,7 +198,7 @@
             <line x1="3" y1="18" x2="21" y2="18"/>
           </svg>
         </button>
-        <span class="mobile-topbar-title">Qingwen<span class="logo-name-highlight">Claws</span></span>
+        <span class="mobile-topbar-title">SurveyMind</span>
       </div>
       <!-- RFC-074 PR-1 fix: include route.path in the key so two different
            keepAlive routes (e.g. /channels and /settings/models) don't collide
@@ -235,6 +236,7 @@ import { useWorkspaceStore } from '@/stores/useWorkspaceStore'
 import { applyLocale, currentLocale, type AppLocale } from '@/i18n'
 import { SwitchButton, Lock } from '@element-plus/icons-vue'
 import ChangePasswordDialog from '@/components/ChangePasswordDialog.vue'
+import TrialBanner from './TrialBanner.vue'
 
 const router = useRouter()
 const route = useRoute()
@@ -612,15 +614,12 @@ watch(() => workspaceStore.currentWorkspaceId, () => {
   justify-content: center;
   flex-shrink: 0;
   overflow: hidden;
-  background: linear-gradient(135deg, rgba(79, 110, 247, 0.12), rgba(79, 110, 247, 0.06));
-  border: 1px solid rgba(79, 110, 247, 0.12);
 }
 
 .logo-img {
-  width: 34px;
-  height: 34px;
-  object-fit: contain;
-  filter: drop-shadow(0 8px 18px rgba(79, 110, 247, 0.25));
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .logo-emoji { font-size: 16px; }
