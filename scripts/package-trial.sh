@@ -96,11 +96,16 @@ cp "$PROJECT_ROOT/scripts/windows/stop.bat" "$DIST_DIR/"
 cp "$PROJECT_ROOT/docs/SurveyMind-安装指南.md" "$DIST_DIR/" 2>/dev/null || true
 
 # Step 6: Generate trial license
+# Spring Boot fat JARs nest classes under BOOT-INF/classes/ so plain -cp
+# doesn't work. Temporarily unpack the JAR to access the generator class.
 echo ""
 echo "[6/6] Generating trial license..."
-cd "$DIST_DIR"
-java -cp surveymind-server.jar vip.mate.license.LicenseGenerator \
-    --customer "$CUSTOMER" --days "$DAYS"
+LICENSE_TMP=$(mktemp -d)
+cd "$LICENSE_TMP"
+jar xf "$DIST_DIR/surveymind-server.jar" BOOT-INF/classes/ BOOT-INF/lib/
+java -cp "BOOT-INF/classes:BOOT-INF/lib/*" vip.mate.license.LicenseGenerator \
+    --customer "$CUSTOMER" --days "$DAYS" --output "$DIST_DIR/license.lic"
+rm -rf "$LICENSE_TMP"
 
 # Create zip
 echo ""
