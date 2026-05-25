@@ -125,10 +125,26 @@ public class ModelProviderService {
         ModelProviderEntity provider = getProvider(providerId);
         if (StringUtils.hasText(request.getApiKey())) {
             provider.setApiKey(request.getApiKey().trim());
+            // Auto-enable when a real API key is provided for the first time.
+            // Callers that only send apiKey (e.g. onboarding wizard) should not
+            // need to issue a separate enable call to make the provider usable.
+            if (!Boolean.TRUE.equals(provider.getEnabled())) {
+                provider.setEnabled(true);
+            }
         }
-        provider.setBaseUrl(request.getBaseUrl());
-        provider.setChatModel(ModelProtocol.resolveChatModel(request.getProtocol(), request.getChatModel()));
-        provider.setGenerateKwargs(writeJson(request.getGenerateKwargs()));
+        // Only overwrite baseUrl / chatModel / generateKwargs when the caller
+        // explicitly provides them. Partial-update callers (e.g. onboarding)
+        // that only send apiKey must not clobber the seeded protocol/URL values.
+        // See useProviderForm.ts saveProviderApiKey for the full-update pattern.
+        if (request.getBaseUrl() != null) {
+            provider.setBaseUrl(request.getBaseUrl());
+        }
+        if (request.getProtocol() != null || request.getChatModel() != null) {
+            provider.setChatModel(ModelProtocol.resolveChatModel(request.getProtocol(), request.getChatModel()));
+        }
+        if (request.getGenerateKwargs() != null) {
+            provider.setGenerateKwargs(writeJson(request.getGenerateKwargs()));
+        }
         if (request.getRequireApiKey() != null) {
             provider.setRequireApiKey(request.getRequireApiKey());
         }
