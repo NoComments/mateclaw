@@ -51,6 +51,7 @@ public class SecurityConfig {
                 // 公开 API 接口
                 .requestMatchers(
                     "/api/v1/auth/login",
+                    "/api/v1/license/status",
                     "/api/v1/settings/language",
                     "/api/v1/agents/*/chat/stream",
                     "/api/v1/chat/stream",
