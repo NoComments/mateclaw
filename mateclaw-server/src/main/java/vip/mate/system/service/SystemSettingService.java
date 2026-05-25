@@ -442,4 +442,18 @@ public class SystemSettingService {
         entity.setDescription(description);
         systemSettingMapper.updateById(entity);
     }
+
+    /**
+     * Public read access to a system setting (used by LicenseService, etc.)
+     */
+    public String getValuePublic(String key, String defaultValue) {
+        return getValue(key, defaultValue);
+    }
+
+    /**
+     * Public write access to a system setting (used by LicenseService, etc.)
+     */
+    public void saveValuePublic(String key, String value, String description) {
+        saveValue(key, value, description);
+    }
 }
