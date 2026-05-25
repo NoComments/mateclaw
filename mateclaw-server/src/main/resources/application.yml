@@ -188,6 +188,11 @@ mateclaw:
     # models (Kimi / GLM / MiniMax) routinely take 90–290 s per LLM turn
     # when the child must produce multi-section structured output.
     parallel-timeout-seconds: 300
+  license:
+    # HMAC-SHA256 signing key for trial license verification.
+    # MUST match the key used by LicenseGenerator to produce license.lic.
+    # Override via env var MATECLAW_LICENSE_SECRET for production.
+    secret: ${MATECLAW_LICENSE_SECRET:SurveyMind-License-Secret-2026-HMAC-SHA256-Key-Do-Not-Share}
 
 # QingwenClaws Agent 配置
 mate:
