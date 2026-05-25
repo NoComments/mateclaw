@@ -8,7 +8,10 @@
             <h2 class="nav-title">{{ t('settings.title') }}</h2>
           </div>
           <template v-for="section in sections" :key="section.id">
-            <div v-if="section.isDivider && !navCollapsed" class="nav-divider">{{ section.label }}</div>
+            <template v-if="section.isDivider">
+              <div v-if="!navCollapsed" class="nav-divider">{{ section.label }}</div>
+              <div v-else class="nav-divider-line"></div>
+            </template>
             <el-tooltip
               v-else-if="!section.isDivider"
               :content="section.label"
@@ -18,7 +21,7 @@
               <router-link
                 :to="section.path"
                 class="nav-item"
-                :class="{ active: isActive(section.path) }"
+                :class="{ active: isActive(section.path), 'nav-item--dev': section.isDev }"
               >
                 <span class="nav-icon" v-html="section.icon"></span>
                 <span v-if="!navCollapsed" class="nav-label">{{ section.label }}</span>
@@ -91,8 +94,9 @@ onBeforeUnmount(() => {
 })
 
 const sections = computed(() => [
+  // ── 基础配置 ──────────────────────────────────────────
   {
-    id: 'model',
+    id: 'models',
     path: '/settings/models',
     label: t('settings.sections.model'),
     icon: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 8V4H8"/><rect x="4" y="8" width="16" height="12" rx="2"/><path d="M2 14h2"/><path d="M20 14h2"/><path d="M15 13v2"/><path d="M9 13v2"/></svg>',
@@ -104,43 +108,13 @@ const sections = computed(() => [
     icon: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h.09a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9c0 .66.26 1.3.73 1.77.47.47 1.11.73 1.77.73H21a2 2 0 1 1 0 4h-.09c-.66 0-1.3.26-1.77.73-.47.47-.73 1.11-.73 1.77z"/></svg>',
   },
   {
-    id: 'image',
-    path: '/settings/image',
-    label: t('settings.sections.image'),
-    icon: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>',
+    id: 'multimodal',
+    path: '/settings/multimodal',
+    label: t('settings.sections.multimodal'),
+    icon: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/><path d="M3 20 L7 16"/></svg>',
   },
-  {
-    id: 'tts',
-    path: '/settings/tts',
-    label: t('settings.sections.tts'),
-    icon: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>',
-  },
-  {
-    id: 'stt',
-    path: '/settings/stt',
-    label: t('settings.sections.stt'),
-    icon: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>',
-  },
-  {
-    id: 'music',
-    path: '/settings/music',
-    label: t('settings.sections.music'),
-    icon: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>',
-  },
-  {
-    id: 'video',
-    path: '/settings/video',
-    label: t('settings.sections.video'),
-    icon: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>',
-  },
-  {
-    id: 'model3d',
-    path: '/settings/model3d',
-    label: t('settings.sections.model3d'),
-    icon: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2 L21 7 L21 17 L12 22 L3 17 L3 7 Z"/><path d="M3 7 L12 12 L21 7"/><path d="M12 12 L12 22"/></svg>',
-  },
-  // Divider: Workspace
-  { id: 'divider-workspace', path: '', label: t('settings.sections.workspace', 'Workspace'), icon: '', isDivider: true },
+  // ── 工作区 ────────────────────────────────────────────
+  { id: 'divider-workspace', path: '', label: t('settings.sections.workspace'), icon: '', isDivider: true },
   {
     id: 'workspaces',
     path: '/settings/workspaces',
@@ -148,27 +122,25 @@ const sections = computed(() => [
     icon: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>',
   },
   {
-    id: 'agent-context',
-    path: '/settings/agent-context',
-    label: t('nav.agentContext', '智能体上下文'),
-    icon: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>',
-  },
-  {
     id: 'members',
     path: '/settings/members',
     label: t('security.sections.members', 'Members'),
     icon: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>',
   },
-  // RFC-090 Phase 4: Activity 子项移除，提升至顶层 /activity
-  // Divider: Advanced
-  { id: 'divider-advanced', path: '', label: t('settings.sections.advanced'), icon: '', isDivider: true },
+  {
+    id: 'agent-context',
+    path: '/settings/agent-context',
+    label: t('nav.agentContext', '智能体上下文'),
+    icon: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>',
+  },
+  // ── 集成 ─────────────────────────────────────────────
+  { id: 'divider-integration', path: '', label: t('settings.sections.integration'), icon: '', isDivider: true },
   {
     id: 'triggers',
     path: '/settings/triggers',
     label: t('nav.triggers', 'Triggers'),
     icon: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>',
   },
-  // Datasources moved to Analytics module — /analytics/datasources
   {
     id: 'mcp-servers',
     path: '/settings/mcp-servers',
@@ -181,7 +153,6 @@ const sections = computed(() => [
     label: t('nav.toolsCatalog'),
     icon: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>',
   },
-  // RFC-090 Phase 7: ACP endpoints
   {
     id: 'acp',
     path: '/settings/acp',
@@ -194,6 +165,8 @@ const sections = computed(() => [
     label: t('nav.plugins'),
     icon: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 3h-8v4h8V3z"/></svg>',
   },
+  // ── 高级 ─────────────────────────────────────────────
+  { id: 'divider-advanced', path: '', label: t('settings.sections.advanced'), icon: '', isDivider: true },
   {
     id: 'token-usage',
     path: '/settings/token-usage',
@@ -201,16 +174,17 @@ const sections = computed(() => [
     icon: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>',
   },
   {
-    id: 'feature-flags',
-    path: '/settings/feature-flags',
-    label: t('settings.sections.featureFlags', 'Feature Flags'),
-    icon: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 21V4l12 4-12 4"/><path d="M4 12v9"/></svg>',
-  },
-  {
     id: 'about',
     path: '/settings/about',
     label: t('settings.sections.about'),
     icon: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>',
+  },
+  {
+    id: 'feature-flags',
+    path: '/settings/feature-flags',
+    label: t('settings.sections.featureFlags', 'Feature Flags'),
+    icon: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 21V4l12 4-12 4"/><path d="M4 12v9"/></svg>',
+    isDev: true,
   },
 ])
 
@@ -278,6 +252,9 @@ function isActive(path: string) {
 .nav-icon { width: 18px; height: 18px; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; }
 .nav-icon :deep(svg) { width: 18px; height: 18px; display: block; }
 .nav-divider { font-size: 10px; font-weight: 700; color: var(--mc-text-tertiary); text-transform: uppercase; letter-spacing: 0.1em; padding: 12px 8px 4px; margin-top: 2px; }
+.nav-divider-line { height: 1px; background: var(--mc-border-light); margin: 8px 6px; }
+.nav-item--dev { opacity: 0.55; }
+.nav-item--dev:hover, .nav-item--dev.active { opacity: 1; }
 
 .nav-collapse-btn {
   display: flex;

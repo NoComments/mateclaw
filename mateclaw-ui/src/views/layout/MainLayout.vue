@@ -124,6 +124,14 @@
             <button class="footer-icon-btn" :class="healthStatus" @click="showDoctor = true" :title="t('doctor.title')">
               <span class="health-dot"></span>
             </button>
+            <button
+              class="footer-icon-btn"
+              :class="{ 'footer-icon-btn--accent': footerPanelOpen }"
+              :title="t('nav.appearance')"
+              @click.stop="footerPanelOpen = !footerPanelOpen"
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h.09a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9c0 .66.26 1.3.73 1.77.47.47 1.11.73 1.77.73H21a2 2 0 1 1 0 4h-.09c-.66 0-1.3.26-1.77.73z"/></svg>
+            </button>
             <button class="footer-icon-btn" :title="t('nav.logout')" @click="logout">
               <el-icon :size="16"><SwitchButton /></el-icon>
             </button>
@@ -131,6 +139,52 @@
         </template>
       </div>
     </aside>
+
+    <!-- 折叠侧边栏快捷设置浮层（position:fixed 逃出 overflow:hidden 裁剪） -->
+    <Transition name="panel-slide">
+      <div v-if="footerPanelOpen && effectiveCollapsed" class="sidebar-utility-panel" @click.stop>
+        <div class="panel-section">
+          <div class="utility-label">{{ t('nav.themeLabel') }}</div>
+          <div class="theme-toggle-row">
+            <button
+              v-for="opt in themeOptions"
+              :key="opt.value"
+              class="theme-btn"
+              :class="{ active: themeStore.mode === opt.value }"
+              :title="opt.label"
+              @click="themeStore.setMode(opt.value)"
+            >
+              <span v-html="opt.icon"></span>
+              <span class="theme-btn-label">{{ opt.label }}</span>
+            </button>
+          </div>
+        </div>
+        <div class="panel-section">
+          <div class="utility-label">{{ t('nav.languageLabel') }}</div>
+          <div class="panel-option-list">
+            <button
+              v-for="opt in localeOptions"
+              :key="opt.value"
+              class="panel-option-btn"
+              :class="{ active: currentLocaleValue === opt.value }"
+              @click="changeLocale(opt.value)"
+            >
+              <span class="panel-option-icon">
+                <span class="language-abbr">{{ opt.short }}</span>
+              </span>
+              {{ opt.label }}
+            </button>
+          </div>
+        </div>
+        <div class="panel-section">
+          <button class="panel-option-btn" @click="showChangePassword = true; footerPanelOpen = false">
+            <span class="panel-option-icon"><el-icon :size="14"><Lock /></el-icon></span>
+            {{ t('auth.changePassword') }}
+          </button>
+        </div>
+      </div>
+    </Transition>
+    <div v-if="footerPanelOpen && effectiveCollapsed" class="panel-backdrop" @click="footerPanelOpen = false" />
 
     <!-- 主内容区 -->
     <main class="main-content">
@@ -370,11 +424,6 @@ const navGroups = computed(() => [
     key: 'business',
     label: t('nav.business'),
     items: [
-      ...(isAdminRole.value ? [{
-        path: '/enterprise',
-        label: t('nav.enterprise'),
-        icon: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18"/><path d="M5 21V7l7-4 7 4v14"/><path d="M9 9h.01"/><path d="M9 12h.01"/><path d="M9 15h.01"/><path d="M9 18h.01"/><path d="M15 9h.01"/><path d="M15 12h.01"/><path d="M15 15h.01"/><path d="M15 18h.01"/></svg>`,
-      }] : []),
       {
         path: '/wiki',
         label: t('nav.wiki'),
@@ -408,11 +457,6 @@ const navGroups = computed(() => [
     label: t('nav.system'),
     items: [
       {
-        path: '/settings/models',
-        label: t('nav.settings'),
-        icon: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"/></svg>`,
-      },
-      {
         path: '/security',
         label: t('nav.security'),
         icon: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>`,
@@ -422,13 +466,18 @@ const navGroups = computed(() => [
         label: t('nav.activity'),
         icon: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>`,
       },
+      {
+        path: '/settings/system',
+        label: t('nav.settings'),
+        icon: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9c.36.27.58.68.6 1.12V10a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>`,
+      },
     ],
   }] : []),
 ])
 
 function toggleSidebar() {
   sidebarCollapsed.value = !sidebarCollapsed.value
-  userExplicitCollapse.value = sidebarCollapsed.value
+  userExplicitCollapse.value = true
   localStorage.setItem('mc-sidebar-collapsed', String(sidebarCollapsed.value))
   if (!sidebarCollapsed.value) {
     footerPanelOpen.value = false
@@ -1006,10 +1055,11 @@ watch(() => workspaceStore.currentWorkspaceId, () => {
 }
 
 .sidebar-utility-panel {
-  position: absolute;
-  left: calc(100% + 14px);
-  bottom: 16px;
-  width: 236px;
+  position: fixed;
+  /* collapsed sidebar: margin 14px + width 74px = 88px; gap 12px → 100px */
+  left: 100px;
+  bottom: 24px;
+  width: 220px;
   padding: 14px;
   border-radius: 22px;
   background: var(--mc-sidebar-floating-bg);
@@ -1019,6 +1069,23 @@ watch(() => workspaceStore.currentWorkspaceId, () => {
   flex-direction: column;
   gap: 14px;
   backdrop-filter: blur(18px);
+  z-index: 200;
+}
+
+.panel-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 199;
+}
+
+.panel-slide-enter-active,
+.panel-slide-leave-active {
+  transition: opacity 0.15s ease, transform 0.15s ease;
+}
+.panel-slide-enter-from,
+.panel-slide-leave-to {
+  opacity: 0;
+  transform: translateX(-8px);
 }
 
 .panel-section {

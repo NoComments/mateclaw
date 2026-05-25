@@ -99,7 +99,7 @@ const router = createRouter({
         {
           path: 'settings',
           component: () => import('@/views/Settings/Layout.vue'),
-          redirect: '/settings/models',
+          redirect: '/settings/system',
           children: [
             {
               path: 'models',
@@ -114,41 +114,18 @@ const router = createRouter({
               meta: { title: 'Settings - System' },
             },
             {
-              path: 'image',
-              name: 'SettingsImage',
-              component: () => import('@/views/Settings/Image/index.vue'),
-              meta: { title: 'Settings - Image' },
+              path: 'multimodal',
+              name: 'SettingsMultimodal',
+              component: () => import('@/views/Settings/Multimodal/index.vue'),
+              meta: { title: 'Settings - Multimodal' },
             },
-            {
-              path: 'tts',
-              name: 'SettingsTts',
-              component: () => import('@/views/Settings/Tts/index.vue'),
-              meta: { title: 'Settings - TTS' },
-            },
-            {
-              path: 'stt',
-              name: 'SettingsStt',
-              component: () => import('@/views/Settings/Stt/index.vue'),
-              meta: { title: 'Settings - STT' },
-            },
-            {
-              path: 'music',
-              name: 'SettingsMusic',
-              component: () => import('@/views/Settings/Music/index.vue'),
-              meta: { title: 'Settings - Music' },
-            },
-            {
-              path: 'video',
-              name: 'SettingsVideo',
-              component: () => import('@/views/Settings/Video/index.vue'),
-              meta: { title: 'Settings - Video' },
-            },
-            {
-              path: 'model3d',
-              name: 'SettingsModel3D',
-              component: () => import('@/views/Settings/Model3D/index.vue'),
-              meta: { title: 'Settings - 3D Model' },
-            },
+            // Legacy redirects — preserve deep-link bookmarks
+            { path: 'image', redirect: () => ({ path: '/settings/multimodal', query: { tab: 'image' } }) },
+            { path: 'tts', redirect: () => ({ path: '/settings/multimodal', query: { tab: 'tts' } }) },
+            { path: 'stt', redirect: () => ({ path: '/settings/multimodal', query: { tab: 'stt' } }) },
+            { path: 'music', redirect: () => ({ path: '/settings/multimodal', query: { tab: 'music' } }) },
+            { path: 'video', redirect: () => ({ path: '/settings/multimodal', query: { tab: 'video' } }) },
+            { path: 'model3d', redirect: () => ({ path: '/settings/multimodal', query: { tab: 'model3d' } }) },
             // Workspace management
             {
               path: 'workspaces',
