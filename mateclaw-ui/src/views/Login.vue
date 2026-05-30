@@ -17,10 +17,10 @@
       <!-- Brand -->
       <div class="login-brand">
         <div class="brand-logo">
-          <img src="/logo/qingwenclaws_logo_s.svg" alt="QingwenClaws" class="logo-img" />
+          <img src="/logo/surveymind_logo_s.png" alt="SurveyMind" class="logo-img" />
         </div>
         <div class="brand-copy">
-          <h1 class="brand-name">Qingwen<span class="brand-accent">Claws</span></h1>
+          <h1 class="brand-name">SurveyMind</h1>
           <p class="brand-sub">enterprise intelligence platform</p>
         </div>
       </div>
@@ -218,20 +218,17 @@ async function handleLogin() {
   width: 52px;
   height: 52px;
   border-radius: 14px;
-  background: rgba(79, 110, 247, 0.1);
-  border: 1px solid rgba(79, 110, 247, 0.2);
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  box-shadow: 0 0 24px rgba(79, 110, 247, 0.12);
+  overflow: hidden;
 }
 
 .logo-img {
-  width: 34px;
-  height: 34px;
-  object-fit: contain;
-  filter: drop-shadow(0 0 8px rgba(79, 110, 247, 0.4));
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .brand-name {

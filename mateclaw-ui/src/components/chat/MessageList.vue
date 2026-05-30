@@ -9,11 +9,7 @@
       <div v-if="messages.length === 0 && !loading" class="empty-state">
         <slot name="empty" :title="title" :subtitle="subtitle" :suggestions="suggestions">
           <div class="welcome-screen">
-            <div class="welcome-logo">
-              <div class="welcome-logo__glow"></div>
-              <img src="/logo/qingwenclaws_logo_s.svg" alt="QingwenClaws" class="welcome-logo__icon" />
-            </div>
-            <h2 class="welcome-title">Qingwen<span class="welcome-title-highlight">Claws</span></h2>
+            <h2 class="welcome-title">Survey<span class="welcome-title-highlight">Mind</span></h2>
             <p class="welcome-subtitle">{{ subtitle }}</p>
             <div v-if="suggestions.length" class="welcome-suggestions">
               <button
@@ -129,7 +125,7 @@ const props = withDefaults(defineProps<Props>(), {
   loading: false,
   assistantIcon: '🤖',
   userIcon: 'U',
-  title: 'QingwenClaws',
+  title: 'SurveyMind',
   subtitle: '',
   suggestions: () => [],
   autoScroll: true,
@@ -248,32 +244,6 @@ watch(
   box-sizing: border-box;
 }
 
-.welcome-logo {
-  position: relative;
-  margin-bottom: 20px;
-}
-
-.welcome-logo__glow {
-  position: absolute;
-  inset: -20px;
-  border-radius: 50%;
-  background: radial-gradient(circle, rgba(217, 119, 87, 0.12) 0%, transparent 70%);
-  animation: logo-glow 3s ease-in-out infinite;
-}
-
-@keyframes logo-glow {
-  0%, 100% { opacity: 0.6; transform: scale(1); }
-  50% { opacity: 1; transform: scale(1.1); }
-}
-
-.welcome-logo__icon {
-  position: relative;
-  width: 64px;
-  height: 64px;
-  object-fit: contain;
-  display: block;
-  filter: drop-shadow(0 4px 12px rgba(217, 119, 87, 0.2));
-}
 
 .welcome-title {
   font-size: 26px;

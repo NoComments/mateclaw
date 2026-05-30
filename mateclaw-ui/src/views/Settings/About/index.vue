@@ -3,13 +3,13 @@
     <!-- Hero: Logo + Identity -->
     <section class="hero">
       <img
-        src="/logo/qingwenclaws_logo_s.svg"
-        alt="QingwenClaws"
+        src="/logo/surveymind_logo.png"
+        alt="SurveyMind"
         class="hero-logo"
       >
       <div class="hero-copy">
         <h1 class="hero-title">
-          Qingwen<span class="hero-accent">Claws</span>
+          SurveyMind
         </h1>
         <div class="hero-version">
           v{{ appVersion }}
@@ -115,7 +115,7 @@ const techStack = [
 .hero-logo {
   width: 80px;
   height: 80px;
-  object-fit: contain;
+  object-fit: cover;
   flex-shrink: 0;
 }
 

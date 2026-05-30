@@ -114,3 +114,6 @@ outputs/
 
 # brainstorming visual companion
 .superpowers/
+
+# Trial license file — generated locally per deployment, never committed
+license.lic
