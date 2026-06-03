@@ -9,6 +9,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import vip.mate.system.service.SystemSettingService;
 
+import org.springframework.boot.system.ApplicationHome;
+
 import javax.crypto.SecretKey;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -23,7 +25,8 @@ import java.time.temporal.ChronoUnit;
 /**
  * Trial license validator with high-water-mark anti-clock-rollback protection.
  * <p>
- * License file: {@code license.lic} in application working directory.
+ * License file: {@code license.lic} resolved relative to the JAR's directory
+ * (via {@link ApplicationHome}), with a fallback to the working directory for dev mode.
  * Format: JWT signed with HMAC-SHA256, containing:
  * <ul>
  *   <li>{@code sub} — customer name</li>
@@ -45,19 +48,42 @@ public class LicenseService {
     private final LicenseProperties properties;
     private final SystemSettingService settingService;
 
+    /**
+     * Resolved once at construction time. Uses the JAR's parent directory
+     * (via {@link ApplicationHome}) so the file is found regardless of the
+     * JVM's working directory (e.g. when launched via systemd / cron).
+     */
+    private final Path licenseFilePath;
+
     /** Cached status — refreshed on startup and by scheduled checker */
     private volatile LicenseStatusDTO cachedStatus;
 
     public LicenseService(LicenseProperties properties, SystemSettingService settingService) {
         this.properties = properties;
         this.settingService = settingService;
+        this.licenseFilePath = resolveLicensePath();
+    }
+
+    private Path resolveLicensePath() {
+        var appHome = new ApplicationHome(LicenseService.class);
+        Path homeDir = appHome.getDir().toPath();
+        Path resolved = homeDir.resolve(LICENSE_FILE);
+        // Fallback: if not found next to JAR, try working directory (dev mode)
+        if (!Files.exists(resolved)) {
+            Path cwd = Path.of(LICENSE_FILE);
+            if (Files.exists(cwd)) {
+                return cwd;
+            }
+        }
+        log.info("[License] License path resolved to: {}", resolved);
+        return resolved;
     }
 
     /**
      * Full validation: read file → verify signature → check expiry → check clock rollback → update HWM.
      */
     public LicenseStatusDTO validate() {
-        Path licPath = Path.of(LICENSE_FILE);
+        Path licPath = licenseFilePath;
         if (!Files.exists(licPath)) {
             cachedStatus = LicenseStatusDTO.builder()
                     .status("missing")
