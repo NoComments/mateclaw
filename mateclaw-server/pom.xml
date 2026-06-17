@@ -61,6 +61,17 @@
             <version>1.1.0-SNAPSHOT</version>
         </dependency>
 
+        <!-- ===== DevTools — hot reload for development ===== -->
+        <!-- DISABLED: Causes ClassCastException with GraphEventPublisher$GraphEvent -->
+        <!-- RestartClassLoader conflicts with record types across classloader boundaries -->
+        <!--
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-devtools</artifactId>
+            <optional>true</optional>
+        </dependency>
+        -->
+
         <!-- ===== Web MVC（不引入 WebFlux，避免自动切换为响应式模式） ===== -->
         <dependency>
             <groupId>org.springframework.boot</groupId>

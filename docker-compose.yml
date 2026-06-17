@@ -8,7 +8,7 @@ services:
   #   2. 编辑 .env 把 DB_ROOT_PASSWORD / DB_PASSWORD 改成强密码
   # 未设置会直接在 `docker compose up` 时报错，避免把默认密码带到生产环境。
   mysql:
-    image: mysql:8.0
+    image: mariadb:10.11
     container_name: qingwenclaws-mysql
     restart: unless-stopped
     environment:

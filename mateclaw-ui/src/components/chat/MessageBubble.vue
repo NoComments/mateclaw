@@ -10,8 +10,7 @@
     <!-- 头像 -->
     <div class="msg-avatar" :class="`${role}-avatar`">
       <slot name="avatar">
-        <img v-if="role === 'assistant'" src="/logo/qingwenclaws_logo_s.svg" alt="" class="avatar-logo" />
-        <span v-else>{{ avatarIcon }}</span>
+        <span>{{ avatarIcon }}</span>
       </slot>
     </div>
 
@@ -1222,15 +1221,12 @@ watch(isGenerating, (generating) => {
 }
 
 .assistant-avatar {
-  background: transparent;
+  background: var(--mc-primary-bg, rgba(217, 109, 70, 0.12));
+  color: var(--mc-primary, #D97757);
+  font-size: 14px;
+  font-weight: 600;
 }
 
-.avatar-logo {
-  width: 30px;
-  height: 30px;
-  object-fit: contain;
-  border-radius: 50%;
-}
 
 .user-avatar {
   background: linear-gradient(135deg, var(--mc-success), #3D7A3D);

@@ -401,6 +401,7 @@ watch(workspaceId, reload)
   display: flex;
   flex-direction: column;
   gap: 16px;
+  min-width: 900px; /* 防止响应式布局在较小窗口触发导致显示异常 */
 }
 .triggers-table {
   width: 100%;
@@ -619,8 +620,12 @@ button:disabled {
 
 /* Mobile / tablet: the trigger table has 9 columns and breaks on
    phones. Wrap it in a horizontal-scroll container, collapse the
-   form to one column, and stack the page header. */
-@media (max-width: 900px) {
+   form to one column, and stack the page header.
+   降低断点到 768px 以避免在正常桌面窗口触发移动端布局 */
+@media (max-width: 768px) {
+  .triggers-page {
+    min-width: auto; /* 移动端取消最小宽度限制 */
+  }
   .triggers-table {
     display: block;
     overflow-x: auto;

@@ -14,17 +14,6 @@
         <span class="status-ver">v{{ appVersion }}</span>
       </div>
 
-      <!-- Brand -->
-      <div class="login-brand">
-        <div class="brand-logo">
-          <img src="/logo/surveymind_logo_s.png" alt="SurveyMind" class="logo-img" />
-        </div>
-        <div class="brand-copy">
-          <h1 class="brand-name">SurveyMind</h1>
-          <p class="brand-sub">enterprise intelligence platform</p>
-        </div>
-      </div>
-
       <!-- Form card -->
       <form class="login-card" @submit.prevent="handleLogin" novalidate>
         <div class="card-top-rule" aria-hidden="true"></div>
@@ -207,51 +196,6 @@ async function handleLogin() {
   white-space: nowrap;
 }
 
-/* ── Brand ── */
-.login-brand {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-}
-
-.brand-logo {
-  width: 52px;
-  height: 52px;
-  border-radius: 14px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  overflow: hidden;
-}
-
-.logo-img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.brand-name {
-  font-family: 'Plus Jakarta Sans', sans-serif;
-  font-size: 28px;
-  font-weight: 700;
-  color: #F0F2FF;
-  letter-spacing: -0.03em;
-  margin: 0;
-  line-height: 1;
-}
-
-.brand-accent { color: #4F6EF7; }
-
-.brand-sub {
-  font-family: 'IBM Plex Mono', monospace;
-  font-size: 10px;
-  font-weight: 300;
-  color: rgba(240, 242, 255, 0.25);
-  letter-spacing: 0.06em;
-  margin-top: 5px;
-}
-
 /* ── Card ── */
 .login-card {
   background: rgba(255, 255, 255, 0.03);
@@ -408,6 +352,6 @@ async function handleLogin() {
 @media (max-width: 480px) {
   .login-page { padding: 16px; }
   .login-card { padding: 22px 20px 20px; }
-  .brand-name { font-size: 24px; }
 }
 </style>
+

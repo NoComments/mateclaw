@@ -74,7 +74,7 @@ const overlayMessage = computed(() => {
 async function fetchLicenseStatus() {
   try {
     const res = await http.get('/license/status')
-    status.value = res as LicenseStatus
+    status.value = (res as any).data || res as LicenseStatus
   } catch {
     // License endpoint not available — assume no license system
   }

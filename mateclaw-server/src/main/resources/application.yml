@@ -4,6 +4,9 @@ server:
     context-path: /
 
 spring:
+  devtools:
+    restart:
+      enabled: false
   application:
     name: qingwenclaws-server
   messages:

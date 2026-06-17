@@ -58,7 +58,7 @@ public class WorkspaceSchemaMigration implements ApplicationRunner {
         try {
             jdbcTemplate.update("""
                     INSERT INTO mate_workspace (id, name, slug, description, owner_id, create_time, update_time, deleted)
-                    VALUES (1, 'Default', 'default', '默认工作区', NULL, NOW(), NOW(), 0)
+                    VALUES (1, '默认', 'default', '默认工作区', NULL, NOW(), NOW(), 0)
                     """);
             log.info("Created default workspace (id=1, slug='default')");
         } catch (DataAccessException e) {

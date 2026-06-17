@@ -8,19 +8,12 @@
 
     <!-- 左侧导航栏 -->
     <aside class="sidebar" :class="{ collapsed: sidebarCollapsed && !isMobile, 'mobile-open': mobileMenuOpen }">
-      <!-- Logo -->
-      <div class="sidebar-logo">
-        <div class="logo-icon">
-          <img src="/logo/surveymind_logo_s.png" alt="SurveyMind" class="logo-img" />
-        </div>
-        <transition name="fade">
-          <div v-if="!effectiveCollapsed" class="logo-text">
-            <span class="logo-name">SurveyMind</span>
-            <span class="logo-version">v{{ appVersion }}</span>
-          </div>
-        </transition>
+      <!-- 工作区切换和折叠按钮 -->
+      <div class="sidebar-header">
+        <!-- WorkspaceSwitcher 已隐藏 -->
         <button
-          class="collapse-btn"
+          v-if="!isMobile"
+          class="collapse-btn collapse-btn--solo"
           :title="sidebarToggleLabel"
           :aria-label="sidebarToggleLabel"
           @click="toggleSidebar"
@@ -33,9 +26,6 @@
           </svg>
         </button>
       </div>
-
-      <!-- 工作区切换 -->
-      <WorkspaceSwitcher :collapsed="effectiveCollapsed" />
 
       <!-- 导航菜单 -->
       <nav class="sidebar-nav">
@@ -198,7 +188,6 @@
             <line x1="3" y1="18" x2="21" y2="18"/>
           </svg>
         </button>
-        <span class="mobile-topbar-title">SurveyMind</span>
       </div>
       <!-- RFC-074 PR-1 fix: include route.path in the key so two different
            keepAlive routes (e.g. /channels and /settings/models) don't collide
@@ -231,7 +220,6 @@ import type { ThemeMode } from '@/stores/useThemeStore'
 import { http, settingsApi, setupApi, backstageApi } from '@/api/index'
 import OnboardingWizard from '@/views/Onboarding/OnboardingWizard.vue'
 import DoctorDrawer from '@/views/Doctor/DoctorDrawer.vue'
-import WorkspaceSwitcher from '@/components/workspace/WorkspaceSwitcher.vue'
 import { useWorkspaceStore } from '@/stores/useWorkspaceStore'
 import { applyLocale, currentLocale, type AppLocale } from '@/i18n'
 import { SwitchButton, Lock } from '@element-plus/icons-vue'
@@ -308,7 +296,8 @@ function handleMediumChange(e: MediaQueryListEvent | MediaQueryList) {
 }
 
 onMounted(async () => {
-  mobileQuery = window.matchMedia('(max-width: 768px)')
+  // 降低移动端断点到 480px，避免在小桌面窗口触发移动端布局
+  mobileQuery = window.matchMedia('(max-width: 480px)')
   handleMobileChange(mobileQuery)
   mobileQuery.addEventListener('change', handleMobileChange)
 
@@ -588,63 +577,18 @@ watch(() => workspaceStore.currentWorkspaceId, () => {
   pointer-events: none;
 }
 
-.sidebar-logo {
+.sidebar-header {
   display: flex;
   align-items: center;
-  padding: 14px 14px 12px;
+  justify-content: center;
+  padding: 8px 8px 4px;
   border-bottom: 1px solid var(--mc-border-light);
-  gap: 12px;
-  min-height: 64px;
+  gap: 8px;
 }
 
-.sidebar.collapsed .sidebar-logo {
-  flex-direction: column;
+.sidebar.collapsed .sidebar-header {
   justify-content: center;
-  padding: 12px 10px;
-  gap: 6px;
-  min-height: 92px;
-}
-
-.logo-icon {
-  width: 40px;
-  height: 40px;
-  border-radius: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  overflow: hidden;
-}
-
-.logo-img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.logo-emoji { font-size: 16px; }
-
-.logo-text { flex: 1; overflow: hidden; }
-
-.logo-name {
-  display: block;
-  font-size: 16px;
-  font-weight: 800;
-  color: var(--mc-sidebar-logo-name);
-  white-space: nowrap;
-  letter-spacing: -0.03em;
-}
-
-.logo-name-highlight {
-  color: var(--mc-primary);
-}
-
-.logo-version {
-  display: block;
-  font-size: 10px;
-  color: var(--mc-text-tertiary);
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
+  padding: 8px 8px 4px;
 }
 
 .collapse-btn {
@@ -660,7 +604,10 @@ watch(() => workspaceStore.currentWorkspaceId, () => {
   border-radius: 10px;
   flex-shrink: 0;
   padding: 0;
-  margin-left: auto;
+}
+
+.collapse-btn--solo {
+  /* 单独按钮样式，居中显示 */
 }
 
 .collapse-btn:hover {
@@ -671,7 +618,6 @@ watch(() => workspaceStore.currentWorkspaceId, () => {
 .sidebar.collapsed .collapse-btn {
   width: 32px;
   height: 32px;
-  margin-left: 0;
   background: var(--mc-bg-sunken);
   border: 1px solid var(--mc-border-light);
   color: var(--mc-sidebar-text-active);
@@ -1180,8 +1126,8 @@ watch(() => workspaceStore.currentWorkspaceId, () => {
 .fade-enter-from,
 .fade-leave-to { opacity: 0; }
 
-/* ===== 移动端适配 ===== */
-@media (max-width: 768px) {
+/* ===== 移动端适配（仅在真正的手机尺寸触发） ===== */
+@media (max-width: 480px) {
   .sidebar {
     position: fixed;
     left: 0;

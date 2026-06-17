@@ -723,36 +723,26 @@ html.dark .mc-surface-card {
   background: linear-gradient(180deg, rgba(42, 32, 26, 0.86), rgba(34, 26, 22, 0.96));
 }
 
+/* 仅在真正的移动设备尺寸（平板以下）才触发响应式布局 */
 @media (max-width: 768px) {
   .mc-page-shell {
     overflow-y: auto !important;
     height: auto !important;
     min-height: 100%;
+    padding: 16px;
   }
 
   .mc-page-frame {
     overflow: visible !important;
     height: auto !important;
     min-height: auto;
+    border-radius: 20px;
   }
 
   .mc-page-inner {
     height: auto !important;
     min-height: auto;
-  }
-}
-
-@media (max-width: 900px) {
-  .mc-page-shell {
-    padding: 16px;
-  }
-
-  .mc-page-inner {
     padding: 18px;
-  }
-
-  .mc-page-frame {
-    border-radius: 20px;
   }
 
   .mc-page-header {

@@ -2,11 +2,6 @@
   <div class="about-page">
     <!-- Hero: Logo + Identity -->
     <section class="hero">
-      <img
-        src="/logo/surveymind_logo.png"
-        alt="SurveyMind"
-        class="hero-logo"
-      >
       <div class="hero-copy">
         <h1 class="hero-title">
           SurveyMind
@@ -112,12 +107,6 @@ const techStack = [
   border-radius: 16px;
 }
 
-.hero-logo {
-  width: 80px;
-  height: 80px;
-  object-fit: cover;
-  flex-shrink: 0;
-}
 
 .hero-copy {
   display: flex;

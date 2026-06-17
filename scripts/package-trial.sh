@@ -17,7 +17,7 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 
 # Defaults
-CUSTOMER="Trial Customer"
+CUSTOMER="擎问科技试用客户"
 DAYS=30
 JRE_VERSION="21.0.7+6"
 JRE_ARCHIVE="OpenJDK21U-jre_x64_windows_hotspot_$(echo ${JRE_VERSION} | tr '+' '_').zip"
@@ -36,11 +36,11 @@ VERSION=$(grep '<version>' "$PROJECT_ROOT/mateclaw-server/pom.xml" | head -1 | s
 DIST_NAME="SurveyMind-Trial-v${VERSION}"
 DIST_DIR="$PROJECT_ROOT/dist/$DIST_NAME"
 
-echo "=== SurveyMind Trial Packaging ==="
-echo "Customer : $CUSTOMER"
-echo "Trial    : $DAYS days"
-echo "Version  : $VERSION"
-echo "Output   : dist/$DIST_NAME.zip"
+echo "=== SurveyMind 试用版打包 ==="
+echo "客户     : $CUSTOMER"
+echo "试用期   : $DAYS 天"
+echo "版本     : $VERSION"
+echo "输出     : dist/$DIST_NAME.zip"
 echo "=================================="
 
 # Step 1: Build frontend
