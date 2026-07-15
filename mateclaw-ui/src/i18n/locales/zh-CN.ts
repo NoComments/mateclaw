@@ -554,6 +554,8 @@ export default {
       modelAddFailed: '模型添加失败',
       modelRemoveFailed: '模型删除失败',
       activeChangeFailed: '激活模型切换失败',
+      multimodalUpdated: '多模态设置已更新',
+      multimodalUpdateFailed: '多模态设置更新失败',
       deleteConfirm: '确认删除提供商“{name}”？',
       removeConfirm: '确认移除模型 “{name}”？',
       generateConfigInvalidJson: 'Generate Kwargs 不是合法 JSON',
@@ -649,6 +651,9 @@ export default {
         searchStrategy: '搜索策略',
         modelId: '模型 ID',
         modelDisplayName: '显示名称',
+        multimodal: '多模态(视觉)',
+        multimodalHint: '勾选=显式标记该模型支持视觉(覆盖自动识别)；不勾=走模型名自动识别',
+        effectiveVision: '视觉',
       },
       actions: {
         manageModels: '管理模型',

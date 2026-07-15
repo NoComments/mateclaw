@@ -434,6 +434,10 @@ export const modelApi = {
   getDefault: () => http.get('/models/default'),
   create: (data: any) => http.post('/models', data),
   update: (id: string | number, data: any) => http.put(`/models/${id}`, data),
+  /** Update only the explicit modalities declaration (model-management "multimodal" checkbox).
+   *  Pass a JSON array string like '["vision"]' to override, or null to clear/defer. */
+  updateModelModalities: (id: string | number, modalities: string | null) =>
+    http.put(`/models/${id}/modalities`, { modalities }),
   delete: (id: string | number) => http.delete(`/models/${id}`),
   setDefault: (id: string | number) => http.post(`/models/${id}/default`),
   updateProviderConfig: (providerId: string, data: any) =>
