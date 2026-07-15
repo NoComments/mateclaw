@@ -7,7 +7,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.jdbc.core.JdbcTemplate;
-import vip.mate.analytics.template.DatasetTemplateRepository;
 
 import java.util.List;
 
@@ -27,7 +26,7 @@ class DatasetServiceTest {
     JdbcTemplate jdbc;
 
     @Mock
-    DatasetTemplateRepository templateRepo;
+    DatasetFieldRepository fieldRepo;
 
     @InjectMocks
     DatasetService service;
@@ -39,13 +38,39 @@ class DatasetServiceTest {
     void create_insertsDataset() {
         Dataset ds = new Dataset();
         ds.setWorkspaceId(1L);
-        ds.setTemplateId(10L);
         ds.setName("my dataset");
 
         Dataset result = service.create(ds);
 
         verify(datasetRepo).insert(ds);
         assertThat(result).isSameAs(ds);
+    }
+
+    @Test
+    void createWithFields_assignsDatasetOwnedTableAndSchema() {
+        Dataset ds = new Dataset();
+        ds.setWorkspaceId(1L);
+        ds.setName("sales");
+        DatasetField field = new DatasetField();
+        field.setFieldName("Total Sales");
+        field.setFieldType("DECIMAL");
+        field.setOrdinal(0);
+
+        doAnswer(invocation -> {
+            ds.setId(42L);
+            return 1;
+        }).when(datasetRepo).insert(ds);
+
+        Dataset result = service.createWithFields(ds, List.of(field));
+
+        assertThat(result.getPhysicalTable()).isEqualTo("dataset_42");
+        assertThat(result.getRowCount()).isZero();
+        assertThat(field.getDatasetId()).isEqualTo(42L);
+        assertThat(field.getFieldCode()).isEqualTo("total_sales");
+        assertThat(field.getExcelHeader()).isEqualTo("Total Sales");
+        assertThat(field.getIsNullable()).isTrue();
+        verify(datasetRepo).updateById(ds);
+        verify(fieldRepo).insert(field);
     }
 
     // ------------------------------------------------------------------ listByWorkspace

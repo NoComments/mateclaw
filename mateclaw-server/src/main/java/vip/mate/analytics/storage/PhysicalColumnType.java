@@ -1,6 +1,6 @@
 package vip.mate.analytics.storage;
 
-import vip.mate.analytics.template.FieldType;
+import vip.mate.analytics.dataset.FieldType;
 
 /**
  * Maps logical {@link FieldType} values to physical SQL column type declarations.

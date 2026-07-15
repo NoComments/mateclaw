@@ -15,14 +15,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
-import vip.mate.analytics.dataset.Dataset;
-import vip.mate.analytics.dataset.DatasetRepository;
 import vip.mate.analytics.dataset.DatasetUploadLog;
-import vip.mate.analytics.dataset.DatasetUploadLogRepository;
-import vip.mate.analytics.template.DatasetTemplate;
-import vip.mate.analytics.template.DatasetTemplateField;
-import vip.mate.analytics.template.DatasetTemplateFieldRepository;
-import vip.mate.analytics.template.DatasetTemplateRepository;
 import vip.mate.common.result.R;
 
 import java.io.ByteArrayOutputStream;
@@ -57,65 +50,43 @@ class DatasetUploadControllerTest {
     DatasetUploadController controller;
 
     @Autowired
-    DatasetRepository datasetRepo;
-
-    @Autowired
-    DatasetTemplateRepository templateRepo;
-
-    @Autowired
-    DatasetTemplateFieldRepository fieldRepo;
-
-    @Autowired
-    DatasetUploadLogRepository uploadLogRepo;
-
-    @Autowired
     JdbcTemplate jdbc;
 
     /** Stable IDs used across setup / test / teardown. */
-    private static final long TEMPLATE_ID = 88001L;
     private static final long DATASET_ID  = 88002L;
 
-    /** Physical table name — must match pattern dataset_[a-z0-9_]+. */
-    private static final String PHYSICAL_TABLE = "dataset_upload_ctrl_test";
+    /** One physical table per dataset, named from the dataset id. */
+    private static final String PHYSICAL_TABLE = "dataset_" + DATASET_ID;
 
     @BeforeEach
     void setup() {
         // Clean up any leftover state from a failed previous run
         jdbc.execute("DELETE FROM mate_dataset_upload_log WHERE dataset_id = " + DATASET_ID);
+        jdbc.execute("DELETE FROM mate_dataset_field WHERE dataset_id = " + DATASET_ID);
         jdbc.execute("DELETE FROM mate_dataset WHERE id = " + DATASET_ID);
-        jdbc.execute("DELETE FROM mate_dataset_template_field WHERE template_id = " + TEMPLATE_ID);
-        jdbc.execute("DELETE FROM mate_dataset_template WHERE id = " + TEMPLATE_ID);
         jdbc.execute("DROP TABLE IF EXISTS " + PHYSICAL_TABLE);
 
-        // Seed template
-        jdbc.execute(
-                "INSERT INTO mate_dataset_template"
-                + " (id, workspace_id, code, name, physical_table, enabled, deleted, create_time, update_time)"
-                + " VALUES (" + TEMPLATE_ID + ", 1, 'upload_ctrl_test', '上传控制器测试模板', '"
-                + PHYSICAL_TABLE + "', 1, 0, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)");
-
-        // Seed template field: 期末存栏 → end_stock (DECIMAL, ordinal=0)
-        jdbc.execute(
-                "INSERT INTO mate_dataset_template_field"
-                + " (id, template_id, field_code, field_name, field_type, excel_header,"
-                + "  ordinal, is_nullable, deleted, create_time, update_time)"
-                + " VALUES (88010, " + TEMPLATE_ID + ", 'end_stock', '期末存栏', 'DECIMAL', '期末存栏',"
-                + "  0, 1, 0, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)");
-
-        // Seed dataset
+        // Seed the dataset that owns both the schema and physical table.
         jdbc.execute(
                 "INSERT INTO mate_dataset"
-                + " (id, workspace_id, template_id, name, row_count, deleted, create_time, update_time)"
-                + " VALUES (" + DATASET_ID + ", 1, " + TEMPLATE_ID + ", '上传控制器测试数据集',"
-                + "  0, 0, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)");
+                + " (id, workspace_id, name, physical_table, row_count, deleted, create_time, update_time)"
+                + " VALUES (" + DATASET_ID + ", 1, '上传控制器测试数据集', '"
+                + PHYSICAL_TABLE + "', 0, 0, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)");
+
+        // Seed dataset field: 期末存栏 → end_stock (DECIMAL, ordinal=0)
+        jdbc.execute(
+                "INSERT INTO mate_dataset_field"
+                + " (id, dataset_id, field_code, field_name, field_type, excel_header,"
+                + "  ordinal, is_nullable, deleted, create_time, update_time)"
+                + " VALUES (88010, " + DATASET_ID + ", 'end_stock', '期末存栏', 'DECIMAL', '期末存栏',"
+                + "  0, 1, 0, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)");
     }
 
     @AfterEach
     void teardown() {
         jdbc.execute("DELETE FROM mate_dataset_upload_log WHERE dataset_id = " + DATASET_ID);
+        jdbc.execute("DELETE FROM mate_dataset_field WHERE dataset_id = " + DATASET_ID);
         jdbc.execute("DELETE FROM mate_dataset WHERE id = " + DATASET_ID);
-        jdbc.execute("DELETE FROM mate_dataset_template_field WHERE template_id = " + TEMPLATE_ID);
-        jdbc.execute("DELETE FROM mate_dataset_template WHERE id = " + TEMPLATE_ID);
         jdbc.execute("DROP TABLE IF EXISTS " + PHYSICAL_TABLE);
     }
 
@@ -142,9 +113,14 @@ class DatasetUploadControllerTest {
 
         // Verify the physical table actually received rows
         Integer rowCount = jdbc.queryForObject(
-                "SELECT COUNT(*) FROM " + PHYSICAL_TABLE + " WHERE dataset_id = " + DATASET_ID,
-                Integer.class);
+                "SELECT COUNT(*) FROM " + PHYSICAL_TABLE, Integer.class);
         assertThat(rowCount).isGreaterThan(0);
+
+        Integer datasetIdColumns = jdbc.queryForObject(
+                "SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS "
+                + "WHERE UPPER(TABLE_NAME) = UPPER(?) AND UPPER(COLUMN_NAME) = 'DATASET_ID'",
+                Integer.class, PHYSICAL_TABLE);
+        assertThat(datasetIdColumns).isZero();
     }
 
     // ── validation ────────────────────────────────────────────────────────────

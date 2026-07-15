@@ -10,14 +10,12 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import vip.mate.analytics.dataset.Dataset;
+import vip.mate.analytics.dataset.DatasetField;
+import vip.mate.analytics.dataset.DatasetFieldRepository;
 import vip.mate.analytics.dataset.DatasetRepository;
 import vip.mate.analytics.dataset.DatasetUploadLog;
 import vip.mate.analytics.dataset.DatasetUploadLogRepository;
 import vip.mate.analytics.storage.DynamicTableService;
-import vip.mate.analytics.template.DatasetTemplate;
-import vip.mate.analytics.template.DatasetTemplateField;
-import vip.mate.analytics.template.DatasetTemplateFieldRepository;
-import vip.mate.analytics.template.DatasetTemplateRepository;
 import vip.mate.analytics.upload.ExcelIngestService;
 import vip.mate.analytics.upload.ExcelParseService;
 import vip.mate.analytics.upload.IngestResult;
@@ -36,7 +34,7 @@ import java.util.Objects;
  * The upload flow:
  * <ol>
  *   <li>Validate file constraints (size ≤ 50 MB, extension {@code .xlsx}).</li>
- *   <li>Load the dataset → template → fields.</li>
+ *   <li>Load the dataset and its fields.</li>
  *   <li>Ensure the physical table DDL is up-to-date.</li>
  *   <li>Create a {@code PROCESSING} upload-log entry.</li>
  *   <li>Parse rows from the workbook.</li>
@@ -58,8 +56,7 @@ public class DatasetUploadController {
     private static final long MAX_FILE_BYTES = 50L * 1024 * 1024;
 
     private final DatasetRepository datasetRepo;
-    private final DatasetTemplateRepository templateRepo;
-    private final DatasetTemplateFieldRepository fieldRepo;
+    private final DatasetFieldRepository fieldRepo;
     private final DatasetUploadLogRepository uploadLogRepo;
     private final DynamicTableService dynamicTable;
     private final ExcelParseService parse;
@@ -85,27 +82,21 @@ public class DatasetUploadController {
         // ── 1. File validation ────────────────────────────────────────────────
         validateFile(file);
 
-        // ── 2. Load dataset → template → fields ──────────────────────────────
+        // ── 2. Load dataset → fields ─────────────────────────────────────────
         Dataset ds = datasetRepo.selectById(id);
         if (ds == null || Objects.equals(ds.getDeleted(), 1)) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(R.fail("Dataset not found: " + id));
         }
 
-        DatasetTemplate tpl = templateRepo.selectById(ds.getTemplateId());
-        if (tpl == null) {
-            return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY)
-                    .body(R.fail("Template not found for dataset: " + id));
-        }
-
-        List<DatasetTemplateField> fields = fieldRepo.selectList(
-                new LambdaQueryWrapper<DatasetTemplateField>()
-                        .eq(DatasetTemplateField::getTemplateId, tpl.getId())
-                        .eq(DatasetTemplateField::getDeleted, 0)
-                        .orderByAsc(DatasetTemplateField::getOrdinal));
+        List<DatasetField> fields = fieldRepo.selectList(
+                new LambdaQueryWrapper<DatasetField>()
+                        .eq(DatasetField::getDatasetId, ds.getId())
+                        .eq(DatasetField::getDeleted, 0)
+                        .orderByAsc(DatasetField::getOrdinal));
 
         // ── 3. Ensure physical table DDL ──────────────────────────────────────
-        dynamicTable.ensureTable(tpl, fields);
+        dynamicTable.ensureTable(ds, fields);
 
         // ── 4. Create PROCESSING log ──────────────────────────────────────────
         DatasetUploadLog uploadLog = new DatasetUploadLog();
@@ -121,7 +112,7 @@ public class DatasetUploadController {
         try {
             List<ParsedRow> rows = parse.parse(file.getInputStream(), fields, sheet);
 
-            IngestResult result = ingest.ingest(ds, tpl, fields, rows, uploadLog.getId());
+            IngestResult result = ingest.ingest(ds, fields, rows, uploadLog.getId());
 
             uploadLog.setRowsReceived(rows.size());
             uploadLog.setRowsInserted(result.inserted());

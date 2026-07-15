@@ -18,8 +18,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 /**
  * Integration tests for {@link AnalyticsProfileTool}.
  *
- * <p>Uses an isolated in-memory H2 database. Template, field, and dataset rows
- * are inserted with explicit snowflake-style IDs (8001/8002/8003) to avoid
+ * <p>Uses an isolated in-memory H2 database. Dataset and field rows
+ * are inserted with explicit snowflake-style IDs to avoid
  * collisions with seed data loaded by {@code DatabaseBootstrapRunner}.
  */
 @SpringBootTest(
@@ -40,65 +40,55 @@ class AnalyticsProfileToolTest {
     private JdbcTemplate jdbc;
 
     // IDs chosen to be far from seed-data ranges
-    private static final long TEMPLATE_ID = 8001L;
     private static final long DATASET_ID  = 8002L;
+    private static final String PHYSICAL_TABLE = "dataset_" + DATASET_ID;
 
     @BeforeEach
     void setup() {
-        // Physical table used by the test template
+        // Physical table owned by the test dataset; dataset_id is intentionally absent.
         jdbc.execute(
-            "CREATE TABLE IF NOT EXISTS dataset_profile_test " +
-            "(id BIGINT PRIMARY KEY AUTO_INCREMENT, dataset_id BIGINT, upload_log_id BIGINT, " +
+            "CREATE TABLE IF NOT EXISTS " + PHYSICAL_TABLE + " " +
+            "(id BIGINT PRIMARY KEY AUTO_INCREMENT, upload_log_id BIGINT, " +
             "farm_code VARCHAR(64), end_stock DECIMAL(20,4))");
-        jdbc.execute("DELETE FROM dataset_profile_test");
-        jdbc.update("INSERT INTO dataset_profile_test VALUES (1, ?, 1, 'A', 1000)", DATASET_ID);
-        jdbc.update("INSERT INTO dataset_profile_test VALUES (2, ?, 1, 'B', 2000)", DATASET_ID);
-        jdbc.update("INSERT INTO dataset_profile_test VALUES (3, ?, 1, 'A', NULL)", DATASET_ID);
+        jdbc.execute("DELETE FROM " + PHYSICAL_TABLE);
+        jdbc.update("INSERT INTO " + PHYSICAL_TABLE + " VALUES (1, 1, 'A', 1000)");
+        jdbc.update("INSERT INTO " + PHYSICAL_TABLE + " VALUES (2, 1, 'B', 2000)");
+        jdbc.update("INSERT INTO " + PHYSICAL_TABLE + " VALUES (3, 1, 'A', NULL)");
 
-        // Template row
+        // Dataset row owns the physical table directly.
         jdbc.update(
-            "INSERT INTO mate_dataset_template " +
-            "(id, workspace_id, code, name, description, category, partition_keys, physical_table, " +
-            " applied_ddl_hash, enabled, creator, updater, create_time, update_time, deleted) " +
-            "VALUES (?, 1, 'test_tpl', 'Test Template', NULL, 'CUSTOM', '[]', " +
-            "'dataset_profile_test', NULL, 1, 0, 0, NOW(), NOW(), 0) " +
-            "ON DUPLICATE KEY UPDATE physical_table = 'dataset_profile_test'",
-            TEMPLATE_ID);
+            "INSERT INTO mate_dataset " +
+            "(id, workspace_id, name, description, physical_table, applied_ddl_hash, row_count, " +
+            " last_upload_at, creator, updater, create_time, update_time, deleted) " +
+            "VALUES (?, 1, 'Profile Test Dataset', NULL, ?, NULL, 3, " +
+            "NOW(), 0, 0, NOW(), NOW(), 0) " +
+            "ON DUPLICATE KEY UPDATE physical_table = ?",
+            DATASET_ID, PHYSICAL_TABLE, PHYSICAL_TABLE);
 
         // Field: end_stock (DECIMAL / numeric)
         jdbc.update(
-            "INSERT INTO mate_dataset_template_field " +
-            "(id, template_id, field_code, field_name, field_type, field_unit, semantic, " +
-            " is_partition_key, is_nullable, ordinal, excel_header, create_time, update_time, deleted) " +
-            "VALUES (?, ?, 'end_stock', '期末存栏', 'DECIMAL', '只', NULL, 0, 1, 0, '期末存栏', NOW(), NOW(), 0) " +
+            "INSERT INTO mate_dataset_field " +
+            "(id, dataset_id, field_code, field_name, field_type, field_unit, semantic, " +
+            " is_nullable, ordinal, excel_header, create_time, update_time, deleted) " +
+            "VALUES (?, ?, 'end_stock', '期末存栏', 'DECIMAL', '只', NULL, 1, 0, '期末存栏', NOW(), NOW(), 0) " +
             "ON DUPLICATE KEY UPDATE field_type = 'DECIMAL'",
-            80011L, TEMPLATE_ID);
+            80011L, DATASET_ID);
 
         // Field: farm_code (STRING)
         jdbc.update(
-            "INSERT INTO mate_dataset_template_field " +
-            "(id, template_id, field_code, field_name, field_type, field_unit, semantic, " +
-            " is_partition_key, is_nullable, ordinal, excel_header, create_time, update_time, deleted) " +
-            "VALUES (?, ?, 'farm_code', '农场编码', 'STRING', NULL, NULL, 0, 0, 1, '农场编码', NOW(), NOW(), 0) " +
+            "INSERT INTO mate_dataset_field " +
+            "(id, dataset_id, field_code, field_name, field_type, field_unit, semantic, " +
+            " is_nullable, ordinal, excel_header, create_time, update_time, deleted) " +
+            "VALUES (?, ?, 'farm_code', '农场编码', 'STRING', NULL, NULL, 0, 1, '农场编码', NOW(), NOW(), 0) " +
             "ON DUPLICATE KEY UPDATE field_type = 'STRING'",
-            80012L, TEMPLATE_ID);
-
-        // Dataset row
-        jdbc.update(
-            "INSERT INTO mate_dataset " +
-            "(id, workspace_id, template_id, name, description, row_count, last_upload_at, " +
-            " creator, updater, create_time, update_time, deleted) " +
-            "VALUES (?, 1, ?, 'Profile Test Dataset', NULL, 3, NOW(), 0, 0, NOW(), NOW(), 0) " +
-            "ON DUPLICATE KEY UPDATE template_id = ?",
-            DATASET_ID, TEMPLATE_ID, TEMPLATE_ID);
+            80012L, DATASET_ID);
     }
 
     @AfterEach
     void teardown() {
-        jdbc.execute("DROP TABLE IF EXISTS dataset_profile_test");
+        jdbc.execute("DROP TABLE IF EXISTS " + PHYSICAL_TABLE);
+        jdbc.update("DELETE FROM mate_dataset_field WHERE dataset_id = ?", DATASET_ID);
         jdbc.update("DELETE FROM mate_dataset WHERE id = ?", DATASET_ID);
-        jdbc.update("DELETE FROM mate_dataset_template_field WHERE template_id = ?", TEMPLATE_ID);
-        jdbc.update("DELETE FROM mate_dataset_template WHERE id = ?", TEMPLATE_ID);
     }
 
     @Test

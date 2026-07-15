@@ -7,12 +7,10 @@ import org.springframework.ai.tool.annotation.ToolParam;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 import vip.mate.analytics.dataset.Dataset;
+import vip.mate.analytics.dataset.DatasetField;
+import vip.mate.analytics.dataset.DatasetFieldRepository;
 import vip.mate.analytics.dataset.DatasetRepository;
-import vip.mate.analytics.template.DatasetTemplate;
-import vip.mate.analytics.template.DatasetTemplateField;
-import vip.mate.analytics.template.DatasetTemplateFieldRepository;
-import vip.mate.analytics.template.DatasetTemplateRepository;
-import vip.mate.analytics.template.FieldType;
+import vip.mate.analytics.dataset.FieldType;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -23,12 +21,12 @@ import java.util.Map;
  * Spring AI @Tool: statistical profiling of dataset columns.
  *
  * <p>For each requested field code the tool executes targeted aggregate SQL
- * against the dataset's physical table, scoped by {@code dataset_id}, and
+ * against the dataset's physical table and
  * returns per-column statistics suitable for LLM consumption.
  *
  * <p><b>Security note:</b> the physical table name comes from the
- * admin-controlled {@code DatasetTemplate.physicalTable} value.  The column
- * name is taken from {@code DatasetTemplateField.fieldCode} (stored value)
+ * dataset-owned {@code Dataset.physicalTable} value. The column name is taken
+ * from {@code DatasetField.fieldCode} (stored value)
  * only <em>after</em> a successful lookup — the raw LLM-supplied field code
  * string is never concatenated into SQL.
  */
@@ -38,8 +36,7 @@ public class AnalyticsProfileTool {
 
     private final JdbcTemplate jdbc;
     private final DatasetRepository datasetRepo;
-    private final DatasetTemplateRepository templateRepo;
-    private final DatasetTemplateFieldRepository fieldRepo;
+    private final DatasetFieldRepository fieldRepo;
 
     /**
      * Profiles column statistics for the given dataset fields.
@@ -58,22 +55,17 @@ public class AnalyticsProfileTool {
             return Map.of("error", "dataset not found: " + datasetId);
         }
 
-        DatasetTemplate template = templateRepo.selectById(dataset.getTemplateId());
-        if (template == null) {
-            return Map.of("error", "template not found for dataset: " + datasetId);
-        }
+        String physicalTable = dataset.getPhysicalTable();
 
-        String physicalTable = template.getPhysicalTable();
-
-        // Pre-load all fields for this template once (avoids N+1)
-        List<DatasetTemplateField> allFields = fieldRepo.selectList(
-                new QueryWrapper<DatasetTemplateField>()
-                        .eq("template_id", template.getId())
+        // Pre-load all fields for this dataset once (avoids N+1)
+        List<DatasetField> allFields = fieldRepo.selectList(
+                new QueryWrapper<DatasetField>()
+                        .eq("dataset_id", dataset.getId())
                         .eq("deleted", 0));
 
         Map<String, Object> result = new LinkedHashMap<>();
         for (String requestedCode : fieldCodes) {
-            DatasetTemplateField field = allFields.stream()
+            DatasetField field = allFields.stream()
                     .filter(f -> f.getFieldCode().equals(requestedCode))
                     .findFirst()
                     .orElse(null);
@@ -89,7 +81,7 @@ public class AnalyticsProfileTool {
             String col = field.getFieldCode();
             FieldType type = FieldType.fromString(field.getFieldType());
 
-            result.put(requestedCode, buildFieldStats(physicalTable, col, type, datasetId));
+            result.put(requestedCode, buildFieldStats(physicalTable, col, type));
         }
         return result;
     }
@@ -99,7 +91,7 @@ public class AnalyticsProfileTool {
     // -------------------------------------------------------------------------
 
     private Map<String, Object> buildFieldStats(
-            String physicalTable, String col, FieldType type, Long datasetId) {
+            String physicalTable, String col, FieldType type) {
 
         Map<String, Object> stats = new LinkedHashMap<>();
 
@@ -108,7 +100,7 @@ public class AnalyticsProfileTool {
                     "SELECT COUNT(*) AS total_count, COUNT(%s) AS non_null_count," +
                     " COUNT(DISTINCT %s) AS distinct_count," +
                     " MIN(%s) AS min_val, MAX(%s) AS max_val, AVG(%s) AS mean_val" +
-                    " FROM %s WHERE dataset_id = ?",
+                    " FROM %s",
                     col, col, col, col, col, physicalTable);
             jdbc.query(sql, rs -> {
                 long total = rs.getLong("total_count");
@@ -120,14 +112,14 @@ public class AnalyticsProfileTool {
                 stats.put("min", rs.getObject("min_val"));
                 stats.put("max", rs.getObject("max_val"));
                 stats.put("mean", rs.getObject("mean_val"));
-            }, datasetId);
+            });
 
         } else if (type == FieldType.DATE || type == FieldType.BOOLEAN) {
             String sql = String.format(
                     "SELECT COUNT(*) AS total_count, COUNT(%s) AS non_null_count," +
                     " COUNT(DISTINCT %s) AS distinct_count," +
                     " MIN(%s) AS min_val, MAX(%s) AS max_val" +
-                    " FROM %s WHERE dataset_id = ?",
+                    " FROM %s",
                     col, col, col, col, physicalTable);
             jdbc.query(sql, rs -> {
                 long total = rs.getLong("total_count");
@@ -138,14 +130,14 @@ public class AnalyticsProfileTool {
                 stats.put("distinctCount", rs.getLong("distinct_count"));
                 stats.put("min", rs.getObject("min_val"));
                 stats.put("max", rs.getObject("max_val"));
-            }, datasetId);
+            });
 
         } else {
             // STRING
             String aggSql = String.format(
                     "SELECT COUNT(*) AS total_count, COUNT(%s) AS non_null_count," +
                     " COUNT(DISTINCT %s) AS distinct_count" +
-                    " FROM %s WHERE dataset_id = ?",
+                    " FROM %s",
                     col, col, physicalTable);
             jdbc.query(aggSql, rs -> {
                 long total = rs.getLong("total_count");
@@ -154,11 +146,11 @@ public class AnalyticsProfileTool {
                 stats.put("nonNullCount", nonNull);
                 stats.put("nullPercent", total == 0 ? 0.0 : (total - nonNull) * 100.0 / total);
                 stats.put("distinctCount", rs.getLong("distinct_count"));
-            }, datasetId);
+            });
 
             String top5Sql = String.format(
                     "SELECT %s AS top_value, COUNT(*) AS freq FROM %s" +
-                    " WHERE dataset_id = ? AND %s IS NOT NULL" +
+                    " WHERE %s IS NOT NULL" +
                     " GROUP BY %s ORDER BY freq DESC LIMIT 5",
                     col, physicalTable, col, col);
             List<Map<String, Object>> top5 = new ArrayList<>();
@@ -167,7 +159,7 @@ public class AnalyticsProfileTool {
                 entry.put("value", rs.getObject("top_value"));
                 entry.put("freq", rs.getLong("freq"));
                 top5.add(entry);
-            }, datasetId);
+            });
             stats.put("top5", top5);
         }
 

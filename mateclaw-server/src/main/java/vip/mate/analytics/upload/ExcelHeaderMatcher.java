@@ -1,6 +1,6 @@
 package vip.mate.analytics.upload;
 
-import vip.mate.analytics.template.DatasetTemplateField;
+import vip.mate.analytics.dataset.DatasetField;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -9,7 +9,7 @@ import java.util.Map;
 import java.util.regex.Pattern;
 
 /**
- * Maps Excel column headers (row 0) to {@link DatasetTemplateField#getFieldCode()} values.
+ * Maps Excel column headers (row 0) to {@link DatasetField#getFieldCode()} values.
  *
  * <p>Matching is attempted in this order:
  * <ol>
@@ -38,11 +38,11 @@ public final class ExcelHeaderMatcher {
      * @return {@code Map<columnIndex, fieldCode>} for every matched field
      * @throws IllegalArgumentException if any required (non-nullable) field has no matching column
      */
-    public static Map<Integer, String> match(List<String> headers, List<DatasetTemplateField> fields) {
+    public static Map<Integer, String> match(List<String> headers, List<DatasetField> fields) {
         Map<Integer, String> result = new HashMap<>();
         List<String> missing = new ArrayList<>();
 
-        for (DatasetTemplateField field : fields) {
+        for (DatasetField field : fields) {
             int idx = findHeaderIndex(headers, field.getExcelHeader());
 
             if (idx >= 0) {

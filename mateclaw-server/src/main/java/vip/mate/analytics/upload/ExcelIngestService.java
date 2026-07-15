@@ -6,9 +6,8 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import vip.mate.analytics.dataset.Dataset;
+import vip.mate.analytics.dataset.DatasetField;
 import vip.mate.analytics.dataset.DatasetRepository;
-import vip.mate.analytics.template.DatasetTemplate;
-import vip.mate.analytics.template.DatasetTemplateField;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -39,11 +38,10 @@ public class ExcelIngestService {
     private final DatasetRepository datasetRepo;
 
     /**
-     * Inserts all parsed rows into the physical table defined by the template,
+     * Inserts all parsed rows into the physical table owned by the dataset,
      * partitioned into batches of {@value #BATCH_SIZE}.
      *
      * @param ds          the owning dataset (must already be persisted)
-     * @param tpl         the template providing {@code physicalTable}
      * @param fields      ordered list of fields that map to INSERT columns
      * @param rows        rows produced by {@link ExcelParseService}
      * @param uploadLogId FK to the upload-log entry for traceability
@@ -52,8 +50,7 @@ public class ExcelIngestService {
     @Transactional
     public IngestResult ingest(
             Dataset ds,
-            DatasetTemplate tpl,
-            List<DatasetTemplateField> fields,
+            List<DatasetField> fields,
             List<ParsedRow> rows,
             Long uploadLogId
     ) {
@@ -61,7 +58,7 @@ public class ExcelIngestService {
             return new IngestResult(0, 0, List.of());
         }
 
-        String physicalTable = tpl.getPhysicalTable();
+        String physicalTable = ds.getPhysicalTable();
         if (!SAFE_TABLE_NAME.matcher(physicalTable).matches()) {
             throw new IllegalArgumentException(
                     "Unsafe physical table name: " + physicalTable);
@@ -77,10 +74,9 @@ public class ExcelIngestService {
         for (List<ParsedRow> batch : batches) {
             try {
                 jdbc.batchUpdate(sql, batch, batch.size(), (ps, row) -> {
-                    ps.setLong(1, ds.getId());
-                    ps.setLong(2, uploadLogId);
+                    ps.setLong(1, uploadLogId);
                     for (int i = 0; i < fields.size(); i++) {
-                        ps.setObject(i + 3, row.values().get(fields.get(i).getFieldCode()));
+                        ps.setObject(i + 2, row.values().get(fields.get(i).getFieldCode()));
                     }
                 });
                 inserted += batch.size();
@@ -100,15 +96,15 @@ public class ExcelIngestService {
 
     // ── private helpers ───────────────────────────────────────────────────────
 
-    private String buildInsertSql(String physicalTable, List<DatasetTemplateField> fields) {
+    private String buildInsertSql(String physicalTable, List<DatasetField> fields) {
         String fieldColumns = fields.stream()
-                .map(DatasetTemplateField::getFieldCode)
+                .map(DatasetField::getFieldCode)
                 .collect(Collectors.joining(", "));
         String placeholders = fields.stream()
                 .map(f -> "?")
                 .collect(Collectors.joining(", "));
         return String.format(
-                "INSERT INTO %s (dataset_id, upload_log_id, %s) VALUES (?, ?, %s)",
+                "INSERT INTO %s (upload_log_id, %s) VALUES (?, %s)",
                 physicalTable, fieldColumns, placeholders);
     }
 

@@ -5,16 +5,16 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import vip.mate.analytics.template.DatasetTemplate;
-import vip.mate.analytics.template.DatasetTemplateRepository;
+import org.springframework.util.StringUtils;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * CRUD service for {@link Dataset}.
  *
- * <p>The {@code delete} operation purges rows from the dynamic physical table
- * whose name is resolved at runtime via the template.
+ * <p>The {@code delete} operation drops the dataset's dynamic physical table.
  */
 @Service
 @RequiredArgsConstructor
@@ -23,7 +23,7 @@ public class DatasetService {
 
     private final DatasetRepository datasetRepo;
     private final JdbcTemplate jdbc;
-    private final DatasetTemplateRepository templateRepo;
+    private final DatasetFieldRepository fieldRepo;
 
     /**
      * Insert a new empty dataset.
@@ -33,6 +33,58 @@ public class DatasetService {
      */
     public Dataset create(Dataset ds) {
         datasetRepo.insert(ds);
+        return ds;
+    }
+
+    /**
+     * Create a dataset together with its schema, then name its physical table after
+     * the generated id.
+     *
+     * <p>fieldCode and excelHeader are derived from fieldName when absent — callers
+     * (and the LLM) never supply physical column names.
+     *
+     * @param ds     dataset to persist; workspaceId and name must be set
+     * @param fields ordered field definitions; fieldName and fieldType required
+     * @return the persisted dataset with id and physicalTable populated
+     */
+    public Dataset createWithFields(Dataset ds, List<DatasetField> fields) {
+        if (!StringUtils.hasText(ds.getName())) {
+            throw new IllegalArgumentException("数据集名称不能为空");
+        }
+        if (fields == null || fields.isEmpty()) {
+            throw new IllegalArgumentException("数据集至少需要一个字段");
+        }
+        for (DatasetField f : fields) {
+            if (!StringUtils.hasText(f.getFieldName())) {
+                throw new IllegalArgumentException("字段名不能为空");
+            }
+            FieldType.fromString(f.getFieldType());
+        }
+
+        if (ds.getRowCount() == null) {
+            ds.setRowCount(0);
+        }
+        ds.setPhysicalTable("dataset_placeholder");
+        datasetRepo.insert(ds);
+
+        ds.setPhysicalTable("dataset_" + ds.getId());
+        datasetRepo.updateById(ds);
+
+        Set<String> usedFieldCodes = new HashSet<>();
+        for (DatasetField f : fields) {
+            if (!StringUtils.hasText(f.getFieldCode())) {
+                f.setFieldCode(generateUniqueFieldCodeInBatch(f.getFieldName(), usedFieldCodes));
+            }
+            usedFieldCodes.add(f.getFieldCode());
+            if (!StringUtils.hasText(f.getExcelHeader())) {
+                f.setExcelHeader(f.getFieldName());
+            }
+            if (f.getIsNullable() == null) {
+                f.setIsNullable(true);
+            }
+            f.setDatasetId(ds.getId());
+            fieldRepo.insert(f);
+        }
         return ds;
     }
 
@@ -60,15 +112,13 @@ public class DatasetService {
     }
 
     /**
-     * Soft-delete the dataset record and hard-delete all rows from the
-     * dynamic physical table.
+     * Soft-delete the dataset record and drop its dynamic physical table.
      *
-     * <p>The physical table name is resolved by looking up the dataset's template
-     * and reading {@code physicalTable}.  The row purge uses a parameterised JDBC
-     * update to avoid SQL-injection risk.
+     * <p>The physical table name is read directly from the dataset and validated
+     * before it is used in DDL.
      *
      * @param id dataset id to delete
-     * @throws IllegalArgumentException if the dataset or its template cannot be found
+     * @throws IllegalArgumentException if the dataset cannot be found
      */
     public void delete(Long id) {
         Dataset ds = datasetRepo.selectById(id);
@@ -76,22 +126,39 @@ public class DatasetService {
             throw new IllegalArgumentException("Dataset not found: " + id);
         }
 
-        DatasetTemplate template = templateRepo.selectById(ds.getTemplateId());
-        if (template == null) {
-            throw new IllegalArgumentException("Template not found for dataset " + id
-                    + " (templateId=" + ds.getTemplateId() + ")");
-        }
-
-        String physicalTable = template.getPhysicalTable();
+        String physicalTable = ds.getPhysicalTable();
         if (physicalTable != null && !physicalTable.isBlank()) {
             if (!physicalTable.matches("[a-z][a-z0-9_]{0,95}")) {
                 throw new IllegalArgumentException("Unsafe physical table name: " + physicalTable);
             }
-            // Parameterised update — dataset_id column is a safe fixed name from DDL
-            jdbc.update("DELETE FROM " + physicalTable + " WHERE dataset_id = ?", id);
+            jdbc.execute("DROP TABLE IF EXISTS " + physicalTable);
         }
 
+        fieldRepo.delete(new LambdaQueryWrapper<DatasetField>()
+                .eq(DatasetField::getDatasetId, id));
         // Soft-delete the dataset record (MyBatis-Plus fills the deleted flag)
         datasetRepo.deleteById(id);
+    }
+
+    private static String generateUniqueFieldCodeInBatch(String fieldName, Set<String> usedCodes) {
+        String base = slugify(fieldName);
+        if (base.isEmpty()) {
+            base = "field";
+        }
+        String candidate = base;
+        int suffix = 2;
+        while (usedCodes.contains(candidate)) {
+            candidate = base + "_" + suffix++;
+        }
+        return candidate;
+    }
+
+    private static String slugify(String s) {
+        if (s == null) {
+            return "";
+        }
+        return s.toLowerCase()
+                .replaceAll("[^a-z0-9]+", "_")
+                .replaceAll("^_+|_+$", "");
     }
 }

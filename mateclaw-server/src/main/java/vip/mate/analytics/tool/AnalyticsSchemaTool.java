@@ -6,11 +6,9 @@ import org.springframework.ai.tool.annotation.Tool;
 import org.springframework.ai.tool.annotation.ToolParam;
 import org.springframework.stereotype.Component;
 import vip.mate.analytics.dataset.Dataset;
+import vip.mate.analytics.dataset.DatasetField;
+import vip.mate.analytics.dataset.DatasetFieldRepository;
 import vip.mate.analytics.dataset.DatasetRepository;
-import vip.mate.analytics.template.DatasetTemplate;
-import vip.mate.analytics.template.DatasetTemplateField;
-import vip.mate.analytics.template.DatasetTemplateFieldRepository;
-import vip.mate.analytics.template.DatasetTemplateRepository;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -31,8 +29,7 @@ import java.util.stream.Collectors;
 public class AnalyticsSchemaTool {
 
     private final DatasetRepository datasetRepo;
-    private final DatasetTemplateRepository templateRepo;
-    private final DatasetTemplateFieldRepository fieldRepo;
+    private final DatasetFieldRepository fieldRepo;
 
     /**
      * Lists all datasets in the current workspace, or describes one dataset's columns.
@@ -52,8 +49,8 @@ public class AnalyticsSchemaTool {
                 return "当前工作空间没有可用数据集。请先上传数据。";
             }
             return all.stream()
-                    .map(d -> String.format("- id=%d  name=%s  rows=%d  templateId=%d",
-                            d.getId(), d.getName(), d.getRowCount(), d.getTemplateId()))
+                    .map(d -> String.format("- id=%d  name=%s  rows=%d  physicalTable=%s",
+                            d.getId(), d.getName(), d.getRowCount(), d.getPhysicalTable()))
                     .collect(Collectors.joining("\n", "可用数据集:\n", ""));
         }
 
@@ -62,17 +59,16 @@ public class AnalyticsSchemaTool {
             return "数据集不存在: id=" + datasetId;
         }
 
-        DatasetTemplate t = templateRepo.selectById(d.getTemplateId());
-        List<DatasetTemplateField> fields = fieldRepo.selectList(
-                new QueryWrapper<DatasetTemplateField>()
-                        .eq("template_id", t.getId())
+        List<DatasetField> fields = fieldRepo.selectList(
+                new QueryWrapper<DatasetField>()
+                        .eq("dataset_id", d.getId())
                         .eq("deleted", 0)
                         .orderByAsc("ordinal"));
 
         StringBuilder sb = new StringBuilder();
         sb.append(String.format("数据集: %s (id=%d, 物理表=%s, 行数=%d)\n字段清单:\n",
-                d.getName(), d.getId(), t.getPhysicalTable(), d.getRowCount()));
-        for (DatasetTemplateField f : fields) {
+                d.getName(), d.getId(), d.getPhysicalTable(), d.getRowCount()));
+        for (DatasetField f : fields) {
             sb.append(String.format("  - %s (%s", f.getFieldCode(), f.getFieldType()));
             if (f.getFieldUnit() != null && !f.getFieldUnit().isBlank()) {
                 sb.append(", 单位:").append(f.getFieldUnit());

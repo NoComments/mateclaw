@@ -1,4 +1,4 @@
-package vip.mate.analytics.template;
+package vip.mate.analytics.dataset;
 
 /**
  * Supported column types for dataset template fields.

@@ -1,7 +1,7 @@
 package vip.mate.analytics.upload;
 
 import org.junit.jupiter.api.Test;
-import vip.mate.analytics.template.DatasetTemplateField;
+import vip.mate.analytics.dataset.DatasetField;
 
 import java.util.List;
 import java.util.Map;
@@ -15,21 +15,11 @@ class ExcelHeaderMatcherTest {
 
     // ── helpers ──────────────────────────────────────────────────────────────
 
-    private static DatasetTemplateField field(String code, String excelHeader, boolean nullable) {
-        DatasetTemplateField f = new DatasetTemplateField();
+    private static DatasetField field(String code, String excelHeader, boolean nullable) {
+        DatasetField f = new DatasetField();
         f.setFieldCode(code);
         f.setExcelHeader(excelHeader);
         f.setIsNullable(nullable);
-        f.setIsPartitionKey(false);
-        return f;
-    }
-
-    private static DatasetTemplateField partitionField(String code, String excelHeader) {
-        DatasetTemplateField f = new DatasetTemplateField();
-        f.setFieldCode(code);
-        f.setExcelHeader(excelHeader);
-        f.setIsNullable(false);
-        f.setIsPartitionKey(true);
         return f;
     }
 
@@ -38,7 +28,7 @@ class ExcelHeaderMatcherTest {
     @Test
     void exactMatch_returnsMappedColumnIndices() {
         List<String> headers = List.of("养殖场编码", "期末存栏（只）");
-        List<DatasetTemplateField> fields = List.of(
+        List<DatasetField> fields = List.of(
                 field("farm_code", "养殖场编码", false),
                 field("end_stock", "期末存栏（只）", false)
         );
@@ -55,7 +45,7 @@ class ExcelHeaderMatcherTest {
     @Test
     void parenStrippedMatch_matchesWhenHeaderLacksSuffix() {
         List<String> headers = List.of("期末存栏");
-        List<DatasetTemplateField> fields = List.of(
+        List<DatasetField> fields = List.of(
                 field("end_stock", "期末存栏（只）", false)
         );
 
@@ -70,7 +60,7 @@ class ExcelHeaderMatcherTest {
     @Test
     void missingRequiredField_throwsIllegalArgumentException() {
         List<String> headers = List.of("养殖场编码"); // "期末存栏" missing
-        List<DatasetTemplateField> fields = List.of(
+        List<DatasetField> fields = List.of(
                 field("farm_code", "养殖场编码", false),
                 field("end_stock", "期末存栏（只）", false)
         );
@@ -88,7 +78,7 @@ class ExcelHeaderMatcherTest {
     @Test
     void nullableFieldWithNoMatch_silentlySkipped() {
         List<String> headers = List.of("养殖场编码");
-        List<DatasetTemplateField> fields = List.of(
+        List<DatasetField> fields = List.of(
                 field("farm_code", "养殖场编码", false),
                 field("remark", "备注", true)          // nullable, no matching header
         );
@@ -107,7 +97,7 @@ class ExcelHeaderMatcherTest {
     @Test
     void extraColumnsInExcel_ignoredGracefully() {
         List<String> headers = List.of("养殖场编码", "未知列", "期末存栏（只）");
-        List<DatasetTemplateField> fields = List.of(
+        List<DatasetField> fields = List.of(
                 field("farm_code", "养殖场编码", false),
                 field("end_stock", "期末存栏（只）", false)
         );

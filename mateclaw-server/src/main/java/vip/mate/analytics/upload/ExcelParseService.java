@@ -7,8 +7,8 @@ import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
-import vip.mate.analytics.template.DatasetTemplateField;
-import vip.mate.analytics.template.FieldType;
+import vip.mate.analytics.dataset.DatasetField;
+import vip.mate.analytics.dataset.FieldType;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -48,7 +48,7 @@ public class ExcelParseService {
      *                                  or if a required header column is missing
      */
     public List<ParsedRow> parse(InputStream in,
-                                 List<DatasetTemplateField> fields,
+                                 List<DatasetField> fields,
                                  @Nullable String sheetName) throws IOException {
 
         try (XSSFWorkbook wb = new XSSFWorkbook(in)) {
@@ -112,9 +112,9 @@ public class ExcelParseService {
         return headers;
     }
 
-    private Map<String, FieldType> buildTypeIndex(List<DatasetTemplateField> fields) {
+    private Map<String, FieldType> buildTypeIndex(List<DatasetField> fields) {
         Map<String, FieldType> index = new HashMap<>();
-        for (DatasetTemplateField f : fields) {
+        for (DatasetField f : fields) {
             if (f.getFieldType() != null) {
                 index.put(f.getFieldCode(), FieldType.fromString(f.getFieldType()));
             }

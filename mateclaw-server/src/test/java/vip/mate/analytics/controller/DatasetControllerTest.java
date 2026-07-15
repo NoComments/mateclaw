@@ -13,8 +13,6 @@ import vip.mate.analytics.dataset.DatasetRepository;
 import vip.mate.analytics.dataset.DatasetService;
 import vip.mate.analytics.dataset.DatasetUploadLog;
 import vip.mate.analytics.dataset.DatasetUploadLogRepository;
-import vip.mate.analytics.template.DatasetTemplate;
-import vip.mate.analytics.template.DatasetTemplateRepository;
 import vip.mate.common.result.R;
 
 import java.util.List;
@@ -33,7 +31,6 @@ class DatasetControllerTest {
 
     private DatasetService datasetService;
     private DatasetRepository datasetRepo;
-    private DatasetTemplateRepository templateRepo;
     private DatasetUploadLogRepository uploadLogRepo;
     private JdbcTemplate jdbc;
     private DatasetController controller;
@@ -42,10 +39,9 @@ class DatasetControllerTest {
     void setUp() {
         datasetService = mock(DatasetService.class);
         datasetRepo = mock(DatasetRepository.class);
-        templateRepo = mock(DatasetTemplateRepository.class);
         uploadLogRepo = mock(DatasetUploadLogRepository.class);
         jdbc = mock(JdbcTemplate.class);
-        controller = new DatasetController(datasetService, datasetRepo, templateRepo, uploadLogRepo, jdbc);
+        controller = new DatasetController(datasetService, datasetRepo, uploadLogRepo, jdbc);
     }
 
     // ------------------------------------------------------------------ list
@@ -92,18 +88,19 @@ class DatasetControllerTest {
         Dataset saved = new Dataset();
         saved.setId(10L);
         saved.setWorkspaceId(5L);
-        saved.setTemplateId(3L);
         saved.setName("My Dataset");
+        saved.setDescription("desc");
         saved.setCreator(7L);
 
         when(datasetService.create(any(Dataset.class))).thenReturn(saved);
 
-        CreateDatasetRequest body = new CreateDatasetRequest(3L, "My Dataset", "desc");
+        CreateDatasetRequest body = new CreateDatasetRequest("My Dataset", "desc");
         R<Dataset> response = controller.create(body, 5L, 7L);
 
         verify(datasetService).create(argThat(ds ->
                 ds.getWorkspaceId().equals(5L)
-                && ds.getTemplateId().equals(3L)
+                && ds.getName().equals("My Dataset")
+                && ds.getDescription().equals("desc")
                 && Long.valueOf(7L).equals(ds.getCreator())));
         assertThat(response.getData().getId()).isEqualTo(10L);
     }
@@ -141,22 +138,17 @@ class DatasetControllerTest {
     void preview_returnsRowsFromPhysicalTable() {
         Dataset ds = new Dataset();
         ds.setId(1L);
-        ds.setTemplateId(10L);
-
-        DatasetTemplate template = new DatasetTemplate();
-        template.setId(10L);
-        template.setPhysicalTable("ds_livestock_health");
+        ds.setPhysicalTable("dataset_1");
 
         when(datasetService.getById(1L)).thenReturn(ds);
-        when(templateRepo.selectById(10L)).thenReturn(template);
 
         List<Map<String, Object>> fakeRows = List.of(
-                Map.of("id", 1, "dataset_id", 1L, "animal_id", "A001"),
-                Map.of("id", 2, "dataset_id", 1L, "animal_id", "A002")
+                Map.of("id", 1, "upload_log_id", 10L, "animal_id", "A001"),
+                Map.of("id", 2, "upload_log_id", 10L, "animal_id", "A002")
         );
         when(jdbc.queryForList(
-                eq("SELECT * FROM ds_livestock_health WHERE dataset_id = ? LIMIT ?"),
-                eq(1L), eq(100)
+                eq("SELECT * FROM dataset_1 LIMIT ?"),
+                eq(100)
         )).thenReturn(fakeRows);
 
         ResponseEntity<?> response = controller.preview(1L, 100);
@@ -166,9 +158,9 @@ class DatasetControllerTest {
         R<List<Map<String, Object>>> body = (R<List<Map<String, Object>>>) response.getBody();
         assertThat(body).isNotNull();
         assertThat(body.getData()).hasSize(2);
+        assertThat(body.getData()).allSatisfy(row -> assertThat(row).doesNotContainKey("dataset_id"));
         verify(jdbc).queryForList(
-                "SELECT * FROM ds_livestock_health WHERE dataset_id = ? LIMIT ?",
-                1L, 100);
+                "SELECT * FROM dataset_1 LIMIT ?", 100);
     }
 
     @Test
@@ -186,14 +178,9 @@ class DatasetControllerTest {
     void preview_returnsEmptyListWhenNoPhysicalTable() {
         Dataset ds = new Dataset();
         ds.setId(5L);
-        ds.setTemplateId(20L);
-
-        DatasetTemplate template = new DatasetTemplate();
-        template.setId(20L);
-        template.setPhysicalTable(null);
+        ds.setPhysicalTable(null);
 
         when(datasetService.getById(5L)).thenReturn(ds);
-        when(templateRepo.selectById(20L)).thenReturn(template);
 
         ResponseEntity<?> response = controller.preview(5L, 50);
 

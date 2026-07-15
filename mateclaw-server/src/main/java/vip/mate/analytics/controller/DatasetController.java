@@ -13,8 +13,6 @@ import vip.mate.analytics.dataset.DatasetRepository;
 import vip.mate.analytics.dataset.DatasetService;
 import vip.mate.analytics.dataset.DatasetUploadLog;
 import vip.mate.analytics.dataset.DatasetUploadLogRepository;
-import vip.mate.analytics.template.DatasetTemplate;
-import vip.mate.analytics.template.DatasetTemplateRepository;
 import vip.mate.common.result.R;
 
 import java.util.List;
@@ -35,7 +33,6 @@ public class DatasetController {
 
     private final DatasetService datasetService;
     private final DatasetRepository datasetRepo;
-    private final DatasetTemplateRepository templateRepo;
     private final DatasetUploadLogRepository uploadLogRepo;
     private final JdbcTemplate jdbc;
 
@@ -50,14 +47,13 @@ public class DatasetController {
 
     // ------------------------------------------------------------------ create
 
-    @Operation(summary = "Create a new dataset bound to a template")
+    @Operation(summary = "Create a new dataset")
     @PostMapping
     public R<Dataset> create(
             @RequestBody CreateDatasetRequest body,
             @RequestHeader("X-Workspace-Id") long workspaceId,
             @RequestHeader(value = "X-User-Id", required = false) Long userId) {
         Dataset ds = new Dataset();
-        ds.setTemplateId(body.templateId());
         ds.setName(body.name());
         ds.setDescription(body.description());
         ds.setWorkspaceId(workspaceId);
@@ -91,23 +87,20 @@ public class DatasetController {
             return ResponseEntity.notFound().build();
         }
 
-        DatasetTemplate template = templateRepo.selectById(ds.getTemplateId());
-        if (template == null || template.getPhysicalTable() == null
-                || template.getPhysicalTable().isBlank()) {
+        if (ds.getPhysicalTable() == null || ds.getPhysicalTable().isBlank()) {
             return ResponseEntity.ok(R.ok(List.of()));
         }
 
-        String physicalTable = template.getPhysicalTable();
+        String physicalTable = ds.getPhysicalTable();
         // Validate table name to prevent SQL injection — same guard as DatasetService.delete()
         if (!physicalTable.matches("[a-z][a-z0-9_]{0,95}")) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(R.fail("Unsafe physical table name"));
         }
 
-        // Code-generated SQL — table name is validated above, dataset_id is parameterised
+        // Code-generated SQL — table name is validated above
         List<Map<String, Object>> rows = jdbc.queryForList(
-                "SELECT * FROM " + physicalTable + " WHERE dataset_id = ? LIMIT ?",
-                id, limit);
+                "SELECT * FROM " + physicalTable + " LIMIT ?", limit);
         return ResponseEntity.ok(R.ok(rows));
     }
 
@@ -143,5 +136,5 @@ public class DatasetController {
     // ------------------------------------------------------------------ request record
 
     /** Request body for dataset creation. */
-    public record CreateDatasetRequest(Long templateId, String name, String description) {}
+    public record CreateDatasetRequest(String name, String description) {}
 }
