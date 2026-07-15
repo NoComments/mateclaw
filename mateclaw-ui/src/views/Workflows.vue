@@ -247,6 +247,7 @@ import {
   type PausedRunSummary,
   type ResumeOutcome,
   type GeneratedDraft,
+  type WorkflowRevision,
 } from '@/api'
 import type { Channel } from '@/types'
 import { useWorkspaceStore } from '@/stores/useWorkspaceStore'
@@ -582,6 +583,19 @@ async function select(id: number) {
     const res = await workflowApi.get(id)
     selected.value = res.data as unknown as WorkflowSummary
     draftJson.value = selected.value?.draftJson ?? ''
+    // Publishing clears the inline draft on the workflow row (the published
+    // revision becomes canonical). Without this fallback the canvas would
+    // render empty right after publish even though the graph is intact in
+    // mate_workflow_revision — fetch it back so re-opening the workflow
+    // shows what was actually published instead of a blank slate.
+    if (!draftJson.value.trim() && selected.value?.latestRevisionId) {
+      try {
+        const revRes = await workflowApi.getLatestRevision(id)
+        draftJson.value = (revRes.data as unknown as WorkflowRevision)?.graphJson ?? ''
+      } catch (e) {
+        console.error('getLatestRevision failed', e)
+      }
+    }
     compileErrors.value = []
     lastStatus.value = ''
     await reloadRuns()
