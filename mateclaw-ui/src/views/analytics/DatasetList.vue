@@ -81,8 +81,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, reactive, onMounted, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import type { FormInstance, FormRules } from 'element-plus'
@@ -95,6 +95,7 @@ import {
 import type { Dataset, DatasetTemplate } from '@/types/analytics'
 import UploadDialog from './UploadDialog.vue'
 
+const route = useRoute()
 const router = useRouter()
 const { t } = useI18n()
 
@@ -202,6 +203,18 @@ function goToUploadHistory(row: Dataset) {
 function goToAnalysis(row: Dataset) {
   router.push({ path: '/chat', query: { agentId: '1000000020' } })
 }
+
+// The query is consumed and cleared so a repeat click re-triggers the dialog
+// instead of resolving to the same route.
+watch(
+  () => route.query.action,
+  (action) => {
+    if (action !== 'create') return
+    openCreateDialog()
+    router.replace({ path: route.path, query: {} })
+  },
+  { immediate: true }
+)
 
 onMounted(loadData)
 </script>
