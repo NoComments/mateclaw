@@ -2338,6 +2338,7 @@ export default {
       deleteTitle: 'Delete workflow',
       deleteContent: 'Delete workflow "{name}"? This is reversible via the audit log.',
     },
+    noWorkspace: 'No workspace selected. Please create or select a workspace first.',
     selectHint: 'Select a workflow on the left, or click "New Workflow" to start a fresh draft.',
     generate: {
       entryButton: 'Generate from description',

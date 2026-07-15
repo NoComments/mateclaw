@@ -2350,6 +2350,7 @@ export default {
       deleteTitle: '删除工作流',
       deleteContent: '将删除工作流「{name}」？此操作可通过审计日志撤销。',
     },
+    noWorkspace: '未选择工作区，请先创建或选择一个工作区。',
     selectHint: '在左侧选择一个工作流，或点击「新建工作流」开始。',
     generate: {
       entryButton: '从描述生成',

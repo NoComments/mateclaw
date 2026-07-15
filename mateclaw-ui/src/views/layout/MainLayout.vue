@@ -317,6 +317,9 @@ onMounted(async () => {
     }
   }
 
+  // Load workspace list so currentWorkspaceId is available throughout the app
+  workspaceStore.fetchWorkspaces()
+
   // Fetch initial health status for sidebar indicator
   fetchHealthStatus()
 

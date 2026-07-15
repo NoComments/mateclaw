@@ -367,7 +367,7 @@ const publishDialogOpen = ref(false)
 const generateDialogOpen = ref(false)
 
 function openGenerate() {
-  if (!workspaceId.value) return
+  if (!workspaceId.value) { ElMessage.warning(t('workflows.noWorkspace')); return }
   generateDialogOpen.value = true
 }
 
@@ -675,7 +675,7 @@ async function loadRun(runId: number) {
 }
 
 function openCreate() {
-  if (!workspaceId.value) return
+  if (!workspaceId.value) { ElMessage.warning(t('workflows.noWorkspace')); return }
   createDialogOpen.value = true
 }
 
