@@ -883,6 +883,17 @@ export interface WorkflowSummary {
   updateTime: string
 }
 
+export interface WorkflowRevision {
+  id: number
+  workflowId: number
+  revision: number
+  graphJson: string
+  schemaVersion: string
+  publishedNote?: string
+  publishedBy?: number
+  createTime: string
+}
+
 export interface WorkflowCompileError {
   code: string
   path: string
@@ -976,6 +987,10 @@ export const workflowApi = {
     http.post(`/workflows/${id}/publish`,
       note ? { note } : {},
       { params: userId ? { userId } : {} }),
+  /** Fetch the latest published revision's graph_json — used to repopulate
+   *  the canvas when a workflow has no inline draft (publish clears it). */
+  getLatestRevision: (id: number) =>
+    http.get<WorkflowRevision>(`/workflows/${id}/revisions/latest`),
   runs: (id: number, limit = 50) =>
     http.get<WorkflowRun[]>(`/workflows/${id}/runs`, { params: { limit } }),
   runDetail: (runId: number) =>

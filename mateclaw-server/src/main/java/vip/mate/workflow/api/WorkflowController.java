@@ -13,9 +13,11 @@ import vip.mate.workflow.compiler.WorkflowAclPort;
 import vip.mate.workflow.compiler.WorkflowCompileFailedException;
 import vip.mate.workflow.compiler.WorkflowCompiler;
 import vip.mate.workflow.model.WorkflowEntity;
+import vip.mate.workflow.model.WorkflowRevisionEntity;
 import vip.mate.workflow.model.WorkflowRunEntity;
 import vip.mate.workflow.model.WorkflowRunPauseEntity;
 import vip.mate.workflow.model.WorkflowRunStepEntity;
+import vip.mate.workflow.repository.WorkflowRevisionMapper;
 import vip.mate.workflow.repository.WorkflowRunMapper;
 import vip.mate.workflow.repository.WorkflowRunPauseMapper;
 import vip.mate.workflow.repository.WorkflowRunStepMapper;
@@ -39,6 +41,7 @@ public class WorkflowController {
     private final WorkflowRunMapper runMapper;
     private final WorkflowRunStepMapper stepMapper;
     private final WorkflowRunPauseMapper pauseMapper;
+    private final WorkflowRevisionMapper revisionMapper;
     private final WorkflowCompiler compiler;
     private final WorkflowAclPort aclPort;
     /** Optional — only present when the LLM module is wired (production).
@@ -158,6 +161,19 @@ public class WorkflowController {
                           @RequestHeader("X-Workspace-Id") long workspaceId) {
         workflowService.delete(id, workspaceId);
         return R.ok();
+    }
+
+    @Operation(summary = "Fetch the graph_json of the latest published revision. "
+            + "Used by the editor to repopulate the canvas after publish clears the inline draft.")
+    @GetMapping("/{id}/revisions/latest")
+    public R<WorkflowRevisionEntity> getLatestRevision(@PathVariable long id,
+                                                       @RequestHeader("X-Workspace-Id") long workspaceId) {
+        WorkflowEntity row = workflowService.get(id, workspaceId);
+        if (row == null) return R.fail("workflow not found: " + id);
+        if (row.getLatestRevisionId() == null) return R.fail("workflow has no published revision: " + id);
+        WorkflowRevisionEntity revision = revisionMapper.selectById(row.getLatestRevisionId());
+        if (revision == null) return R.fail("revision not found: " + row.getLatestRevisionId());
+        return R.ok(revision);
     }
 
     @Operation(summary = "List the most recent runs for a workflow.")
