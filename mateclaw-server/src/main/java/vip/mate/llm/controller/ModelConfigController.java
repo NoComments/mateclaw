@@ -160,6 +160,21 @@ public class ModelConfigController {
         return R.ok(modelConfigService.updateModel(entity));
     }
 
+    @Operation(summary = "更新模型的显式多模态声明（模型管理「多模态」勾选框）")
+    @PutMapping("/{id}/modalities")
+    public R<Void> updateModalities(@PathVariable Long id, @RequestBody UpdateModalitiesRequest request) {
+        modelConfigService.updateModalities(id, request.modalities());
+        return R.ok();
+    }
+
+    /**
+     * Request body for {@link #updateModalities}: the new modalities declaration as a JSON
+     * array string (e.g. {@code "[\"vision\"]"}) to override heuristics, or {@code null} to
+     * clear it and defer to {@link vip.mate.llm.service.ModelCapabilityService} heuristics.
+     */
+    public record UpdateModalitiesRequest(String modalities) {
+    }
+
     @Operation(summary = "删除模型")
     @DeleteMapping("/{id}")
     public R<Void> delete(@PathVariable Long id) {

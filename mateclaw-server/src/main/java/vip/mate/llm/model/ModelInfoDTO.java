@@ -4,6 +4,8 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
+
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -40,6 +42,30 @@ public class ModelInfoDTO {
      * <p>Derived from the model name so every construction site stays consistent.
      */
     private boolean supportsThinking;
+
+    /**
+     * Numeric {@code mate_model_config.id} of the row backing this model entry.
+     * Lets the UI call the per-model update endpoints (e.g. {@code PUT /models/{id}/modalities})
+     * without a separate lookup. Null only for ad-hoc entries not backed by a config row.
+     */
+    private Long configId;
+
+    /**
+     * Explicit modality declaration stored on {@code mate_model_config.modalities} - a JSON
+     * array of lowercase modality names (e.g. {@code ["vision"]}), or null when the model
+     * defers to {@link vip.mate.llm.service.ModelCapabilityService}'s name-based heuristics.
+     * Round-tripped to the UI so the "multimodal" checkbox reflects the explicit override
+     * (checked = non-null), independent of the effective capability below.
+     */
+    private String modalities;
+
+    /**
+     * Effective modality set resolved by {@link vip.mate.llm.service.ModelCapabilityService#resolve}
+     * (explicit declaration if present, otherwise the built-in heuristic table). Uppercase
+     * modality names ({@code TEXT / VISION / VIDEO / AUDIO}). Lets the UI show what the model
+     * actually supports at runtime - e.g. an unchecked qwen-vl still shows "视觉" via heuristic.
+     */
+    private List<String> resolvedModalities;
 
     public ModelInfoDTO(String id, String name) {
         this.id = id;

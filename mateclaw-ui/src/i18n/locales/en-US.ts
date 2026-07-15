@@ -668,6 +668,8 @@ export default {
       modelAddFailed: 'Failed to add model',
       modelRemoveFailed: 'Failed to remove model',
       activeChangeFailed: 'Failed to change active model',
+      multimodalUpdated: 'Multimodal setting updated',
+      multimodalUpdateFailed: 'Failed to update multimodal setting',
       deleteConfirm: 'Delete provider "{name}"?',
       removeConfirm: 'Remove model "{name}"?',
       generateConfigInvalidJson: 'Generate kwargs is not valid JSON',
@@ -763,6 +765,9 @@ export default {
         searchStrategy: 'Search Strategy',
         modelId: 'Model ID',
         modelDisplayName: 'Display Name',
+        multimodal: 'Multimodal (vision)',
+        multimodalHint: 'Checked = explicitly mark this model as vision-capable (overrides auto-detection); unchecked = defer to model-name heuristics',
+        effectiveVision: 'Vision',
       },
       actions: {
         manageModels: 'Manage Models',

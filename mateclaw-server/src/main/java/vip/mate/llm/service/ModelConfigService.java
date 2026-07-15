@@ -1,6 +1,7 @@
 package vip.mate.llm.service;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
@@ -216,6 +217,25 @@ public class ModelConfigService {
         ensureDefaultExists();
         publishConfigChanged("model-updated");
         return getModel(entity.getId());
+    }
+
+    /**
+     * Update only the explicit {@code modalities} declaration on a model config row.
+     * Backs the model-management UI "multimodal" checkbox: checked writes
+     * {@code ["vision"]} (overrides name-based heuristics), unchecked writes {@code null}
+     * (defers to {@link ModelCapabilityService} heuristics).
+     *
+     * <p>Uses a {@link LambdaUpdateWrapper} {@code .set(...)} rather than {@code updateById}
+     * so a {@code null} value actually clears the column - MyBatis-Plus' default NOT_NULL
+     * update strategy would otherwise skip null fields and leave the stale declaration.
+     */
+    public void updateModalities(Long id, String modalities) {
+        getModel(id); // throws MateClawException if the row doesn't exist
+        modelConfigMapper.update(null,
+                new LambdaUpdateWrapper<ModelConfigEntity>()
+                        .eq(ModelConfigEntity::getId, id)
+                        .set(ModelConfigEntity::getModalities, modalities));
+        publishConfigChanged("modalities-updated");
     }
 
     public void deleteModel(Long id) {
