@@ -13,7 +13,9 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import vip.mate.analytics.controller.DatasetController;
+import vip.mate.analytics.storage.DynamicTableService;
 import vip.mate.common.result.R;
 
 import java.io.ByteArrayOutputStream;
@@ -25,6 +27,9 @@ import java.util.concurrent.atomic.AtomicReference;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.catchThrowable;
 import static org.junit.jupiter.api.Assertions.assertAll;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.Mockito.doThrow;
 
 /**
  * Integration test for the one-step upload: a single multipart call must create
@@ -56,6 +61,9 @@ class DatasetCreateFromFileTest {
 
     @Autowired
     JdbcTemplate jdbc;
+
+    @MockitoSpyBean
+    DynamicTableService dynamicTable;
 
     /** Builds a 2-column, 2-row .xlsx in memory. */
     private MockMultipartFile xlsx() throws IOException {
@@ -132,6 +140,88 @@ class DatasetCreateFromFileTest {
 
         // The physical table must NOT carry a dataset_id column any more
         assertThat(rows.get(0)).doesNotContainKey("dataset_id");
+
+        jdbc.execute("DROP TABLE IF EXISTS " + saved.getPhysicalTable());
+    }
+
+    @Test
+    @DisplayName("reserved-word headers are mangled and upload end to end")
+    void reservedWordHeaderUploadsAndRemainsQueryable() throws IOException {
+        String fieldsJson = """
+                [{"fieldName":"Order","fieldType":"STRING","ordinal":0},
+                 {"fieldName":"Amount","fieldType":"DECIMAL","ordinal":1}]
+                """;
+
+        ResponseEntity<R<DatasetController.CreateDatasetResponse>> response =
+                controller.createFromFile(
+                        xlsx(new String[]{"Order", "Amount"}, new Object[][]{{"A-100", 25.5}}),
+                        "Orders", fieldsJson, null, 9L, 42L);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        DatasetController.CreateDatasetResponse body = response.getBody().getData();
+        Dataset saved = datasetRepo.selectById(body.dataset().getId());
+        List<DatasetField> fields = fieldRepo.selectList(
+                new com.baomidou.mybatisplus.core.conditions.query.QueryWrapper<DatasetField>()
+                        .eq("dataset_id", saved.getId()).orderByAsc("ordinal"));
+        List<Map<String, Object>> rows = jdbc.queryForList(
+                "SELECT order_col, amount FROM " + saved.getPhysicalTable());
+
+        assertAll(
+                () -> assertThat(body.uploadLog().getStatus()).isEqualTo("SUCCESS"),
+                () -> assertThat(body.uploadLog().getRowsInserted()).isEqualTo(1),
+                () -> assertThat(fields).extracting(DatasetField::getFieldCode)
+                        .containsExactly("order_col", "amount"),
+                () -> assertThat(rows).hasSize(1),
+                () -> assertThat(rows.get(0).get("order_col")).isEqualTo("A-100"),
+                () -> assertThat(rows.get(0).get("amount").toString()).isEqualTo("25.5000"));
+
+        jdbc.execute("DROP TABLE IF EXISTS " + saved.getPhysicalTable());
+    }
+
+    @Test
+    @DisplayName("an ensureTable failure removes the just-created dataset and fields")
+    void ensureTableFailureLeavesNoActiveMetadata() throws IOException {
+        long datasetsBefore = datasetRepo.selectCount(null);
+        long fieldsBefore = fieldRepo.selectCount(null);
+        doThrow(new IllegalStateException("forced ensureTable failure"))
+                .when(dynamicTable).ensureTable(any(Dataset.class), anyList());
+
+        Throwable failure = catchThrowable(() -> controller.createFromFile(
+                xlsx(new String[]{"Amount"}, new Object[][]{{25.5}}),
+                "DDL failure", "[{\"fieldName\":\"Amount\",\"fieldType\":\"DECIMAL\",\"ordinal\":0}]",
+                null, 9L, 42L));
+
+        assertAll(
+                () -> assertThat(failure).isInstanceOf(IllegalStateException.class)
+                        .hasMessage("forced ensureTable failure"),
+                () -> assertThat(datasetRepo.selectCount(null)).isEqualTo(datasetsBefore),
+                () -> assertThat(fieldRepo.selectCount(null)).isEqualTo(fieldsBefore));
+    }
+
+    @Test
+    @DisplayName("headers differing only inside parentheses keep values in their exact columns")
+    void parentheticalHeadersIngestIntoTheirExactColumns() throws IOException {
+        String fieldsJson = """
+                [{"fieldName":"金额(元)","fieldType":"DECIMAL","ordinal":0},
+                 {"fieldName":"金额(万元)","fieldType":"DECIMAL","ordinal":1}]
+                """;
+
+        ResponseEntity<R<DatasetController.CreateDatasetResponse>> response =
+                controller.createFromFile(
+                        xlsx(new String[]{"金额(元)", "金额(万元)"}, new Object[][]{{100.0, 0.01}}),
+                        "金额单位", fieldsJson, null, 9L, 42L);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        DatasetController.CreateDatasetResponse body = response.getBody().getData();
+        Dataset saved = datasetRepo.selectById(body.dataset().getId());
+        List<Map<String, Object>> rows = jdbc.queryForList(
+                "SELECT field, field_2 FROM " + saved.getPhysicalTable());
+
+        assertAll(
+                () -> assertThat(body.uploadLog().getStatus()).isEqualTo("SUCCESS"),
+                () -> assertThat(rows).hasSize(1),
+                () -> assertThat(rows.get(0).get("field").toString()).isEqualTo("100.0000"),
+                () -> assertThat(rows.get(0).get("field_2").toString()).isEqualTo("0.0100"));
 
         jdbc.execute("DROP TABLE IF EXISTS " + saved.getPhysicalTable());
     }

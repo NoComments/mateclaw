@@ -129,10 +129,17 @@ async function onAppendFilePicked(e: Event) {
   try {
     const res = await uploadExcel(appendTargetId.value, file)
     const log = res.data
-    if (log.rowsRejected > 0) {
+    if (log.status === 'FAILED') {
+      ElMessage.error(log.errorSummary || t('analytics.ingestFailed'))
+      return
+    }
+    if (log.status === 'PARTIAL') {
       ElMessage.warning(t('analytics.partialIngest', { ok: log.rowsInserted, bad: log.rowsRejected }))
-    } else {
+    } else if (log.status === 'SUCCESS') {
       ElMessage.success(t('analytics.ingestOk', { ok: log.rowsInserted }))
+    } else {
+      ElMessage.error(t('analytics.ingestFailed'))
+      return
     }
     await loadData()
   } catch (err: unknown) {
@@ -149,7 +156,7 @@ function goToUploadHistory(row: Dataset) {
 }
 
 function goToAnalysis(row: Dataset) {
-  router.push({ path: '/chat', query: { agentId: ANALYST_AGENT_ID } })
+  router.push({ path: '/chat', query: { agentId: ANALYST_AGENT_ID, datasetId: row.id } })
 }
 
 function onCreated(datasetId: string) {

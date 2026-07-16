@@ -94,6 +94,23 @@ class DatasetServiceTest {
     }
 
     @Test
+    void prepareFields_manglesReservedWordsBeforeDeduplicatingCodes() {
+        DatasetField reserved = new DatasetField();
+        reserved.setFieldName("Order");
+        reserved.setFieldType("STRING");
+
+        DatasetField colliding = new DatasetField();
+        colliding.setFieldName("Order Col");
+        colliding.setFieldType("DECIMAL");
+
+        service.prepareFields(List.of(reserved, colliding));
+
+        assertThat(reserved.getFieldCode()).isEqualTo("order_col");
+        assertThat(colliding.getFieldCode()).isEqualTo("order_col_2");
+        verifyNoInteractions(datasetRepo, fieldRepo, jdbc);
+    }
+
+    @Test
     void prepareFields_rejectsUnsafeGeneratedCodeWithoutDatabaseAccess() {
         DatasetField field = new DatasetField();
         field.setFieldName("2024");

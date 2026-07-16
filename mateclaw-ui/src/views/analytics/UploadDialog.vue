@@ -9,6 +9,13 @@
   >
     <!-- Step 1: pick a file -->
     <div v-if="step === 'pick'" class="upload-body">
+      <el-alert
+        v-if="inspectError"
+        :title="inspectError"
+        type="error"
+        :closable="false"
+        show-icon
+      />
       <el-upload
         ref="uploadRef"
         class="upload-dragger"
@@ -125,12 +132,14 @@ const sheetName = ref('')
 const inspecting = ref(false)
 const creating = ref(false)
 const inspectResult = ref<InspectResult | null>(null)
+const inspectError = ref('')
 const datasetName = ref('')
 const editableFields = ref<InspectedField[]>([])
 
 function onFileChange(file: UploadFile) {
   if (file.raw) {
     selectedFile.value = file.raw
+    inspectError.value = ''
     // Default the dataset name to the file name without its extension.
     datasetName.value = (file.name || '').replace(/\.[^.]+$/, '')
   }
@@ -138,18 +147,24 @@ function onFileChange(file: UploadFile) {
 
 function onFileRemove() {
   selectedFile.value = null
+  inspectError.value = ''
 }
 
 async function handleInspect() {
   if (!selectedFile.value) return
   inspecting.value = true
+  inspectError.value = ''
   try {
     const res = await inspectFile(selectedFile.value, sheetName.value.trim() || undefined)
+    if (!res.data.suggestedFields.length) {
+      inspectError.value = t('analytics.inspectNoHeaders')
+      return
+    }
     inspectResult.value = res.data
     editableFields.value = res.data.suggestedFields.map((f) => ({ ...f }))
     step.value = 'confirm'
   } catch (e: unknown) {
-    ElMessage.error(e instanceof Error ? e.message : String(e))
+    inspectError.value = e instanceof Error ? e.message : t('analytics.inspectNoHeaders')
   } finally {
     inspecting.value = false
   }
@@ -166,12 +181,19 @@ async function handleCreate() {
       sheet: sheetName.value.trim() || undefined,
     })
     const { dataset, uploadLog } = res.data
-    if (uploadLog.rowsRejected > 0) {
+    if (uploadLog.status === 'FAILED') {
+      ElMessage.error(uploadLog.errorSummary || t('analytics.ingestFailed'))
+      return
+    }
+    if (uploadLog.status === 'PARTIAL') {
       ElMessage.warning(
         t('analytics.partialIngest', { ok: uploadLog.rowsInserted, bad: uploadLog.rowsRejected })
       )
-    } else {
+    } else if (uploadLog.status === 'SUCCESS') {
       ElMessage.success(t('analytics.ingestOk', { ok: uploadLog.rowsInserted }))
+    } else {
+      ElMessage.error(t('analytics.ingestFailed'))
+      return
     }
     emit('update:modelValue', false)
     emit('created', dataset.id)
@@ -189,6 +211,7 @@ function resetState() {
   inspecting.value = false
   creating.value = false
   inspectResult.value = null
+  inspectError.value = ''
   datasetName.value = ''
   editableFields.value = []
   uploadRef.value?.clearFiles()

@@ -18,7 +18,6 @@ import java.util.HexFormat;
 import java.util.List;
 import java.util.Set;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 /**
  * Manages the lifecycle of physical {@code dataset_*} tables in the database.

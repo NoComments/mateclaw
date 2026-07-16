@@ -108,4 +108,35 @@ class ExcelHeaderMatcherTest {
         assertEquals("end_stock", result.get(2));
         assertFalse(result.containsKey(1)); // unknown column not in result
     }
+
+    @Test
+    void exactMatchesWinOverParenFallbackRegardlessOfFieldOrder() {
+        List<String> headers = List.of("金额(元)", "金额(万元)");
+        List<DatasetField> fields = List.of(
+                field("amount_ten_thousand", "金额(万元)", true),
+                field("amount_yuan", "金额(元)", true)
+        );
+
+        Map<Integer, String> result = ExcelHeaderMatcher.match(headers, fields);
+
+        assertEquals(2, result.size());
+        assertEquals("amount_yuan", result.get(0));
+        assertEquals("amount_ten_thousand", result.get(1));
+    }
+
+    @Test
+    void collidingParenFallbacksThrowAndNameAmbiguousHeaders() {
+        List<String> headers = List.of("金额");
+        List<DatasetField> fields = List.of(
+                field("amount_yuan", "金额(元)", true),
+                field("amount_ten_thousand", "金额(万元)", true)
+        );
+
+        IllegalArgumentException ex = assertThrows(
+                IllegalArgumentException.class,
+                () -> ExcelHeaderMatcher.match(headers, fields));
+
+        assertTrue(ex.getMessage().contains("金额(元)"));
+        assertTrue(ex.getMessage().contains("金额(万元)"));
+    }
 }

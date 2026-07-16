@@ -93,4 +93,13 @@ class ExcelInspectServiceTest {
                 .isThrownBy(() -> service.inspect(new ByteArrayInputStream(data), "不存在的Sheet"))
                 .withMessageContaining("Sheet not found");
     }
+
+    @Test
+    void inspect_throwsWhenNoHeadersCanBeInferred() throws IOException {
+        byte[] data = xlsx("Sheet1", new String[]{}, null);
+
+        assertThatIllegalArgumentException()
+                .isThrownBy(() -> service.inspect(new ByteArrayInputStream(data), null))
+                .withMessageContaining("表头");
+    }
 }

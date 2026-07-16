@@ -137,19 +137,22 @@ class DatasetUploadControllerTest {
     }
 
     @Test
-    @DisplayName("POST /{id}/upload throws for non-xlsx file")
-    void upload_nonXlsxFile_throwsIllegalArgument() {
+    @DisplayName("POST /{id}/upload returns 400 with a message for non-xlsx file")
+    void upload_nonXlsxFile_returnsBadRequest() {
         MockMultipartFile csv = new MockMultipartFile(
                 "file", "data.csv", "text/csv", "a,b\n1,2".getBytes());
 
-        org.junit.jupiter.api.Assertions.assertThrows(
-                IllegalArgumentException.class,
-                () -> controller.upload(DATASET_ID, csv, null, null));
+        ResponseEntity<R<DatasetUploadLog>> response =
+                controller.upload(DATASET_ID, csv, null, null);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+        assertThat(response.getBody().getMsg())
+                .isEqualTo("Only .xlsx files are accepted; received: data.csv");
     }
 
     @Test
-    @DisplayName("POST /{id}/upload throws for oversized file")
-    void upload_oversizedFile_throwsIllegalArgument() {
+    @DisplayName("POST /{id}/upload returns 400 with a message for oversized file")
+    void upload_oversizedFile_returnsBadRequest() {
         // Create a byte array > 50 MB
         byte[] bigData = new byte[51 * 1024 * 1024];
         MockMultipartFile big = new MockMultipartFile(
@@ -157,9 +160,25 @@ class DatasetUploadControllerTest {
                 "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
                 bigData);
 
-        org.junit.jupiter.api.Assertions.assertThrows(
-                IllegalArgumentException.class,
-                () -> controller.upload(DATASET_ID, big, null, null));
+        ResponseEntity<R<DatasetUploadLog>> response =
+                controller.upload(DATASET_ID, big, null, null);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+        assertThat(response.getBody().getMsg()).contains("50 MB");
+    }
+
+    @Test
+    @DisplayName("POST /{id}/upload reports FAILED when the sheet has no ingestable rows")
+    void upload_headerOnlyFile_returnsFailedLog() throws IOException {
+        ResponseEntity<R<DatasetUploadLog>> response =
+                controller.upload(DATASET_ID, buildHeaderOnlyXlsx(), null, null);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        DatasetUploadLog log = response.getBody().getData();
+        assertThat(log.getStatus()).isEqualTo("FAILED");
+        assertThat(log.getRowsInserted()).isZero();
+        assertThat(log.getRowsRejected()).isZero();
+        assertThat(log.getErrorSummary()).isEqualTo("No ingestable rows found in sheet");
     }
 
     // ── helpers ───────────────────────────────────────────────────────────────
@@ -187,6 +206,20 @@ class DatasetUploadControllerTest {
             return new MockMultipartFile(
                     "file",
                     "test.xlsx",
+                    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                    out.toByteArray());
+        }
+    }
+
+    private MockMultipartFile buildHeaderOnlyXlsx() throws IOException {
+        try (XSSFWorkbook wb = new XSSFWorkbook()) {
+            XSSFSheet sheet = wb.createSheet("Sheet1");
+            sheet.createRow(0).createCell(0).setCellValue("期末存栏");
+
+            ByteArrayOutputStream out = new ByteArrayOutputStream();
+            wb.write(out);
+            return new MockMultipartFile(
+                    "file", "header-only.xlsx",
                     "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
                     out.toByteArray());
         }

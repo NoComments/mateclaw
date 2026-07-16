@@ -77,7 +77,11 @@ public class DatasetUploadController {
             @RequestHeader(value = "X-User-Id", required = false) Long userId) {
 
         // ── 1. File validation ────────────────────────────────────────────────
-        DatasetFileValidator.validate(file);
+        try {
+            DatasetFileValidator.validate(file);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(R.fail(e.getMessage()));
+        }
 
         // ── 2. Load dataset → fields ─────────────────────────────────────────
         Dataset ds = datasetRepo.selectById(id);
@@ -115,7 +119,12 @@ public class DatasetUploadController {
             uploadLog.setRowsInserted(result.inserted());
             uploadLog.setRowsRejected(result.rejected());
 
-            if (result.rejected() == 0) {
+            if (result.inserted() == 0) {
+                uploadLog.setStatus("FAILED");
+                uploadLog.setErrorSummary(result.errors().isEmpty()
+                        ? "No ingestable rows found in sheet"
+                        : String.join("; ", result.errors()));
+            } else if (result.rejected() == 0) {
                 uploadLog.setStatus("SUCCESS");
             } else if (result.inserted() > 0) {
                 uploadLog.setStatus("PARTIAL");

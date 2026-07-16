@@ -129,7 +129,16 @@ public class DatasetController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(R.fail(e.getMessage()));
         }
 
-        dynamicTable.ensureTable(ds, fields);
+        try {
+            dynamicTable.ensureTable(ds, fields);
+        } catch (RuntimeException ddlFailure) {
+            try {
+                datasetService.delete(ds.getId());
+            } catch (RuntimeException cleanupFailure) {
+                ddlFailure.addSuppressed(cleanupFailure);
+            }
+            throw ddlFailure;
+        }
 
         DatasetUploadLog uploadLog = new DatasetUploadLog();
         uploadLog.setDatasetId(ds.getId());

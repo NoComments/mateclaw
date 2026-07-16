@@ -16,19 +16,6 @@ export interface Dataset {
   deleted: number
 }
 
-export interface DatasetField {
-  id: string
-  datasetId: string
-  fieldCode: string
-  fieldName: string
-  fieldType: FieldType
-  fieldUnit?: string
-  semantic?: string
-  isNullable: boolean
-  ordinal: number
-  excelHeader: string
-}
-
 export interface DatasetUploadLog {
   id: string
   datasetId: string
