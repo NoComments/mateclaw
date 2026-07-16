@@ -17,9 +17,9 @@ import java.util.regex.Pattern;
  *   <li>Strip-parens match: both sides strip {@code （...）} and {@code (...)} then compare.</li>
  * </ol>
  *
- * <p>Required fields (isNullable=false) that have no matching
- * header column cause an {@link IllegalArgumentException} listing all missing field codes.
- * Nullable fields with no match are silently skipped.
+ * <p>Every field must match a header because one-step upload fields come from inspection
+ * of this same workbook. Any unmatched expected header causes an
+ * {@link IllegalArgumentException} that lists the missing headers.
  */
 public final class ExcelHeaderMatcher {
 
@@ -36,7 +36,7 @@ public final class ExcelHeaderMatcher {
      * @param headers  ordered list of header strings from Excel row 0 (may include unknown columns)
      * @param fields   field definitions from the dataset
      * @return {@code Map<columnIndex, fieldCode>} for every matched field
-     * @throws IllegalArgumentException if any required (non-nullable) field has no matching column
+     * @throws IllegalArgumentException if any field has no matching column
      */
     public static Map<Integer, String> match(List<String> headers, List<DatasetField> fields) {
         Map<Integer, String> result = new HashMap<>();
@@ -48,17 +48,13 @@ public final class ExcelHeaderMatcher {
             if (idx >= 0) {
                 result.put(idx, field.getFieldCode());
             } else {
-                boolean required = !Boolean.TRUE.equals(field.getIsNullable());
-                if (required) {
-                    missing.add(field.getFieldCode());
-                }
-                // nullable with no match → silently skip
+                missing.add(field.getExcelHeader());
             }
         }
 
         if (!missing.isEmpty()) {
             throw new IllegalArgumentException(
-                    "Excel 表头缺少以下必填字段: " + String.join(", ", missing));
+                    "Excel 表头未找到以下字段: " + String.join(", ", missing));
         }
 
         return result;

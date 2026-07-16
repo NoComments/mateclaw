@@ -161,7 +161,7 @@ public class DynamicTableService {
      *
      * @throws IllegalArgumentException if the name does not match {@link #SAFE_NAME}
      */
-    private static void validateName(String name, String label) {
+    public static void validateName(String name, String label) {
         if (name == null || !SAFE_NAME.matcher(name).matches()) {
             throw new IllegalArgumentException(
                 "Unsafe " + label + " '" + name + "': must match ^[a-z][a-z0-9_]{0,62}$");

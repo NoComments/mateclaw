@@ -69,27 +69,26 @@ class ExcelHeaderMatcherTest {
                 IllegalArgumentException.class,
                 () -> ExcelHeaderMatcher.match(headers, fields)
         );
-        assertTrue(ex.getMessage().contains("end_stock"),
-                "Exception message should list the missing field code: " + ex.getMessage());
+        assertTrue(ex.getMessage().contains("期末存栏（只）"),
+                "Exception message should list the unmatched Excel header: " + ex.getMessage());
     }
 
-    // ── Test 4: skips nullable field with no matching header ──────────────────
+    // ── Test 4: every requested field must match this inspected workbook ──────
 
     @Test
-    void nullableFieldWithNoMatch_silentlySkipped() {
+    void nullableFieldWithNoMatch_throwsAndNamesExpectedHeader() {
         List<String> headers = List.of("养殖场编码");
         List<DatasetField> fields = List.of(
                 field("farm_code", "养殖场编码", false),
-                field("remark", "备注", true)          // nullable, no matching header
+                field("remark", "备注", true)
         );
 
-        Map<Integer, String> result = assertDoesNotThrow(
-                () -> ExcelHeaderMatcher.match(headers, fields)
-        );
+        IllegalArgumentException ex = assertThrows(
+                IllegalArgumentException.class,
+                () -> ExcelHeaderMatcher.match(headers, fields));
 
-        assertEquals(1, result.size());
-        assertEquals("farm_code", result.get(0));
-        assertFalse(result.containsValue("remark"));
+        assertTrue(ex.getMessage().contains("备注"),
+                "Exception message should name the unmatched Excel header: " + ex.getMessage());
     }
 
     // ── Test 5: extra/unknown columns in Excel should not throw ───────────────

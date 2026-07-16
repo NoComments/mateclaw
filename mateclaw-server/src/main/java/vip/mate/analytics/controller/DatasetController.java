@@ -13,7 +13,6 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import vip.mate.analytics.dataset.Dataset;
 import vip.mate.analytics.dataset.DatasetField;
-import vip.mate.analytics.dataset.DatasetRepository;
 import vip.mate.analytics.dataset.DatasetService;
 import vip.mate.analytics.dataset.DatasetUploadLog;
 import vip.mate.analytics.dataset.DatasetUploadLogRepository;
@@ -47,7 +46,6 @@ import java.util.Map;
 public class DatasetController {
 
     private final DatasetService datasetService;
-    private final DatasetRepository datasetRepo;
     private final DatasetUploadLogRepository uploadLogRepo;
     private final DynamicTableService dynamicTable;
     private final ExcelParseService parse;
@@ -79,9 +77,13 @@ public class DatasetController {
     public ResponseEntity<R<InspectResult>> inspect(
             @RequestParam("file") MultipartFile file,
             @RequestParam(value = "sheet", required = false) String sheet) throws IOException {
-        validateFile(file);
-        try (InputStream in = file.getInputStream()) {
-            return ResponseEntity.ok(R.ok(inspectService.inspect(in, sheet)));
+        try {
+            DatasetFileValidator.validate(file);
+            try (InputStream in = file.getInputStream()) {
+                return ResponseEntity.ok(R.ok(inspectService.inspect(in, sheet)));
+            }
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(R.fail(e.getMessage()));
         }
     }
 
@@ -104,15 +106,28 @@ public class DatasetController {
             @RequestHeader(value = "X-Workspace-Id", required = false) Long workspaceId,
             @RequestHeader(value = "X-User-Id", required = false) Long userId) throws IOException {
 
-        validateFile(file);
-
-        List<DatasetField> fields = parseFields(fieldsJson);
+        List<DatasetField> fields;
+        List<ParsedRow> rows;
+        try {
+            DatasetFileValidator.validate(file);
+            fields = parseFields(fieldsJson);
+            datasetService.prepareFields(fields);
+            try (InputStream in = file.getInputStream()) {
+                rows = parse.parse(in, fields, sheet);
+            }
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(R.fail(e.getMessage()));
+        }
 
         Dataset ds = new Dataset();
         ds.setWorkspaceId(workspaceId);
         ds.setName(name);
         ds.setRowCount(0);
-        datasetService.createWithFields(ds, fields);
+        try {
+            datasetService.createWithFields(ds, fields);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(R.fail(e.getMessage()));
+        }
 
         dynamicTable.ensureTable(ds, fields);
 
@@ -126,13 +141,17 @@ public class DatasetController {
         uploadLogRepo.insert(uploadLog);
 
         try {
-            List<ParsedRow> rows = parse.parse(file.getInputStream(), fields, sheet);
             IngestResult result = ingest.ingest(ds, fields, rows, uploadLog.getId());
 
             uploadLog.setRowsReceived(rows.size());
             uploadLog.setRowsInserted(result.inserted());
             uploadLog.setRowsRejected(result.rejected());
-            if (result.rejected() == 0) {
+            if (result.inserted() == 0) {
+                uploadLog.setStatus("FAILED");
+                uploadLog.setErrorSummary(result.errors().isEmpty()
+                        ? "No ingestable rows found in sheet"
+                        : String.join("; ", result.errors()));
+            } else if (result.rejected() == 0) {
                 uploadLog.setStatus("SUCCESS");
             } else if (result.inserted() > 0) {
                 uploadLog.setStatus("PARTIAL");
@@ -141,13 +160,6 @@ public class DatasetController {
                 uploadLog.setStatus("FAILED");
                 uploadLog.setErrorSummary(String.join("; ", result.errors()));
             }
-
-            ds.setRowCount(result.inserted());
-            ds.setLastUploadAt(LocalDateTime.now());
-            datasetRepo.updateById(ds);
-        } catch (IOException e) {
-            uploadLog.setStatus("FAILED");
-            uploadLog.setErrorSummary("File read error: " + e.getMessage());
         } catch (IllegalArgumentException e) {
             uploadLog.setStatus("FAILED");
             uploadLog.setErrorSummary(e.getMessage());
@@ -234,12 +246,17 @@ public class DatasetController {
     private List<DatasetField> parseFields(String fieldsJson) {
         try {
             JsonNode arr = objectMapper.readTree(fieldsJson);
+            if (arr == null || !arr.isArray()) {
+                throw new IllegalArgumentException("字段定义必须是 JSON 数组");
+            }
             List<DatasetField> out = new ArrayList<>();
             int i = 0;
             for (JsonNode n : arr) {
                 DatasetField f = new DatasetField();
                 f.setFieldName(n.path("fieldName").asText());
-                f.setFieldType(n.path("fieldType").asText("STRING"));
+                JsonNode fieldType = n.get("fieldType");
+                f.setFieldType(fieldType == null || fieldType.isNull()
+                        ? "STRING" : fieldType.asText());
                 if (n.hasNonNull("fieldUnit")) {
                     f.setFieldUnit(n.get("fieldUnit").asText());
                 }
@@ -251,22 +268,6 @@ public class DatasetController {
             return out;
         } catch (IOException e) {
             throw new IllegalArgumentException("字段定义格式错误: " + e.getMessage());
-        }
-    }
-
-    /** Validates file size and extension. Mirrors DatasetUploadController.validateFile. */
-    private void validateFile(MultipartFile file) {
-        if (file == null || file.isEmpty()) {
-            throw new IllegalArgumentException("Upload file must not be empty");
-        }
-        if (file.getSize() > 50L * 1024 * 1024) {
-            throw new IllegalArgumentException(
-                    "File too large: " + file.getSize() + " bytes (max 50 MB)");
-        }
-        String originalName = file.getOriginalFilename();
-        if (originalName == null || !originalName.toLowerCase().endsWith(".xlsx")) {
-            throw new IllegalArgumentException(
-                    "Only .xlsx files are accepted; received: " + originalName);
         }
     }
 }

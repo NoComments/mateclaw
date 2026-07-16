@@ -4,8 +4,10 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
+import vip.mate.analytics.storage.DynamicTableService;
 
 import java.util.HashSet;
 import java.util.List;
@@ -26,6 +28,48 @@ public class DatasetService {
     private final DatasetFieldRepository fieldRepo;
 
     /**
+     * Derives and validates field metadata without reading or writing the database.
+     *
+     * <p>This method is explicitly non-transactional so one-step upload callers can
+     * understand and validate the workbook schema before any persistent work begins.
+     * Existing field codes are preserved for callers that already prepared their fields.
+     *
+     * @param fields ordered field definitions to prepare in place
+     */
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
+    public void prepareFields(List<DatasetField> fields) {
+        if (fields == null || fields.isEmpty()) {
+            throw new IllegalArgumentException("数据集至少需要一个字段");
+        }
+
+        Set<String> usedFieldNames = new HashSet<>();
+        for (DatasetField f : fields) {
+            if (!StringUtils.hasText(f.getFieldName())) {
+                throw new IllegalArgumentException("字段名不能为空");
+            }
+            if (!usedFieldNames.add(f.getFieldName().trim())) {
+                throw new IllegalArgumentException("字段名重复: " + f.getFieldName());
+            }
+            FieldType.fromString(f.getFieldType());
+        }
+
+        Set<String> usedFieldCodes = new HashSet<>();
+        for (DatasetField f : fields) {
+            if (!StringUtils.hasText(f.getFieldCode())) {
+                f.setFieldCode(generateUniqueFieldCodeInBatch(f.getFieldName(), usedFieldCodes));
+            }
+            DynamicTableService.validateName(f.getFieldCode(), "fieldCode");
+            usedFieldCodes.add(f.getFieldCode());
+            if (!StringUtils.hasText(f.getExcelHeader())) {
+                f.setExcelHeader(f.getFieldName());
+            }
+            if (f.getIsNullable() == null) {
+                f.setIsNullable(true);
+            }
+        }
+    }
+
+    /**
      * Create a dataset together with its schema, then name its physical table after
      * the generated id.
      *
@@ -40,15 +84,7 @@ public class DatasetService {
         if (!StringUtils.hasText(ds.getName())) {
             throw new IllegalArgumentException("数据集名称不能为空");
         }
-        if (fields == null || fields.isEmpty()) {
-            throw new IllegalArgumentException("数据集至少需要一个字段");
-        }
-        for (DatasetField f : fields) {
-            if (!StringUtils.hasText(f.getFieldName())) {
-                throw new IllegalArgumentException("字段名不能为空");
-            }
-            FieldType.fromString(f.getFieldType());
-        }
+        prepareFields(fields);
 
         if (ds.getRowCount() == null) {
             ds.setRowCount(0);
@@ -59,18 +95,7 @@ public class DatasetService {
         ds.setPhysicalTable("dataset_" + ds.getId());
         datasetRepo.updateById(ds);
 
-        Set<String> usedFieldCodes = new HashSet<>();
         for (DatasetField f : fields) {
-            if (!StringUtils.hasText(f.getFieldCode())) {
-                f.setFieldCode(generateUniqueFieldCodeInBatch(f.getFieldName(), usedFieldCodes));
-            }
-            usedFieldCodes.add(f.getFieldCode());
-            if (!StringUtils.hasText(f.getExcelHeader())) {
-                f.setExcelHeader(f.getFieldName());
-            }
-            if (f.getIsNullable() == null) {
-                f.setIsNullable(true);
-            }
             f.setDatasetId(ds.getId());
             fieldRepo.insert(f);
         }

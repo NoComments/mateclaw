@@ -10,7 +10,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.mock.web.MockMultipartFile;
 import vip.mate.analytics.dataset.Dataset;
-import vip.mate.analytics.dataset.DatasetRepository;
 import vip.mate.analytics.dataset.DatasetService;
 import vip.mate.analytics.dataset.DatasetUploadLog;
 import vip.mate.analytics.dataset.DatasetUploadLogRepository;
@@ -38,7 +37,6 @@ import static org.mockito.Mockito.*;
 class DatasetControllerTest {
 
     private DatasetService datasetService;
-    private DatasetRepository datasetRepo;
     private DatasetUploadLogRepository uploadLogRepo;
     private DynamicTableService dynamicTable;
     private ExcelParseService parse;
@@ -51,7 +49,6 @@ class DatasetControllerTest {
     @BeforeEach
     void setUp() {
         datasetService = mock(DatasetService.class);
-        datasetRepo = mock(DatasetRepository.class);
         uploadLogRepo = mock(DatasetUploadLogRepository.class);
         dynamicTable = mock(DynamicTableService.class);
         parse = mock(ExcelParseService.class);
@@ -60,7 +57,7 @@ class DatasetControllerTest {
         objectMapper = new ObjectMapper();
         jdbc = mock(JdbcTemplate.class);
         controller = new DatasetController(
-                datasetService, datasetRepo, uploadLogRepo, dynamicTable,
+                datasetService, uploadLogRepo, dynamicTable,
                 parse, ingest, inspectService, objectMapper, jdbc);
     }
 
@@ -110,7 +107,7 @@ class DatasetControllerTest {
                 "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
                 new byte[]{1});
         String fieldsJson = """
-                [{"fieldName":"Amount","fieldType":"DECIMAL","ordinal":0}]
+                [{"fieldName":"Amount","fieldType":null,"ordinal":0}]
                 """;
 
         doAnswer(invocation -> {
@@ -135,12 +132,50 @@ class DatasetControllerTest {
                         ds.getWorkspaceId().equals(5L)
                         && ds.getName().equals("My Dataset")),
                 argThat(fields -> fields.size() == 1
-                        && fields.get(0).getFieldName().equals("Amount")));
+                        && fields.get(0).getFieldName().equals("Amount")
+                        && fields.get(0).getFieldType().equals("STRING")));
         verify(uploadLogRepo).insert((DatasetUploadLog) argThat((DatasetUploadLog log) ->
                 log.getDatasetId().equals(10L)
                         && log.getUploader().equals(7L)));
         assertThat(response.getBody().getData().dataset().getId()).isEqualTo(10L);
-        assertThat(response.getBody().getData().uploadLog().getStatus()).isEqualTo("SUCCESS");
+        assertThat(response.getBody().getData().uploadLog().getStatus()).isEqualTo("FAILED");
+        assertThat(response.getBody().getData().uploadLog().getErrorSummary())
+                .isEqualTo("No ingestable rows found in sheet");
+    }
+
+    @Test
+    @DisplayName("POST /api/analytics/datasets rejects a fields object with a clear 400")
+    void createFromFile_rejectsFieldsObject() throws IOException {
+        MockMultipartFile file = new MockMultipartFile(
+                "file", "sales.xlsx",
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                new byte[]{1});
+
+        ResponseEntity<R<DatasetController.CreateDatasetResponse>> response =
+                controller.createFromFile(
+                        file, "My Dataset",
+                        "{\"fieldName\":\"Amount\",\"fieldType\":\"DECIMAL\"}",
+                        null, 5L, 7L);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+        assertThat(response.getBody().getMsg()).isEqualTo("字段定义必须是 JSON 数组");
+        verifyNoInteractions(uploadLogRepo, dynamicTable, parse, ingest);
+        verify(datasetService, never()).createWithFields(any(), anyList());
+    }
+
+    @Test
+    @DisplayName("POST /api/analytics/datasets/inspect returns validation errors as 400")
+    void inspect_returns400ForInvalidFile() throws IOException {
+        MockMultipartFile file = new MockMultipartFile(
+                "file", "sales.txt", "text/plain", new byte[]{1});
+
+        ResponseEntity<R<ExcelInspectService.InspectResult>> response =
+                controller.inspect(file, null);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+        assertThat(response.getBody().getMsg())
+                .isEqualTo("Only .xlsx files are accepted; received: sales.txt");
+        verifyNoInteractions(inspectService);
     }
 
     // ------------------------------------------------------------------ get

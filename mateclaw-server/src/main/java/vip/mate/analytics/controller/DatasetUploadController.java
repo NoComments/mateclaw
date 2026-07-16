@@ -52,9 +52,6 @@ import java.util.Objects;
 @Slf4j
 public class DatasetUploadController {
 
-    /** Maximum accepted file size: 50 MB. */
-    private static final long MAX_FILE_BYTES = 50L * 1024 * 1024;
-
     private final DatasetRepository datasetRepo;
     private final DatasetFieldRepository fieldRepo;
     private final DatasetUploadLogRepository uploadLogRepo;
@@ -80,7 +77,7 @@ public class DatasetUploadController {
             @RequestHeader(value = "X-User-Id", required = false) Long userId) {
 
         // ── 1. File validation ────────────────────────────────────────────────
-        validateFile(file);
+        DatasetFileValidator.validate(file);
 
         // ── 2. Load dataset → fields ─────────────────────────────────────────
         Dataset ds = datasetRepo.selectById(id);
@@ -144,25 +141,4 @@ public class DatasetUploadController {
         return ResponseEntity.ok(R.ok(uploadLog));
     }
 
-    // ── private helpers ───────────────────────────────────────────────────────
-
-    /**
-     * Validates file size and extension.
-     *
-     * @throws IllegalArgumentException if validation fails
-     */
-    private void validateFile(MultipartFile file) {
-        if (file == null || file.isEmpty()) {
-            throw new IllegalArgumentException("Upload file must not be empty");
-        }
-        if (file.getSize() > MAX_FILE_BYTES) {
-            throw new IllegalArgumentException(
-                    "File too large: " + file.getSize() + " bytes (max 50 MB)");
-        }
-        String originalName = file.getOriginalFilename();
-        if (originalName == null || !originalName.toLowerCase().endsWith(".xlsx")) {
-            throw new IllegalArgumentException(
-                    "Only .xlsx files are accepted; received: " + originalName);
-        }
-    }
 }

@@ -71,6 +71,57 @@ class DatasetServiceTest {
         verify(fieldRepo).insert(field);
     }
 
+    @Test
+    void prepareFields_derivesDefaultsAndDeduplicatesCodesWithoutDatabaseAccess() {
+        DatasetField first = new DatasetField();
+        first.setFieldName("Total Sales");
+        first.setFieldType("decimal");
+
+        DatasetField second = new DatasetField();
+        second.setFieldName("Total-Sales");
+        second.setFieldType("STRING");
+        second.setIsNullable(false);
+
+        service.prepareFields(List.of(first, second));
+
+        assertThat(first.getFieldCode()).isEqualTo("total_sales");
+        assertThat(first.getExcelHeader()).isEqualTo("Total Sales");
+        assertThat(first.getIsNullable()).isTrue();
+        assertThat(second.getFieldCode()).isEqualTo("total_sales_2");
+        assertThat(second.getExcelHeader()).isEqualTo("Total-Sales");
+        assertThat(second.getIsNullable()).isFalse();
+        verifyNoInteractions(datasetRepo, fieldRepo, jdbc);
+    }
+
+    @Test
+    void prepareFields_rejectsUnsafeGeneratedCodeWithoutDatabaseAccess() {
+        DatasetField field = new DatasetField();
+        field.setFieldName("2024");
+        field.setFieldType("DECIMAL");
+
+        assertThatIllegalArgumentException()
+                .isThrownBy(() -> service.prepareFields(List.of(field)))
+                .withMessage("Unsafe fieldCode '2024': must match ^[a-z][a-z0-9_]{0,62}$");
+
+        verifyNoInteractions(datasetRepo, fieldRepo, jdbc);
+    }
+
+    @Test
+    void prepareFields_rejectsDuplicateFieldNamesWithoutDatabaseAccess() {
+        DatasetField first = new DatasetField();
+        first.setFieldName("Amount");
+        first.setFieldType("DECIMAL");
+        DatasetField duplicate = new DatasetField();
+        duplicate.setFieldName("Amount");
+        duplicate.setFieldType("DECIMAL");
+
+        assertThatIllegalArgumentException()
+                .isThrownBy(() -> service.prepareFields(List.of(first, duplicate)))
+                .withMessage("字段名重复: Amount");
+
+        verifyNoInteractions(datasetRepo, fieldRepo, jdbc);
+    }
+
     // ------------------------------------------------------------------ listByWorkspace
 
     /** listByWorkspace() must query with correct workspaceId condition. */
