@@ -1,5 +1,7 @@
 package vip.mate.analytics.controller;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -8,13 +10,26 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 import vip.mate.analytics.dataset.Dataset;
+import vip.mate.analytics.dataset.DatasetField;
 import vip.mate.analytics.dataset.DatasetRepository;
 import vip.mate.analytics.dataset.DatasetService;
 import vip.mate.analytics.dataset.DatasetUploadLog;
 import vip.mate.analytics.dataset.DatasetUploadLogRepository;
+import vip.mate.analytics.storage.DynamicTableService;
+import vip.mate.analytics.upload.ExcelIngestService;
+import vip.mate.analytics.upload.ExcelInspectService;
+import vip.mate.analytics.upload.ExcelInspectService.InspectResult;
+import vip.mate.analytics.upload.ExcelParseService;
+import vip.mate.analytics.upload.IngestResult;
+import vip.mate.analytics.upload.ParsedRow;
 import vip.mate.common.result.R;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -34,6 +49,11 @@ public class DatasetController {
     private final DatasetService datasetService;
     private final DatasetRepository datasetRepo;
     private final DatasetUploadLogRepository uploadLogRepo;
+    private final DynamicTableService dynamicTable;
+    private final ExcelParseService parse;
+    private final ExcelIngestService ingest;
+    private final ExcelInspectService inspectService;
+    private final ObjectMapper objectMapper;
     private final JdbcTemplate jdbc;
 
     // ------------------------------------------------------------------ list
@@ -47,20 +67,95 @@ public class DatasetController {
 
     // ------------------------------------------------------------------ create
 
-    @Operation(summary = "Create a new dataset")
-    @PostMapping
-    public R<Dataset> create(
-            @RequestBody CreateDatasetRequest body,
-            @RequestHeader("X-Workspace-Id") long workspaceId,
-            @RequestHeader(value = "X-User-Id", required = false) Long userId) {
-        Dataset ds = new Dataset();
-        ds.setName(body.name());
-        ds.setDescription(body.description());
-        ds.setWorkspaceId(workspaceId);
-        if (userId != null) {
-            ds.setCreator(userId);
+    /** Response of the one-step upload: the dataset plus the log of its first ingest. */
+    public record CreateDatasetResponse(Dataset dataset, DatasetUploadLog uploadLog) {}
+
+    /**
+     * Inspect a file's headers and infer field definitions. Nothing is persisted —
+     * the client shows these for confirmation, then posts them back to {@link #createFromFile}.
+     */
+    @Operation(summary = "Infer field definitions from a file without persisting")
+    @PostMapping("/inspect")
+    public ResponseEntity<R<InspectResult>> inspect(
+            @RequestParam("file") MultipartFile file,
+            @RequestParam(value = "sheet", required = false) String sheet) throws IOException {
+        validateFile(file);
+        try (InputStream in = file.getInputStream()) {
+            return ResponseEntity.ok(R.ok(inspectService.inspect(in, sheet)));
         }
-        return R.ok(datasetService.create(ds));
+    }
+
+    /**
+     * Create a dataset from a file in one call: persist schema, create the physical
+     * table, and ingest every row. The file is uploaded exactly once.
+     *
+     * @param file       multipart .xlsx (required)
+     * @param name       dataset name
+     * @param fieldsJson JSON array of {fieldName, fieldType, fieldUnit?, ordinal}
+     * @param sheet      optional sheet name; first sheet when omitted
+     */
+    @Operation(summary = "Create a dataset from a file and ingest it in one call")
+    @PostMapping
+    public ResponseEntity<R<CreateDatasetResponse>> createFromFile(
+            @RequestParam("file") MultipartFile file,
+            @RequestParam("name") String name,
+            @RequestParam("fields") String fieldsJson,
+            @RequestParam(value = "sheet", required = false) String sheet,
+            @RequestHeader(value = "X-Workspace-Id", required = false) Long workspaceId,
+            @RequestHeader(value = "X-User-Id", required = false) Long userId) throws IOException {
+
+        validateFile(file);
+
+        List<DatasetField> fields = parseFields(fieldsJson);
+
+        Dataset ds = new Dataset();
+        ds.setWorkspaceId(workspaceId);
+        ds.setName(name);
+        ds.setRowCount(0);
+        datasetService.createWithFields(ds, fields);
+
+        dynamicTable.ensureTable(ds, fields);
+
+        DatasetUploadLog uploadLog = new DatasetUploadLog();
+        uploadLog.setDatasetId(ds.getId());
+        uploadLog.setFileName(file.getOriginalFilename());
+        uploadLog.setFileSize(file.getSize());
+        uploadLog.setStatus("PROCESSING");
+        uploadLog.setUploader(userId);
+        uploadLog.setUploadTime(LocalDateTime.now());
+        uploadLogRepo.insert(uploadLog);
+
+        try {
+            List<ParsedRow> rows = parse.parse(file.getInputStream(), fields, sheet);
+            IngestResult result = ingest.ingest(ds, fields, rows, uploadLog.getId());
+
+            uploadLog.setRowsReceived(rows.size());
+            uploadLog.setRowsInserted(result.inserted());
+            uploadLog.setRowsRejected(result.rejected());
+            if (result.rejected() == 0) {
+                uploadLog.setStatus("SUCCESS");
+            } else if (result.inserted() > 0) {
+                uploadLog.setStatus("PARTIAL");
+                uploadLog.setErrorSummary(String.join("; ", result.errors()));
+            } else {
+                uploadLog.setStatus("FAILED");
+                uploadLog.setErrorSummary(String.join("; ", result.errors()));
+            }
+
+            ds.setRowCount(result.inserted());
+            ds.setLastUploadAt(LocalDateTime.now());
+            datasetRepo.updateById(ds);
+        } catch (IOException e) {
+            uploadLog.setStatus("FAILED");
+            uploadLog.setErrorSummary("File read error: " + e.getMessage());
+        } catch (IllegalArgumentException e) {
+            uploadLog.setStatus("FAILED");
+            uploadLog.setErrorSummary(e.getMessage());
+        } finally {
+            uploadLogRepo.updateById(uploadLog);
+        }
+
+        return ResponseEntity.ok(R.ok(new CreateDatasetResponse(ds, uploadLog)));
     }
 
     // ------------------------------------------------------------------ get one
@@ -135,8 +230,43 @@ public class DatasetController {
         }
     }
 
-    // ------------------------------------------------------------------ request record
+    /** Maps the client's field JSON onto entities. Physical column names are derived server-side. */
+    private List<DatasetField> parseFields(String fieldsJson) {
+        try {
+            JsonNode arr = objectMapper.readTree(fieldsJson);
+            List<DatasetField> out = new ArrayList<>();
+            int i = 0;
+            for (JsonNode n : arr) {
+                DatasetField f = new DatasetField();
+                f.setFieldName(n.path("fieldName").asText());
+                f.setFieldType(n.path("fieldType").asText("STRING"));
+                if (n.hasNonNull("fieldUnit")) {
+                    f.setFieldUnit(n.get("fieldUnit").asText());
+                }
+                f.setOrdinal(n.path("ordinal").asInt(i));
+                f.setIsNullable(true);
+                out.add(f);
+                i++;
+            }
+            return out;
+        } catch (IOException e) {
+            throw new IllegalArgumentException("字段定义格式错误: " + e.getMessage());
+        }
+    }
 
-    /** Request body for dataset creation. */
-    public record CreateDatasetRequest(String name, String description) {}
+    /** Validates file size and extension. Mirrors DatasetUploadController.validateFile. */
+    private void validateFile(MultipartFile file) {
+        if (file == null || file.isEmpty()) {
+            throw new IllegalArgumentException("Upload file must not be empty");
+        }
+        if (file.getSize() > 50L * 1024 * 1024) {
+            throw new IllegalArgumentException(
+                    "File too large: " + file.getSize() + " bytes (max 50 MB)");
+        }
+        String originalName = file.getOriginalFilename();
+        if (originalName == null || !originalName.toLowerCase().endsWith(".xlsx")) {
+            throw new IllegalArgumentException(
+                    "Only .xlsx files are accepted; received: " + originalName);
+        }
+    }
 }

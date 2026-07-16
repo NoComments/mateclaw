@@ -1,5 +1,6 @@
 package vip.mate.analytics.controller;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -7,14 +8,21 @@ import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.jdbc.core.JdbcTemplate;
-import vip.mate.analytics.controller.DatasetController.CreateDatasetRequest;
+import org.springframework.mock.web.MockMultipartFile;
 import vip.mate.analytics.dataset.Dataset;
 import vip.mate.analytics.dataset.DatasetRepository;
 import vip.mate.analytics.dataset.DatasetService;
 import vip.mate.analytics.dataset.DatasetUploadLog;
 import vip.mate.analytics.dataset.DatasetUploadLogRepository;
+import vip.mate.analytics.storage.DynamicTableService;
+import vip.mate.analytics.upload.ExcelIngestService;
+import vip.mate.analytics.upload.ExcelInspectService;
+import vip.mate.analytics.upload.ExcelParseService;
+import vip.mate.analytics.upload.IngestResult;
 import vip.mate.common.result.R;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.List;
 import java.util.Map;
 
@@ -32,6 +40,11 @@ class DatasetControllerTest {
     private DatasetService datasetService;
     private DatasetRepository datasetRepo;
     private DatasetUploadLogRepository uploadLogRepo;
+    private DynamicTableService dynamicTable;
+    private ExcelParseService parse;
+    private ExcelIngestService ingest;
+    private ExcelInspectService inspectService;
+    private ObjectMapper objectMapper;
     private JdbcTemplate jdbc;
     private DatasetController controller;
 
@@ -40,8 +53,15 @@ class DatasetControllerTest {
         datasetService = mock(DatasetService.class);
         datasetRepo = mock(DatasetRepository.class);
         uploadLogRepo = mock(DatasetUploadLogRepository.class);
+        dynamicTable = mock(DynamicTableService.class);
+        parse = mock(ExcelParseService.class);
+        ingest = mock(ExcelIngestService.class);
+        inspectService = mock(ExcelInspectService.class);
+        objectMapper = new ObjectMapper();
         jdbc = mock(JdbcTemplate.class);
-        controller = new DatasetController(datasetService, datasetRepo, uploadLogRepo, jdbc);
+        controller = new DatasetController(
+                datasetService, datasetRepo, uploadLogRepo, dynamicTable,
+                parse, ingest, inspectService, objectMapper, jdbc);
     }
 
     // ------------------------------------------------------------------ list
@@ -83,26 +103,44 @@ class DatasetControllerTest {
     // ------------------------------------------------------------------ create
 
     @Test
-    @DisplayName("POST /api/analytics/datasets stamps workspaceId and creator from headers")
-    void create_stampsWorkspaceAndCreator() {
-        Dataset saved = new Dataset();
-        saved.setId(10L);
-        saved.setWorkspaceId(5L);
-        saved.setName("My Dataset");
-        saved.setDescription("desc");
-        saved.setCreator(7L);
+    @DisplayName("POST /api/analytics/datasets stamps workspaceId and uploader from headers")
+    void createFromFile_stampsWorkspaceAndUploader() throws IOException {
+        MockMultipartFile file = new MockMultipartFile(
+                "file", "sales.xlsx",
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                new byte[]{1});
+        String fieldsJson = """
+                [{"fieldName":"Amount","fieldType":"DECIMAL","ordinal":0}]
+                """;
 
-        when(datasetService.create(any(Dataset.class))).thenReturn(saved);
+        doAnswer(invocation -> {
+            Dataset ds = invocation.getArgument(0);
+            ds.setId(10L);
+            ds.setPhysicalTable("dataset_10");
+            return ds;
+        }).when(datasetService).createWithFields(any(Dataset.class), anyList());
+        doAnswer(invocation -> {
+            DatasetUploadLog log = invocation.getArgument(0);
+            log.setId(20L);
+            return 1;
+        }).when(uploadLogRepo).insert((DatasetUploadLog) any());
+        when(parse.parse(any(InputStream.class), anyList(), isNull())).thenReturn(List.of());
+        when(ingest.ingest(any(Dataset.class), anyList(), anyList(), eq(20L)))
+                .thenReturn(new IngestResult(0, 0, List.of()));
 
-        CreateDatasetRequest body = new CreateDatasetRequest("My Dataset", "desc");
-        R<Dataset> response = controller.create(body, 5L, 7L);
+        ResponseEntity<R<DatasetController.CreateDatasetResponse>> response =
+                controller.createFromFile(file, "My Dataset", fieldsJson, null, 5L, 7L);
 
-        verify(datasetService).create(argThat(ds ->
-                ds.getWorkspaceId().equals(5L)
-                && ds.getName().equals("My Dataset")
-                && ds.getDescription().equals("desc")
-                && Long.valueOf(7L).equals(ds.getCreator())));
-        assertThat(response.getData().getId()).isEqualTo(10L);
+        verify(datasetService).createWithFields(argThat(ds ->
+                        ds.getWorkspaceId().equals(5L)
+                        && ds.getName().equals("My Dataset")),
+                argThat(fields -> fields.size() == 1
+                        && fields.get(0).getFieldName().equals("Amount")));
+        verify(uploadLogRepo).insert((DatasetUploadLog) argThat((DatasetUploadLog log) ->
+                log.getDatasetId().equals(10L)
+                        && log.getUploader().equals(7L)));
+        assertThat(response.getBody().getData().dataset().getId()).isEqualTo(10L);
+        assertThat(response.getBody().getData().uploadLog().getStatus()).isEqualTo("SUCCESS");
     }
 
     // ------------------------------------------------------------------ get

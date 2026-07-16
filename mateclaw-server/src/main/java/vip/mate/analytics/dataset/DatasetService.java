@@ -26,17 +26,6 @@ public class DatasetService {
     private final DatasetFieldRepository fieldRepo;
 
     /**
-     * Insert a new empty dataset.
-     *
-     * @param ds dataset to persist; {@code workspaceId} must be set
-     * @return the same instance with its generated {@code id} populated
-     */
-    public Dataset create(Dataset ds) {
-        datasetRepo.insert(ds);
-        return ds;
-    }
-
-    /**
      * Create a dataset together with its schema, then name its physical table after
      * the generated id.
      *

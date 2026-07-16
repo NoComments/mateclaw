@@ -31,19 +31,17 @@ class DatasetServiceTest {
     @InjectMocks
     DatasetService service;
 
-    // ------------------------------------------------------------------ create
-
-    /** create() must delegate to datasetRepo.insert and return the same instance. */
     @Test
-    void create_insertsDataset() {
+    void createWithFields_rejectsEmptySchemaBeforeInsert() {
         Dataset ds = new Dataset();
         ds.setWorkspaceId(1L);
         ds.setName("my dataset");
 
-        Dataset result = service.create(ds);
+        assertThatIllegalArgumentException()
+                .isThrownBy(() -> service.createWithFields(ds, List.of()))
+                .withMessage("数据集至少需要一个字段");
 
-        verify(datasetRepo).insert(ds);
-        assertThat(result).isSameAs(ds);
+        verifyNoInteractions(datasetRepo, fieldRepo);
     }
 
     @Test
