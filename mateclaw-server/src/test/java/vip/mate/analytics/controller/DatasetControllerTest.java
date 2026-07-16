@@ -99,13 +99,21 @@ class DatasetControllerTest {
 
     // ------------------------------------------------------------------ create
 
+    /**
+     * Bytes that clear {@code DatasetFileValidator}'s content sniff. These tests mock
+     * the parser, so the payload only has to look like a zip — which every .xlsx is.
+     */
+    private static byte[] xlsxBytes() {
+        return new byte[]{0x50, 0x4B, 0x03, 0x04, 0, 0, 0, 0};
+    }
+
     @Test
     @DisplayName("POST /api/analytics/datasets stamps workspaceId and uploader from headers")
     void createFromFile_stampsWorkspaceAndUploader() throws IOException {
         MockMultipartFile file = new MockMultipartFile(
                 "file", "sales.xlsx",
                 "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                new byte[]{1});
+                xlsxBytes());
         String fieldsJson = """
                 [{"fieldName":"Amount","fieldType":null,"ordinal":0}]
                 """;
@@ -149,7 +157,7 @@ class DatasetControllerTest {
         MockMultipartFile file = new MockMultipartFile(
                 "file", "sales.xlsx",
                 "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                new byte[]{1});
+                xlsxBytes());
 
         ResponseEntity<R<DatasetController.CreateDatasetResponse>> response =
                 controller.createFromFile(
