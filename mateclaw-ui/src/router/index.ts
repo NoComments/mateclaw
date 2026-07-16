@@ -254,18 +254,6 @@ const router = createRouter({
               meta: { title: 'Analytics - Upload History' },
             },
             {
-              path: 'templates',
-              name: 'AnalyticsTemplates',
-              component: () => import('@/views/analytics/TemplateList.vue'),
-              meta: { title: 'Analytics - Templates' },
-            },
-            {
-              path: 'templates/:id/fields',
-              name: 'AnalyticsTemplateEditor',
-              component: () => import('@/views/analytics/TemplateEditor.vue'),
-              meta: { title: 'Analytics - Template Editor' },
-            },
-            {
               path: 'datasources',
               name: 'AnalyticsDatasources',
               component: () => import('@/views/analytics/DatasourceList.vue'),

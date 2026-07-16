@@ -1,13 +1,14 @@
 <template>
   <el-dialog
     :model-value="modelValue"
-    :title="t('analytics.upload')"
-    width="480px"
+    :title="t('analytics.uploadData')"
+    width="640px"
     :close-on-click-modal="false"
     @update:model-value="emit('update:modelValue', $event)"
     @closed="resetState"
   >
-    <div class="upload-body">
+    <!-- Step 1: pick a file -->
+    <div v-if="step === 'pick'" class="upload-body">
       <el-upload
         ref="uploadRef"
         class="upload-dragger"
@@ -25,7 +26,7 @@
             <line x1="12" y1="3" x2="12" y2="15"/>
           </svg>
         </div>
-        <div class="upload-hint">{{ t('analytics.upload') }}</div>
+        <div class="upload-hint">{{ t('analytics.dropFile') }}</div>
         <div class="upload-sub">{{ t('analytics.uploadSub') }}</div>
       </el-upload>
 
@@ -36,40 +37,63 @@
           :placeholder="t('analytics.sheetPlaceholder')"
           size="small"
           class="sheet-input"
-          :disabled="uploading"
         />
       </div>
+    </div>
 
-      <el-progress
-        v-if="uploading"
-        :percentage="uploadProgress"
-        status="active"
-        class="upload-progress"
+    <!-- Step 2: confirm the inferred schema -->
+    <div v-else class="upload-body">
+      <el-alert
+        v-if="inspectResult && !inspectResult.sampleRowAvailable"
+        :title="t('analytics.inspectNoSample')"
+        type="warning"
+        :closable="false"
       />
-
-      <div v-if="uploadResult" class="result-box">
-        <div class="result-row">
-          <span class="result-label">{{ t('analytics.rowsInserted') }}</span>
-          <span class="result-value success">{{ uploadResult.rowsInserted }}</span>
-        </div>
-        <div class="result-row">
-          <span class="result-label">{{ t('analytics.rowsRejected') }}</span>
-          <span class="result-value" :class="uploadResult.rowsRejected > 0 ? 'warn' : ''">
-            {{ uploadResult.rowsRejected }}
-          </span>
-        </div>
-      </div>
+      <el-form label-position="top">
+        <el-form-item :label="t('analytics.datasetName')" required>
+          <el-input v-model="datasetName" />
+        </el-form-item>
+      </el-form>
+      <el-table :data="editableFields" size="small" class="field-table">
+        <el-table-column :label="t('analytics.fieldName')" min-width="160">
+          <template #default="{ row }"><span>{{ row.fieldName }}</span></template>
+        </el-table-column>
+        <el-table-column :label="t('analytics.fieldType')" width="140">
+          <template #default="{ row }">
+            <el-select v-model="row.fieldType" size="small">
+              <el-option v-for="ft in FIELD_TYPES" :key="ft" :label="ft" :value="ft" />
+            </el-select>
+          </template>
+        </el-table-column>
+        <el-table-column width="60">
+          <template #default="{ $index }">
+            <el-button link type="danger" size="small" @click="editableFields.splice($index, 1)">
+              {{ t('common.delete') }}
+            </el-button>
+          </template>
+        </el-table-column>
+      </el-table>
     </div>
 
     <template #footer>
       <el-button @click="emit('update:modelValue', false)">{{ t('common.cancel') }}</el-button>
       <el-button
+        v-if="step === 'pick'"
         type="primary"
-        :loading="uploading"
+        :loading="inspecting"
         :disabled="!selectedFile"
-        @click="handleUpload"
+        @click="handleInspect"
       >
-        {{ t('analytics.startUpload') }}
+        {{ t('analytics.nextStep') }}
+      </el-button>
+      <el-button
+        v-else
+        type="primary"
+        :loading="creating"
+        :disabled="!datasetName.trim() || !editableFields.length"
+        @click="handleCreate"
+      >
+        {{ t('analytics.createAndAnalyze') }}
       </el-button>
     </template>
   </el-dialog>
@@ -80,31 +104,35 @@ import { ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { ElMessage } from 'element-plus'
 import type { UploadFile, UploadInstance } from 'element-plus'
-import { uploadExcel } from '@/api/analytics'
-import type { DatasetUploadLog } from '@/types/analytics'
+import { inspectFile, createDatasetFromFile } from '@/api/analytics'
+import type { InspectResult, InspectedField, FieldType } from '@/types/analytics'
 
-const props = defineProps<{
-  datasetId: string
-  modelValue: boolean
-}>()
+defineProps<{ modelValue: boolean }>()
 
 const emit = defineEmits<{
   (e: 'update:modelValue', value: boolean): void
-  (e: 'uploaded'): void
+  (e: 'created', datasetId: string): void
 }>()
 
 const { t } = useI18n()
 
+const FIELD_TYPES: FieldType[] = ['STRING', 'INT', 'DECIMAL', 'BOOLEAN', 'DATE']
+
+const step = ref<'pick' | 'confirm'>('pick')
 const uploadRef = ref<UploadInstance>()
 const selectedFile = ref<File | null>(null)
 const sheetName = ref('')
-const uploading = ref(false)
-const uploadProgress = ref(0)
-const uploadResult = ref<DatasetUploadLog | null>(null)
+const inspecting = ref(false)
+const creating = ref(false)
+const inspectResult = ref<InspectResult | null>(null)
+const datasetName = ref('')
+const editableFields = ref<InspectedField[]>([])
 
 function onFileChange(file: UploadFile) {
   if (file.raw) {
     selectedFile.value = file.raw
+    // Default the dataset name to the file name without its extension.
+    datasetName.value = (file.name || '').replace(/\.[^.]+$/, '')
   }
 }
 
@@ -112,34 +140,57 @@ function onFileRemove() {
   selectedFile.value = null
 }
 
-async function handleUpload() {
+async function handleInspect() {
   if (!selectedFile.value) return
-  uploading.value = true
-  uploadProgress.value = 10
-  uploadResult.value = null
+  inspecting.value = true
   try {
-    uploadProgress.value = 40
-    const res = await uploadExcel(
-      props.datasetId,
-      selectedFile.value,
-      sheetName.value.trim() || undefined
-    )
-    uploadProgress.value = 100
-    uploadResult.value = res.data
-    emit('uploaded')
+    const res = await inspectFile(selectedFile.value, sheetName.value.trim() || undefined)
+    inspectResult.value = res.data
+    editableFields.value = res.data.suggestedFields.map((f) => ({ ...f }))
+    step.value = 'confirm'
   } catch (e: unknown) {
     ElMessage.error(e instanceof Error ? e.message : String(e))
   } finally {
-    uploading.value = false
+    inspecting.value = false
+  }
+}
+
+async function handleCreate() {
+  if (!selectedFile.value) return
+  creating.value = true
+  try {
+    const res = await createDatasetFromFile({
+      file: selectedFile.value,
+      name: datasetName.value.trim(),
+      fields: editableFields.value.map((f, i) => ({ ...f, ordinal: i })),
+      sheet: sheetName.value.trim() || undefined,
+    })
+    const { dataset, uploadLog } = res.data
+    if (uploadLog.rowsRejected > 0) {
+      ElMessage.warning(
+        t('analytics.partialIngest', { ok: uploadLog.rowsInserted, bad: uploadLog.rowsRejected })
+      )
+    } else {
+      ElMessage.success(t('analytics.ingestOk', { ok: uploadLog.rowsInserted }))
+    }
+    emit('update:modelValue', false)
+    emit('created', dataset.id)
+  } catch (e: unknown) {
+    ElMessage.error(e instanceof Error ? e.message : String(e))
+  } finally {
+    creating.value = false
   }
 }
 
 function resetState() {
+  step.value = 'pick'
   selectedFile.value = null
   sheetName.value = ''
-  uploading.value = false
-  uploadProgress.value = 0
-  uploadResult.value = null
+  inspecting.value = false
+  creating.value = false
+  inspectResult.value = null
+  datasetName.value = ''
+  editableFields.value = []
   uploadRef.value?.clearFiles()
 }
 </script>
@@ -189,41 +240,5 @@ function resetState() {
   flex: 1;
 }
 
-.upload-progress {
-  margin-top: 4px;
-}
-
-.result-box {
-  background: var(--mc-bg-elevated);
-  border: 1px solid var(--mc-border-light);
-  border-radius: 8px;
-  padding: 12px 16px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.result-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-size: 13px;
-}
-
-.result-label {
-  color: var(--mc-text-secondary);
-}
-
-.result-value {
-  font-weight: 600;
-  color: var(--mc-text-primary);
-}
-
-.result-value.success {
-  color: var(--el-color-success);
-}
-
-.result-value.warn {
-  color: var(--el-color-warning);
-}
+.field-table { max-height: 320px; overflow-y: auto; }
 </style>
