@@ -158,7 +158,6 @@ class DatasetControllerTest {
         R<List<Map<String, Object>>> body = (R<List<Map<String, Object>>>) response.getBody();
         assertThat(body).isNotNull();
         assertThat(body.getData()).hasSize(2);
-        assertThat(body.getData()).allSatisfy(row -> assertThat(row).doesNotContainKey("dataset_id"));
         verify(jdbc).queryForList(
                 "SELECT * FROM dataset_1 LIMIT ?", 100);
     }

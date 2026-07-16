@@ -17,7 +17,7 @@ import java.util.regex.Pattern;
  *   <li>Strip-parens match: both sides strip {@code （...）} and {@code (...)} then compare.</li>
  * </ol>
  *
- * <p>Required fields (isNullable=false, any isPartitionKey value) that have no matching
+ * <p>Required fields (isNullable=false) that have no matching
  * header column cause an {@link IllegalArgumentException} listing all missing field codes.
  * Nullable fields with no match are silently skipped.
  */
@@ -34,7 +34,7 @@ public final class ExcelHeaderMatcher {
      * Maps Excel column indices to field codes.
      *
      * @param headers  ordered list of header strings from Excel row 0 (may include unknown columns)
-     * @param fields   field definitions from the dataset template
+     * @param fields   field definitions from the dataset
      * @return {@code Map<columnIndex, fieldCode>} for every matched field
      * @throws IllegalArgumentException if any required (non-nullable) field has no matching column
      */

@@ -119,4 +119,26 @@ class DatasetServiceTest {
 
         assertThat(result).isNull();
     }
+
+    // ------------------------------------------------------------------ delete
+
+    /**
+     * delete() must reject a physicalTable that isn't a {@code dataset_*} table
+     * (e.g. an application table like {@code mate_user}) and must never issue a
+     * DROP TABLE against it.
+     */
+    @Test
+    void delete_rejectsNonDatasetPhysicalTableName() {
+        Dataset ds = new Dataset();
+        ds.setId(1L);
+        ds.setPhysicalTable("mate_user");
+
+        when(datasetRepo.selectById(1L)).thenReturn(ds);
+
+        assertThatIllegalArgumentException()
+                .isThrownBy(() -> service.delete(1L))
+                .withMessageContaining("mate_user");
+
+        verify(jdbc, never()).execute(anyString());
+    }
 }

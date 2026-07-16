@@ -163,6 +163,29 @@ class DynamicTableServiceTest {
         }
     }
 
+    /** A field with isNullable=false must produce a NOT NULL column on CREATE TABLE. */
+    @Test
+    void ensureTable_createsNotNullColumnForNonNullableField() {
+        Dataset ds = insertDataset("test_dyn4");
+
+        DatasetField required = field("crop_code", "STRING", 0);
+        required.setIsNullable(false);
+        List<DatasetField> fields = List.of(required);
+
+        try {
+            service.ensureTable(ds, fields);
+
+            String isNullable = jdbc.queryForObject(
+                "SELECT IS_NULLABLE FROM INFORMATION_SCHEMA.COLUMNS "
+                    + "WHERE UPPER(TABLE_NAME) = UPPER(?) AND UPPER(COLUMN_NAME) = 'CROP_CODE'",
+                String.class, ds.getPhysicalTable());
+            assertThat(isNullable).isEqualTo("NO");
+        } finally {
+            jdbc.execute("DROP TABLE IF EXISTS " + ds.getPhysicalTable());
+            datasetRepo.deleteById(ds.getId());
+        }
+    }
+
     /** An unsafe physical table name must be rejected before any DB access. */
     @Test
     void ensureTable_rejectsUnsafeTableName() {

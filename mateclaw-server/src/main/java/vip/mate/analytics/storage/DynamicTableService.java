@@ -79,6 +79,9 @@ public class DynamicTableService {
                 validateName(col, "fieldCode");
                 if (!existing.contains(col.toLowerCase())) {
                     FieldType ft = FieldType.fromString(f.getFieldType());
+                    // Intentionally no NOT NULL here (unlike buildCreate): the table may
+                    // already hold rows, and adding a NOT NULL column to a non-empty table
+                    // without a DEFAULT fails on both H2 and MySQL.
                     String sql = "ALTER TABLE " + physicalTable + " ADD COLUMN "
                             + col + " " + PhysicalColumnType.sqlType(ft);
                     log.info("DynamicTableService: ALTER TABLE {} ADD COLUMN {} {}", physicalTable, col, PhysicalColumnType.sqlType(ft));
@@ -106,8 +109,9 @@ public class DynamicTableService {
         for (DatasetField f : fields) {
             validateName(f.getFieldCode(), "fieldCode");
             FieldType ft = FieldType.fromString(f.getFieldType());
+            String nullable = Boolean.FALSE.equals(f.getIsNullable()) ? " NOT NULL" : "";
             sb.append("  ").append(f.getFieldCode()).append(" ")
-              .append(PhysicalColumnType.sqlType(ft)).append(",\n");
+              .append(PhysicalColumnType.sqlType(ft)).append(nullable).append(",\n");
         }
         sb.setLength(sb.length() - 2);
         sb.append("\n)");

@@ -31,7 +31,7 @@ public class ExcelIngestService {
 
     private static final int BATCH_SIZE = 500;
 
-    /** Guards against SQL injection via misconfigured template physical table names. */
+    /** Guards against SQL injection via misconfigured dataset physical table names. */
     private static final Pattern SAFE_TABLE_NAME = Pattern.compile("^dataset_[a-z0-9_]+$");
 
     private final JdbcTemplate jdbc;

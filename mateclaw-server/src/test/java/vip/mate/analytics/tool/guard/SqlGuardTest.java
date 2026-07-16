@@ -67,6 +67,13 @@ class SqlGuardTest {
         assertDoesNotThrow(() -> SqlGuard.safen("SELECT id FROM mate_dataset LIMIT 100"));
     }
 
+    // acceptDatasetFieldTable — SELECT field_code, semantic FROM mate_dataset_field → valid
+    @Test
+    void acceptDatasetFieldTable() {
+        assertDoesNotThrow(() ->
+            SqlGuard.safen("SELECT field_code, semantic FROM mate_dataset_field WHERE dataset_id = 8002"));
+    }
+
     // appendsLimitWhenAbsent — "SELECT * FROM dataset_x" → returned SQL contains "LIMIT 10000"
     @Test
     void appendsLimitWhenAbsent() {

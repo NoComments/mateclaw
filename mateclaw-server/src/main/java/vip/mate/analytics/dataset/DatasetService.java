@@ -28,7 +28,7 @@ public class DatasetService {
     /**
      * Insert a new empty dataset.
      *
-     * @param ds dataset to persist; {@code workspaceId} and {@code templateId} must be set
+     * @param ds dataset to persist; {@code workspaceId} must be set
      * @return the same instance with its generated {@code id} populated
      */
     public Dataset create(Dataset ds) {
@@ -128,9 +128,13 @@ public class DatasetService {
 
         String physicalTable = ds.getPhysicalTable();
         if (physicalTable != null && !physicalTable.isBlank()) {
-            if (!physicalTable.matches("[a-z][a-z0-9_]{0,95}")) {
+            if (!physicalTable.matches("^dataset_[a-z0-9_]+$")) {
                 throw new IllegalArgumentException("Unsafe physical table name: " + physicalTable);
             }
+            // NOTE: DROP TABLE is DDL and causes an implicit commit on MySQL. If the
+            // datasetRepo.deleteById(id) call below throws, this DROP has already been
+            // committed and cannot be rolled back — the dataset metadata row would then
+            // survive pointing at a physical table that no longer exists.
             jdbc.execute("DROP TABLE IF EXISTS " + physicalTable);
         }
 

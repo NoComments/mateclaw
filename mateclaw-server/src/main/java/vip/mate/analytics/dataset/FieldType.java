@@ -1,7 +1,7 @@
 package vip.mate.analytics.dataset;
 
 /**
- * Supported column types for dataset template fields.
+ * Supported column types for dataset fields.
  */
 public enum FieldType {
     STRING, INT, DECIMAL, BOOLEAN, DATE;

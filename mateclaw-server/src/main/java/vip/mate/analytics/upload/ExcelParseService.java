@@ -40,7 +40,7 @@ public class ExcelParseService {
      * non-blank data row.
      *
      * @param in        input stream of an .xlsx file; caller is responsible for closing it
-     * @param fields    field definitions from the dataset template
+     * @param fields    field definitions from the dataset
      * @param sheetName name of the sheet to read; if {@code null} the first sheet is used
      * @return ordered list of parsed rows (header row excluded)
      * @throws IOException              if the stream cannot be read
