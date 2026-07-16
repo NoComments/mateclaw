@@ -134,6 +134,21 @@ class DatasetControllerTest {
     // ------------------------------------------------------------------ preview
 
     @Test
+    @DisplayName("preview refuses a physical table name outside the dataset_ namespace")
+    void preview_rejectsNonDatasetPhysicalTableName() {
+        Dataset ds = new Dataset();
+        ds.setId(1L);
+        ds.setPhysicalTable("mate_user");
+
+        when(datasetService.getById(1L)).thenReturn(ds);
+
+        ResponseEntity<?> response = controller.preview(1L, 100);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR);
+        verifyNoInteractions(jdbc);
+    }
+
+    @Test
     @DisplayName("GET /api/analytics/datasets/{id}/preview returns 200 with rows")
     void preview_returnsRowsFromPhysicalTable() {
         Dataset ds = new Dataset();

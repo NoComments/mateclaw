@@ -20,7 +20,7 @@ import java.util.Map;
 
 /**
  * Parses an uploaded .xlsx file into typed {@link ParsedRow} records using
- * a dataset template's field mapping.
+ * a dataset's field mapping.
  *
  * <p>Processing steps:
  * <ol>

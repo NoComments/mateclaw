@@ -92,8 +92,10 @@ public class DatasetController {
         }
 
         String physicalTable = ds.getPhysicalTable();
-        // Validate table name to prevent SQL injection — same guard as DatasetService.delete()
-        if (!physicalTable.matches("[a-z][a-z0-9_]{0,95}")) {
+        // Same guard as DatasetService.delete() and ExcelIngestService.SAFE_TABLE_NAME:
+        // only a dataset's own table is readable here, so a physical_table value that
+        // somehow named an application table cannot be selected from.
+        if (!physicalTable.matches("^dataset_[a-z0-9_]+$")) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(R.fail("Unsafe physical table name"));
         }
