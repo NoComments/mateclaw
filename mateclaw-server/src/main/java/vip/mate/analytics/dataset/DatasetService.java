@@ -23,22 +23,17 @@ import java.util.Set;
 @Transactional
 public class DatasetService {
 
-    /**
-     * Unquoted column identifiers empirically rejected by both H2 (MySQL mode)
-     * and MySQL: order, group, key, index, row, value, left, check, primary.
-     */
-    private static final Set<String> RESERVED_FIELD_CODES = Set.of(
-            "order", "group", "key", "index", "row", "value", "left", "check", "primary");
-
     private final DatasetRepository datasetRepo;
     private final JdbcTemplate jdbc;
     private final DatasetFieldRepository fieldRepo;
+    private final SqlReservedWords sqlReservedWords;
 
     /**
-     * Derives and validates field metadata without reading or writing the database.
+     * Derives and validates field metadata without reading or writing dataset data.
      *
      * <p>This method is explicitly non-transactional so one-step upload callers can
      * understand and validate the workbook schema before any persistent work begins.
+     * The first invocation may open a connection to resolve and cache SQL keyword metadata.
      * Existing field codes are preserved for callers that already prepared their fields.
      *
      * @param fields ordered field definitions to prepare in place
@@ -165,12 +160,12 @@ public class DatasetService {
         datasetRepo.deleteById(id);
     }
 
-    private static String generateUniqueFieldCodeInBatch(String fieldName, Set<String> usedCodes) {
+    private String generateUniqueFieldCodeInBatch(String fieldName, Set<String> usedCodes) {
         String base = slugify(fieldName);
         if (base.isEmpty()) {
             base = "field";
         }
-        if (RESERVED_FIELD_CODES.contains(base)) {
+        if (sqlReservedWords.isReserved(base)) {
             base += "_col";
         }
         String candidate = base;

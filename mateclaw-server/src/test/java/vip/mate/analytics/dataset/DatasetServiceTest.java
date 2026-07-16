@@ -28,6 +28,9 @@ class DatasetServiceTest {
     @Mock
     DatasetFieldRepository fieldRepo;
 
+    @Mock
+    SqlReservedWords sqlReservedWords;
+
     @InjectMocks
     DatasetService service;
 
@@ -102,6 +105,8 @@ class DatasetServiceTest {
         DatasetField colliding = new DatasetField();
         colliding.setFieldName("Order Col");
         colliding.setFieldType("DECIMAL");
+
+        when(sqlReservedWords.isReserved("order")).thenReturn(true);
 
         service.prepareFields(List.of(reserved, colliding));
 

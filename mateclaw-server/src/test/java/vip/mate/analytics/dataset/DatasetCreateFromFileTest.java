@@ -62,8 +62,19 @@ class DatasetCreateFromFileTest {
     @Autowired
     JdbcTemplate jdbc;
 
+    @Autowired
+    SqlReservedWords sqlReservedWords;
+
     @MockitoSpyBean
     DynamicTableService dynamicTable;
+
+    @Test
+    @DisplayName("resolved reserved words include the SQL:2003 baseline")
+    void resolvedReservedWordsIncludeSql2003Baseline() {
+        assertThat(sqlReservedWords.get()).contains(
+                "order", "group", "key", "index", "primary", "check",
+                "left", "value", "row", "desc");
+    }
 
     /** Builds a 2-column, 2-row .xlsx in memory. */
     private MockMultipartFile xlsx() throws IOException {
@@ -174,6 +185,40 @@ class DatasetCreateFromFileTest {
                 () -> assertThat(rows).hasSize(1),
                 () -> assertThat(rows.get(0).get("order_col")).isEqualTo("A-100"),
                 () -> assertThat(rows.get(0).get("amount").toString()).isEqualTo("25.5000"));
+
+        jdbc.execute("DROP TABLE IF EXISTS " + saved.getPhysicalTable());
+    }
+
+    @Test
+    @DisplayName("driver and standard reserved-word headers upload end to end")
+    void driverAndStandardReservedWordHeadersUploadAndRemainQueryable() throws IOException {
+        String fieldsJson = """
+                [{"fieldName":"Rank","fieldType":"DECIMAL","ordinal":0},
+                 {"fieldName":"Desc","fieldType":"STRING","ordinal":1}]
+                """;
+
+        ResponseEntity<R<DatasetController.CreateDatasetResponse>> response =
+                controller.createFromFile(
+                        xlsx(new String[]{"Rank", "Desc"}, new Object[][]{{1, "Highest"}}),
+                        "Rankings", fieldsJson, null, 9L, 42L);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        DatasetController.CreateDatasetResponse body = response.getBody().getData();
+        Dataset saved = datasetRepo.selectById(body.dataset().getId());
+        List<DatasetField> fields = fieldRepo.selectList(
+                new com.baomidou.mybatisplus.core.conditions.query.QueryWrapper<DatasetField>()
+                        .eq("dataset_id", saved.getId()).orderByAsc("ordinal"));
+        List<Map<String, Object>> rows = jdbc.queryForList(
+                "SELECT rank_col, desc_col FROM " + saved.getPhysicalTable());
+
+        assertAll(
+                () -> assertThat(body.uploadLog().getStatus()).isEqualTo("SUCCESS"),
+                () -> assertThat(body.uploadLog().getRowsInserted()).isEqualTo(1),
+                () -> assertThat(fields).extracting(DatasetField::getFieldCode)
+                        .containsExactly("rank_col", "desc_col"),
+                () -> assertThat(rows).hasSize(1),
+                () -> assertThat(rows.get(0).get("rank_col").toString()).isEqualTo("1.0000"),
+                () -> assertThat(rows.get(0).get("desc_col")).isEqualTo("Highest"));
 
         jdbc.execute("DROP TABLE IF EXISTS " + saved.getPhysicalTable());
     }
