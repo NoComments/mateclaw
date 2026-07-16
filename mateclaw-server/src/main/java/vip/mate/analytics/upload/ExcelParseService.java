@@ -7,8 +7,8 @@ import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
-import vip.mate.analytics.template.DatasetTemplateField;
-import vip.mate.analytics.template.FieldType;
+import vip.mate.analytics.dataset.DatasetField;
+import vip.mate.analytics.dataset.FieldType;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -20,7 +20,7 @@ import java.util.Map;
 
 /**
  * Parses an uploaded .xlsx file into typed {@link ParsedRow} records using
- * a dataset template's field mapping.
+ * a dataset's field mapping.
  *
  * <p>Processing steps:
  * <ol>
@@ -40,7 +40,7 @@ public class ExcelParseService {
      * non-blank data row.
      *
      * @param in        input stream of an .xlsx file; caller is responsible for closing it
-     * @param fields    field definitions from the dataset template
+     * @param fields    field definitions from the dataset
      * @param sheetName name of the sheet to read; if {@code null} the first sheet is used
      * @return ordered list of parsed rows (header row excluded)
      * @throws IOException              if the stream cannot be read
@@ -48,7 +48,7 @@ public class ExcelParseService {
      *                                  or if a required header column is missing
      */
     public List<ParsedRow> parse(InputStream in,
-                                 List<DatasetTemplateField> fields,
+                                 List<DatasetField> fields,
                                  @Nullable String sheetName) throws IOException {
 
         try (XSSFWorkbook wb = new XSSFWorkbook(in)) {
@@ -112,9 +112,9 @@ public class ExcelParseService {
         return headers;
     }
 
-    private Map<String, FieldType> buildTypeIndex(List<DatasetTemplateField> fields) {
+    private Map<String, FieldType> buildTypeIndex(List<DatasetField> fields) {
         Map<String, FieldType> index = new HashMap<>();
-        for (DatasetTemplateField f : fields) {
+        for (DatasetField f : fields) {
             if (f.getFieldType() != null) {
                 index.put(f.getFieldCode(), FieldType.fromString(f.getFieldType()));
             }

@@ -48,7 +48,7 @@ public class ExcelInspectService {
 
             Row headerRow = sheet.getRow(0);
             if (headerRow == null) {
-                return new InspectResult(List.of(), List.of(), false);
+                throw new IllegalArgumentException("无法推断 Excel 表头，请确认工作表第一行包含列名");
             }
 
             List<String> headers = extractHeaders(headerRow);
@@ -61,6 +61,10 @@ public class ExcelInspectService {
                 if (header == null || header.isBlank()) continue;
                 String type = hasSample ? inferType(sampleRow.getCell(i)) : "STRING";
                 fields.add(new InspectedField(header, type, i));
+            }
+
+            if (fields.isEmpty()) {
+                throw new IllegalArgumentException("无法推断 Excel 表头，请确认工作表第一行包含列名");
             }
 
             return new InspectResult(headers, fields, hasSample);

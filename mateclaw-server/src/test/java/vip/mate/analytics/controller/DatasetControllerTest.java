@@ -1,5 +1,6 @@
 package vip.mate.analytics.controller;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -7,16 +8,20 @@ import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.jdbc.core.JdbcTemplate;
-import vip.mate.analytics.controller.DatasetController.CreateDatasetRequest;
+import org.springframework.mock.web.MockMultipartFile;
 import vip.mate.analytics.dataset.Dataset;
-import vip.mate.analytics.dataset.DatasetRepository;
 import vip.mate.analytics.dataset.DatasetService;
 import vip.mate.analytics.dataset.DatasetUploadLog;
 import vip.mate.analytics.dataset.DatasetUploadLogRepository;
-import vip.mate.analytics.template.DatasetTemplate;
-import vip.mate.analytics.template.DatasetTemplateRepository;
+import vip.mate.analytics.storage.DynamicTableService;
+import vip.mate.analytics.upload.ExcelIngestService;
+import vip.mate.analytics.upload.ExcelInspectService;
+import vip.mate.analytics.upload.ExcelParseService;
+import vip.mate.analytics.upload.IngestResult;
 import vip.mate.common.result.R;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.List;
 import java.util.Map;
 
@@ -32,20 +37,28 @@ import static org.mockito.Mockito.*;
 class DatasetControllerTest {
 
     private DatasetService datasetService;
-    private DatasetRepository datasetRepo;
-    private DatasetTemplateRepository templateRepo;
     private DatasetUploadLogRepository uploadLogRepo;
+    private DynamicTableService dynamicTable;
+    private ExcelParseService parse;
+    private ExcelIngestService ingest;
+    private ExcelInspectService inspectService;
+    private ObjectMapper objectMapper;
     private JdbcTemplate jdbc;
     private DatasetController controller;
 
     @BeforeEach
     void setUp() {
         datasetService = mock(DatasetService.class);
-        datasetRepo = mock(DatasetRepository.class);
-        templateRepo = mock(DatasetTemplateRepository.class);
         uploadLogRepo = mock(DatasetUploadLogRepository.class);
+        dynamicTable = mock(DynamicTableService.class);
+        parse = mock(ExcelParseService.class);
+        ingest = mock(ExcelIngestService.class);
+        inspectService = mock(ExcelInspectService.class);
+        objectMapper = new ObjectMapper();
         jdbc = mock(JdbcTemplate.class);
-        controller = new DatasetController(datasetService, datasetRepo, templateRepo, uploadLogRepo, jdbc);
+        controller = new DatasetController(
+                datasetService, uploadLogRepo, dynamicTable,
+                parse, ingest, inspectService, objectMapper, jdbc);
     }
 
     // ------------------------------------------------------------------ list
@@ -87,25 +100,82 @@ class DatasetControllerTest {
     // ------------------------------------------------------------------ create
 
     @Test
-    @DisplayName("POST /api/analytics/datasets stamps workspaceId and creator from headers")
-    void create_stampsWorkspaceAndCreator() {
-        Dataset saved = new Dataset();
-        saved.setId(10L);
-        saved.setWorkspaceId(5L);
-        saved.setTemplateId(3L);
-        saved.setName("My Dataset");
-        saved.setCreator(7L);
+    @DisplayName("POST /api/analytics/datasets stamps workspaceId and uploader from headers")
+    void createFromFile_stampsWorkspaceAndUploader() throws IOException {
+        MockMultipartFile file = new MockMultipartFile(
+                "file", "sales.xlsx",
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                new byte[]{1});
+        String fieldsJson = """
+                [{"fieldName":"Amount","fieldType":null,"ordinal":0}]
+                """;
 
-        when(datasetService.create(any(Dataset.class))).thenReturn(saved);
+        doAnswer(invocation -> {
+            Dataset ds = invocation.getArgument(0);
+            ds.setId(10L);
+            ds.setPhysicalTable("dataset_10");
+            return ds;
+        }).when(datasetService).createWithFields(any(Dataset.class), anyList());
+        doAnswer(invocation -> {
+            DatasetUploadLog log = invocation.getArgument(0);
+            log.setId(20L);
+            return 1;
+        }).when(uploadLogRepo).insert((DatasetUploadLog) any());
+        when(parse.parse(any(InputStream.class), anyList(), isNull())).thenReturn(List.of());
+        when(ingest.ingest(any(Dataset.class), anyList(), anyList(), eq(20L)))
+                .thenReturn(new IngestResult(0, 0, List.of()));
 
-        CreateDatasetRequest body = new CreateDatasetRequest(3L, "My Dataset", "desc");
-        R<Dataset> response = controller.create(body, 5L, 7L);
+        ResponseEntity<R<DatasetController.CreateDatasetResponse>> response =
+                controller.createFromFile(file, "My Dataset", fieldsJson, null, 5L, 7L);
 
-        verify(datasetService).create(argThat(ds ->
-                ds.getWorkspaceId().equals(5L)
-                && ds.getTemplateId().equals(3L)
-                && Long.valueOf(7L).equals(ds.getCreator())));
-        assertThat(response.getData().getId()).isEqualTo(10L);
+        verify(datasetService).createWithFields(argThat(ds ->
+                        ds.getWorkspaceId().equals(5L)
+                        && ds.getName().equals("My Dataset")),
+                argThat(fields -> fields.size() == 1
+                        && fields.get(0).getFieldName().equals("Amount")
+                        && fields.get(0).getFieldType().equals("STRING")));
+        verify(uploadLogRepo).insert((DatasetUploadLog) argThat((DatasetUploadLog log) ->
+                log.getDatasetId().equals(10L)
+                        && log.getUploader().equals(7L)));
+        assertThat(response.getBody().getData().dataset().getId()).isEqualTo(10L);
+        assertThat(response.getBody().getData().uploadLog().getStatus()).isEqualTo("FAILED");
+        assertThat(response.getBody().getData().uploadLog().getErrorSummary())
+                .isEqualTo("No ingestable rows found in sheet");
+    }
+
+    @Test
+    @DisplayName("POST /api/analytics/datasets rejects a fields object with a clear 400")
+    void createFromFile_rejectsFieldsObject() throws IOException {
+        MockMultipartFile file = new MockMultipartFile(
+                "file", "sales.xlsx",
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                new byte[]{1});
+
+        ResponseEntity<R<DatasetController.CreateDatasetResponse>> response =
+                controller.createFromFile(
+                        file, "My Dataset",
+                        "{\"fieldName\":\"Amount\",\"fieldType\":\"DECIMAL\"}",
+                        null, 5L, 7L);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+        assertThat(response.getBody().getMsg()).isEqualTo("字段定义必须是 JSON 数组");
+        verifyNoInteractions(uploadLogRepo, dynamicTable, parse, ingest);
+        verify(datasetService, never()).createWithFields(any(), anyList());
+    }
+
+    @Test
+    @DisplayName("POST /api/analytics/datasets/inspect returns validation errors as 400")
+    void inspect_returns400ForInvalidFile() throws IOException {
+        MockMultipartFile file = new MockMultipartFile(
+                "file", "sales.txt", "text/plain", new byte[]{1});
+
+        ResponseEntity<R<ExcelInspectService.InspectResult>> response =
+                controller.inspect(file, null);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+        assertThat(response.getBody().getMsg())
+                .isEqualTo("Only .xlsx files are accepted; received: sales.txt");
+        verifyNoInteractions(inspectService);
     }
 
     // ------------------------------------------------------------------ get
@@ -137,26 +207,36 @@ class DatasetControllerTest {
     // ------------------------------------------------------------------ preview
 
     @Test
+    @DisplayName("preview refuses a physical table name outside the dataset_ namespace")
+    void preview_rejectsNonDatasetPhysicalTableName() {
+        Dataset ds = new Dataset();
+        ds.setId(1L);
+        ds.setPhysicalTable("mate_user");
+
+        when(datasetService.getById(1L)).thenReturn(ds);
+
+        ResponseEntity<?> response = controller.preview(1L, 100);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR);
+        verifyNoInteractions(jdbc);
+    }
+
+    @Test
     @DisplayName("GET /api/analytics/datasets/{id}/preview returns 200 with rows")
     void preview_returnsRowsFromPhysicalTable() {
         Dataset ds = new Dataset();
         ds.setId(1L);
-        ds.setTemplateId(10L);
-
-        DatasetTemplate template = new DatasetTemplate();
-        template.setId(10L);
-        template.setPhysicalTable("ds_livestock_health");
+        ds.setPhysicalTable("dataset_1");
 
         when(datasetService.getById(1L)).thenReturn(ds);
-        when(templateRepo.selectById(10L)).thenReturn(template);
 
         List<Map<String, Object>> fakeRows = List.of(
-                Map.of("id", 1, "dataset_id", 1L, "animal_id", "A001"),
-                Map.of("id", 2, "dataset_id", 1L, "animal_id", "A002")
+                Map.of("id", 1, "upload_log_id", 10L, "animal_id", "A001"),
+                Map.of("id", 2, "upload_log_id", 10L, "animal_id", "A002")
         );
         when(jdbc.queryForList(
-                eq("SELECT * FROM ds_livestock_health WHERE dataset_id = ? LIMIT ?"),
-                eq(1L), eq(100)
+                eq("SELECT * FROM dataset_1 LIMIT ?"),
+                eq(100)
         )).thenReturn(fakeRows);
 
         ResponseEntity<?> response = controller.preview(1L, 100);
@@ -167,8 +247,7 @@ class DatasetControllerTest {
         assertThat(body).isNotNull();
         assertThat(body.getData()).hasSize(2);
         verify(jdbc).queryForList(
-                "SELECT * FROM ds_livestock_health WHERE dataset_id = ? LIMIT ?",
-                1L, 100);
+                "SELECT * FROM dataset_1 LIMIT ?", 100);
     }
 
     @Test
@@ -186,14 +265,9 @@ class DatasetControllerTest {
     void preview_returnsEmptyListWhenNoPhysicalTable() {
         Dataset ds = new Dataset();
         ds.setId(5L);
-        ds.setTemplateId(20L);
-
-        DatasetTemplate template = new DatasetTemplate();
-        template.setId(20L);
-        template.setPhysicalTable(null);
+        ds.setPhysicalTable(null);
 
         when(datasetService.getById(5L)).thenReturn(ds);
-        when(templateRepo.selectById(20L)).thenReturn(template);
 
         ResponseEntity<?> response = controller.preview(5L, 50);
 

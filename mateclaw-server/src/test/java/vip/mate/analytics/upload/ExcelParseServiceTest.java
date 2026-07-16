@@ -5,7 +5,7 @@ import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-import vip.mate.analytics.template.DatasetTemplateField;
+import vip.mate.analytics.dataset.DatasetField;
 
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -29,7 +29,7 @@ class ExcelParseServiceTest {
 
     private static final String SHEET_NAME = "家禽";
 
-    private static final List<DatasetTemplateField> FIELDS = List.of(
+    private static final List<DatasetField> FIELDS = List.of(
             field("farm_code",   "养殖场编码",   "STRING",  false, 0),
             field("end_stock",   "期末存栏（只）", "DECIMAL", false, 1),
             field("is_contract", "是否代养",     "INT",     true,  2)
@@ -119,15 +119,14 @@ class ExcelParseServiceTest {
 
     // ── helpers ───────────────────────────────────────────────────────────────
 
-    private static DatasetTemplateField field(String code, String excelHeader,
-                                              String type, boolean nullable, int ordinal) {
-        DatasetTemplateField f = new DatasetTemplateField();
+    private static DatasetField field(String code, String excelHeader,
+                                      String type, boolean nullable, int ordinal) {
+        DatasetField f = new DatasetField();
         f.setFieldCode(code);
         f.setFieldName(excelHeader);
         f.setFieldType(type);
         f.setExcelHeader(excelHeader);
         f.setIsNullable(nullable);
-        f.setIsPartitionKey(false);
         f.setOrdinal(ordinal);
         return f;
     }

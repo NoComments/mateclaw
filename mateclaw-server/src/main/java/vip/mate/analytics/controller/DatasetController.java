@@ -1,5 +1,7 @@
 package vip.mate.analytics.controller;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -8,15 +10,25 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 import vip.mate.analytics.dataset.Dataset;
-import vip.mate.analytics.dataset.DatasetRepository;
+import vip.mate.analytics.dataset.DatasetField;
 import vip.mate.analytics.dataset.DatasetService;
 import vip.mate.analytics.dataset.DatasetUploadLog;
 import vip.mate.analytics.dataset.DatasetUploadLogRepository;
-import vip.mate.analytics.template.DatasetTemplate;
-import vip.mate.analytics.template.DatasetTemplateRepository;
+import vip.mate.analytics.storage.DynamicTableService;
+import vip.mate.analytics.upload.ExcelIngestService;
+import vip.mate.analytics.upload.ExcelInspectService;
+import vip.mate.analytics.upload.ExcelInspectService.InspectResult;
+import vip.mate.analytics.upload.ExcelParseService;
+import vip.mate.analytics.upload.IngestResult;
+import vip.mate.analytics.upload.ParsedRow;
 import vip.mate.common.result.R;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -34,9 +46,12 @@ import java.util.Map;
 public class DatasetController {
 
     private final DatasetService datasetService;
-    private final DatasetRepository datasetRepo;
-    private final DatasetTemplateRepository templateRepo;
     private final DatasetUploadLogRepository uploadLogRepo;
+    private final DynamicTableService dynamicTable;
+    private final ExcelParseService parse;
+    private final ExcelIngestService ingest;
+    private final ExcelInspectService inspectService;
+    private final ObjectMapper objectMapper;
     private final JdbcTemplate jdbc;
 
     // ------------------------------------------------------------------ list
@@ -50,21 +65,118 @@ public class DatasetController {
 
     // ------------------------------------------------------------------ create
 
-    @Operation(summary = "Create a new dataset bound to a template")
-    @PostMapping
-    public R<Dataset> create(
-            @RequestBody CreateDatasetRequest body,
-            @RequestHeader("X-Workspace-Id") long workspaceId,
-            @RequestHeader(value = "X-User-Id", required = false) Long userId) {
-        Dataset ds = new Dataset();
-        ds.setTemplateId(body.templateId());
-        ds.setName(body.name());
-        ds.setDescription(body.description());
-        ds.setWorkspaceId(workspaceId);
-        if (userId != null) {
-            ds.setCreator(userId);
+    /** Response of the one-step upload: the dataset plus the log of its first ingest. */
+    public record CreateDatasetResponse(Dataset dataset, DatasetUploadLog uploadLog) {}
+
+    /**
+     * Inspect a file's headers and infer field definitions. Nothing is persisted —
+     * the client shows these for confirmation, then posts them back to {@link #createFromFile}.
+     */
+    @Operation(summary = "Infer field definitions from a file without persisting")
+    @PostMapping("/inspect")
+    public ResponseEntity<R<InspectResult>> inspect(
+            @RequestParam("file") MultipartFile file,
+            @RequestParam(value = "sheet", required = false) String sheet) throws IOException {
+        try {
+            DatasetFileValidator.validate(file);
+            try (InputStream in = file.getInputStream()) {
+                return ResponseEntity.ok(R.ok(inspectService.inspect(in, sheet)));
+            }
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(R.fail(e.getMessage()));
         }
-        return R.ok(datasetService.create(ds));
+    }
+
+    /**
+     * Create a dataset from a file in one call: persist schema, create the physical
+     * table, and ingest every row. The file is uploaded exactly once.
+     *
+     * @param file       multipart .xlsx (required)
+     * @param name       dataset name
+     * @param fieldsJson JSON array of {fieldName, fieldType, fieldUnit?, ordinal}
+     * @param sheet      optional sheet name; first sheet when omitted
+     */
+    @Operation(summary = "Create a dataset from a file and ingest it in one call")
+    @PostMapping
+    public ResponseEntity<R<CreateDatasetResponse>> createFromFile(
+            @RequestParam("file") MultipartFile file,
+            @RequestParam("name") String name,
+            @RequestParam("fields") String fieldsJson,
+            @RequestParam(value = "sheet", required = false) String sheet,
+            @RequestHeader(value = "X-Workspace-Id", required = false) Long workspaceId,
+            @RequestHeader(value = "X-User-Id", required = false) Long userId) throws IOException {
+
+        List<DatasetField> fields;
+        List<ParsedRow> rows;
+        try {
+            DatasetFileValidator.validate(file);
+            fields = parseFields(fieldsJson);
+            datasetService.prepareFields(fields);
+            try (InputStream in = file.getInputStream()) {
+                rows = parse.parse(in, fields, sheet);
+            }
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(R.fail(e.getMessage()));
+        }
+
+        Dataset ds = new Dataset();
+        ds.setWorkspaceId(workspaceId);
+        ds.setName(name);
+        ds.setRowCount(0);
+        try {
+            datasetService.createWithFields(ds, fields);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(R.fail(e.getMessage()));
+        }
+
+        try {
+            dynamicTable.ensureTable(ds, fields);
+        } catch (RuntimeException ddlFailure) {
+            try {
+                datasetService.delete(ds.getId());
+            } catch (RuntimeException cleanupFailure) {
+                ddlFailure.addSuppressed(cleanupFailure);
+            }
+            throw ddlFailure;
+        }
+
+        DatasetUploadLog uploadLog = new DatasetUploadLog();
+        uploadLog.setDatasetId(ds.getId());
+        uploadLog.setFileName(file.getOriginalFilename());
+        uploadLog.setFileSize(file.getSize());
+        uploadLog.setStatus("PROCESSING");
+        uploadLog.setUploader(userId);
+        uploadLog.setUploadTime(LocalDateTime.now());
+        uploadLogRepo.insert(uploadLog);
+
+        try {
+            IngestResult result = ingest.ingest(ds, fields, rows, uploadLog.getId());
+
+            uploadLog.setRowsReceived(rows.size());
+            uploadLog.setRowsInserted(result.inserted());
+            uploadLog.setRowsRejected(result.rejected());
+            if (result.inserted() == 0) {
+                uploadLog.setStatus("FAILED");
+                uploadLog.setErrorSummary(result.errors().isEmpty()
+                        ? "No ingestable rows found in sheet"
+                        : String.join("; ", result.errors()));
+            } else if (result.rejected() == 0) {
+                uploadLog.setStatus("SUCCESS");
+            } else if (result.inserted() > 0) {
+                uploadLog.setStatus("PARTIAL");
+                uploadLog.setErrorSummary(String.join("; ", result.errors()));
+            } else {
+                uploadLog.setStatus("FAILED");
+                uploadLog.setErrorSummary(String.join("; ", result.errors()));
+            }
+        } catch (IllegalArgumentException e) {
+            uploadLog.setStatus("FAILED");
+            uploadLog.setErrorSummary(e.getMessage());
+        } finally {
+            uploadLogRepo.updateById(uploadLog);
+        }
+
+        return ResponseEntity.ok(R.ok(new CreateDatasetResponse(ds, uploadLog)));
     }
 
     // ------------------------------------------------------------------ get one
@@ -91,23 +203,22 @@ public class DatasetController {
             return ResponseEntity.notFound().build();
         }
 
-        DatasetTemplate template = templateRepo.selectById(ds.getTemplateId());
-        if (template == null || template.getPhysicalTable() == null
-                || template.getPhysicalTable().isBlank()) {
+        if (ds.getPhysicalTable() == null || ds.getPhysicalTable().isBlank()) {
             return ResponseEntity.ok(R.ok(List.of()));
         }
 
-        String physicalTable = template.getPhysicalTable();
-        // Validate table name to prevent SQL injection — same guard as DatasetService.delete()
-        if (!physicalTable.matches("[a-z][a-z0-9_]{0,95}")) {
+        String physicalTable = ds.getPhysicalTable();
+        // Same guard as DatasetService.delete() and ExcelIngestService.SAFE_TABLE_NAME:
+        // only a dataset's own table is readable here, so a physical_table value that
+        // somehow named an application table cannot be selected from.
+        if (!physicalTable.matches("^dataset_[a-z0-9_]+$")) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(R.fail("Unsafe physical table name"));
         }
 
-        // Code-generated SQL — table name is validated above, dataset_id is parameterised
+        // Code-generated SQL — table name is validated above
         List<Map<String, Object>> rows = jdbc.queryForList(
-                "SELECT * FROM " + physicalTable + " WHERE dataset_id = ? LIMIT ?",
-                id, limit);
+                "SELECT * FROM " + physicalTable + " LIMIT ?", limit);
         return ResponseEntity.ok(R.ok(rows));
     }
 
@@ -140,8 +251,32 @@ public class DatasetController {
         }
     }
 
-    // ------------------------------------------------------------------ request record
-
-    /** Request body for dataset creation. */
-    public record CreateDatasetRequest(Long templateId, String name, String description) {}
+    /** Maps the client's field JSON onto entities. Physical column names are derived server-side. */
+    private List<DatasetField> parseFields(String fieldsJson) {
+        try {
+            JsonNode arr = objectMapper.readTree(fieldsJson);
+            if (arr == null || !arr.isArray()) {
+                throw new IllegalArgumentException("字段定义必须是 JSON 数组");
+            }
+            List<DatasetField> out = new ArrayList<>();
+            int i = 0;
+            for (JsonNode n : arr) {
+                DatasetField f = new DatasetField();
+                f.setFieldName(n.path("fieldName").asText());
+                JsonNode fieldType = n.get("fieldType");
+                f.setFieldType(fieldType == null || fieldType.isNull()
+                        ? "STRING" : fieldType.asText());
+                if (n.hasNonNull("fieldUnit")) {
+                    f.setFieldUnit(n.get("fieldUnit").asText());
+                }
+                f.setOrdinal(n.path("ordinal").asInt(i));
+                f.setIsNullable(true);
+                out.add(f);
+                i++;
+            }
+            return out;
+        } catch (IOException e) {
+            throw new IllegalArgumentException("字段定义格式错误: " + e.getMessage());
+        }
+    }
 }

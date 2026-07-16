@@ -11,11 +11,11 @@ import lombok.Data;
 import java.time.LocalDateTime;
 
 /**
- * A dataset is a versioned collection of uploaded rows bound to a
- * {@link vip.mate.analytics.template.DatasetTemplate}.
+ * A dataset is a collection of uploaded rows plus the typed schema describing them.
  *
- * <p>Physical row storage lives in the dynamic table whose name is
- * derived from the template's {@code physicalTable} column.
+ * <p>Each dataset owns exactly one physical table named {@code dataset_<id>}, whose
+ * columns are defined by this dataset's {@link DatasetField} rows. One dataset per
+ * table means queries cannot accidentally mix rows from another dataset.
  */
 @Data
 @TableName("mate_dataset")
@@ -26,11 +26,15 @@ public class Dataset {
 
     private Long workspaceId;
 
-    private Long templateId;
-
     private String name;
 
     private String description;
+
+    /** Physical table holding this dataset's rows; always "dataset_" + id. */
+    private String physicalTable;
+
+    /** SHA-256 of the field list; lets DynamicTableService skip no-op DDL. */
+    private String appliedDdlHash;
 
     /** Cached count of rows currently in the physical table for this dataset. */
     private Integer rowCount;

@@ -7,7 +7,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.jdbc.core.JdbcTemplate;
-import vip.mate.analytics.template.DatasetTemplateRepository;
 
 import java.util.List;
 
@@ -27,25 +26,122 @@ class DatasetServiceTest {
     JdbcTemplate jdbc;
 
     @Mock
-    DatasetTemplateRepository templateRepo;
+    DatasetFieldRepository fieldRepo;
+
+    @Mock
+    SqlReservedWords sqlReservedWords;
 
     @InjectMocks
     DatasetService service;
 
-    // ------------------------------------------------------------------ create
-
-    /** create() must delegate to datasetRepo.insert and return the same instance. */
     @Test
-    void create_insertsDataset() {
+    void createWithFields_rejectsEmptySchemaBeforeInsert() {
         Dataset ds = new Dataset();
         ds.setWorkspaceId(1L);
-        ds.setTemplateId(10L);
         ds.setName("my dataset");
 
-        Dataset result = service.create(ds);
+        assertThatIllegalArgumentException()
+                .isThrownBy(() -> service.createWithFields(ds, List.of()))
+                .withMessage("数据集至少需要一个字段");
 
-        verify(datasetRepo).insert(ds);
-        assertThat(result).isSameAs(ds);
+        verifyNoInteractions(datasetRepo, fieldRepo);
+    }
+
+    @Test
+    void createWithFields_assignsDatasetOwnedTableAndSchema() {
+        Dataset ds = new Dataset();
+        ds.setWorkspaceId(1L);
+        ds.setName("sales");
+        DatasetField field = new DatasetField();
+        field.setFieldName("Total Sales");
+        field.setFieldType("DECIMAL");
+        field.setOrdinal(0);
+
+        doAnswer(invocation -> {
+            ds.setId(42L);
+            return 1;
+        }).when(datasetRepo).insert(ds);
+
+        Dataset result = service.createWithFields(ds, List.of(field));
+
+        assertThat(result.getPhysicalTable()).isEqualTo("dataset_42");
+        assertThat(result.getRowCount()).isZero();
+        assertThat(field.getDatasetId()).isEqualTo(42L);
+        assertThat(field.getFieldCode()).isEqualTo("total_sales");
+        assertThat(field.getExcelHeader()).isEqualTo("Total Sales");
+        assertThat(field.getIsNullable()).isTrue();
+        verify(datasetRepo).updateById(ds);
+        verify(fieldRepo).insert(field);
+    }
+
+    @Test
+    void prepareFields_derivesDefaultsAndDeduplicatesCodesWithoutDatabaseAccess() {
+        DatasetField first = new DatasetField();
+        first.setFieldName("Total Sales");
+        first.setFieldType("decimal");
+
+        DatasetField second = new DatasetField();
+        second.setFieldName("Total-Sales");
+        second.setFieldType("STRING");
+        second.setIsNullable(false);
+
+        service.prepareFields(List.of(first, second));
+
+        assertThat(first.getFieldCode()).isEqualTo("total_sales");
+        assertThat(first.getExcelHeader()).isEqualTo("Total Sales");
+        assertThat(first.getIsNullable()).isTrue();
+        assertThat(second.getFieldCode()).isEqualTo("total_sales_2");
+        assertThat(second.getExcelHeader()).isEqualTo("Total-Sales");
+        assertThat(second.getIsNullable()).isFalse();
+        verifyNoInteractions(datasetRepo, fieldRepo, jdbc);
+    }
+
+    @Test
+    void prepareFields_manglesReservedWordsBeforeDeduplicatingCodes() {
+        DatasetField reserved = new DatasetField();
+        reserved.setFieldName("Order");
+        reserved.setFieldType("STRING");
+
+        DatasetField colliding = new DatasetField();
+        colliding.setFieldName("Order Col");
+        colliding.setFieldType("DECIMAL");
+
+        when(sqlReservedWords.isReserved("order")).thenReturn(true);
+
+        service.prepareFields(List.of(reserved, colliding));
+
+        assertThat(reserved.getFieldCode()).isEqualTo("order_col");
+        assertThat(colliding.getFieldCode()).isEqualTo("order_col_2");
+        verifyNoInteractions(datasetRepo, fieldRepo, jdbc);
+    }
+
+    @Test
+    void prepareFields_rejectsUnsafeGeneratedCodeWithoutDatabaseAccess() {
+        DatasetField field = new DatasetField();
+        field.setFieldName("2024");
+        field.setFieldType("DECIMAL");
+
+        assertThatIllegalArgumentException()
+                .isThrownBy(() -> service.prepareFields(List.of(field)))
+                .withMessage("Unsafe fieldCode '2024': must match ^[a-z][a-z0-9_]{0,62}$");
+
+        verifyNoInteractions(datasetRepo, fieldRepo, jdbc);
+    }
+
+    @Test
+    void prepareFields_rejectsDuplicateFieldNamesWithoutDatabaseAccess() {
+        DatasetField first = new DatasetField();
+        first.setFieldName("Amount");
+        first.setFieldType("DECIMAL");
+        DatasetField duplicate = new DatasetField();
+        duplicate.setFieldName("Amount");
+        duplicate.setFieldType("DECIMAL");
+
+        assertThatIllegalArgumentException()
+                .isThrownBy(() -> service.prepareFields(List.of(first, duplicate)))
+                .withMessage("字段名重复: Amount");
+
+        verifyNoInteractions(datasetRepo, fieldRepo, jdbc);
     }
 
     // ------------------------------------------------------------------ listByWorkspace
@@ -93,5 +189,27 @@ class DatasetServiceTest {
         Dataset result = service.getById(99L);
 
         assertThat(result).isNull();
+    }
+
+    // ------------------------------------------------------------------ delete
+
+    /**
+     * delete() must reject a physicalTable that isn't a {@code dataset_*} table
+     * (e.g. an application table like {@code mate_user}) and must never issue a
+     * DROP TABLE against it.
+     */
+    @Test
+    void delete_rejectsNonDatasetPhysicalTableName() {
+        Dataset ds = new Dataset();
+        ds.setId(1L);
+        ds.setPhysicalTable("mate_user");
+
+        when(datasetRepo.selectById(1L)).thenReturn(ds);
+
+        assertThatIllegalArgumentException()
+                .isThrownBy(() -> service.delete(1L))
+                .withMessageContaining("mate_user");
+
+        verify(jdbc, never()).execute(anyString());
     }
 }

@@ -1,34 +1,33 @@
 <template>
   <div>
     <div class="sub-page-header">
-      <button class="btn-primary" @click="openCreateDialog">
+      <button class="btn-primary" @click="showUploadDialog = true">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
         </svg>
-        {{ t('analytics.createDataset') }}
+        {{ t('analytics.uploadData') }}
       </button>
     </div>
 
     <div v-loading="loading" class="mc-surface-card table-wrap">
           <el-table :data="datasets" style="width: 100%">
             <el-table-column prop="name" :label="t('analytics.datasetName')" min-width="160" />
-            <el-table-column prop="templateId" :label="t('analytics.templateCode')" width="120" />
             <el-table-column prop="rowCount" :label="t('analytics.rowsInserted')" width="120" />
             <el-table-column prop="createTime" :label="t('common.create')" min-width="160" />
             <el-table-column :label="t('common.edit')" width="360" fixed="right">
               <template #default="{ row }">
                 <div class="action-row">
-                  <button class="action-btn" @click="openUploadDialog(row)">
-                    {{ t('analytics.upload') }}
+                  <button class="action-btn accent" @click="goToAnalysis(row)">
+                    {{ t('analytics.analyze') }}
                   </button>
                   <button class="action-btn" @click="goToPreview(row)">
                     {{ t('analytics.preview') }}
                   </button>
+                  <button class="action-btn" @click="openAppend(row)">
+                    {{ t('analytics.appendData') }}
+                  </button>
                   <button class="action-btn" @click="goToUploadHistory(row)">
                     {{ t('analytics.uploadLog') }}
-                  </button>
-                  <button class="action-btn accent" @click="goToAnalysis(row)">
-                    {{ t('analytics.analyze') }}
                   </button>
                   <button class="action-btn danger" @click="handleDelete(row)">
                     {{ t('common.delete') }}
@@ -36,87 +35,49 @@
                 </div>
               </template>
             </el-table-column>
+            <template #empty>
+              <div class="empty-state">
+                <div class="empty-hint">{{ t('analytics.emptyHint') }}</div>
+                <button class="btn-primary" @click="showUploadDialog = true">
+                  {{ t('analytics.uploadData') }}
+                </button>
+              </div>
+            </template>
           </el-table>
     </div>
 
-    <!-- Create dataset dialog -->
-    <el-dialog
-      v-model="showCreateDialog"
-      :title="t('analytics.createDataset')"
-      width="480px"
-      :close-on-click-modal="false"
-    >
-      <el-form ref="createFormRef" :model="createForm" :rules="createRules" label-position="top">
-        <el-form-item :label="t('analytics.datasetName')" prop="name">
-          <el-input v-model="createForm.name" />
-        </el-form-item>
-        <el-form-item :label="t('analytics.templateCode')" prop="templateId">
-          <el-select v-model="createForm.templateId" style="width: 100%" filterable>
-            <el-option
-              v-for="tpl in templates"
-              :key="tpl.id"
-              :label="tpl.name"
-              :value="tpl.id"
-            />
-          </el-select>
-        </el-form-item>
-        <el-form-item :label="t('analytics.description')">
-          <el-input v-model="createForm.description" type="textarea" :rows="2" />
-        </el-form-item>
-      </el-form>
-      <template #footer>
-        <el-button @click="showCreateDialog = false">{{ t('common.cancel') }}</el-button>
-        <el-button type="primary" :loading="creating" @click="handleCreate">{{ t('common.create') }}</el-button>
-      </template>
-    </el-dialog>
-
-    <!-- Upload dialog -->
-    <UploadDialog
-      v-if="activeDatasetId"
-      v-model="showUploadDialog"
-      :dataset-id="activeDatasetId"
-      @uploaded="loadData"
+    <UploadDialog v-model="showUploadDialog" @created="onCreated" />
+    <input
+      ref="appendInputRef"
+      type="file"
+      accept=".xlsx"
+      style="display: none"
+      @change="onAppendFilePicked"
     />
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import type { FormInstance, FormRules } from 'element-plus'
-import {
-  listDatasets,
-  createDataset,
-  deleteDataset,
-  listTemplates,
-} from '@/api/analytics'
-import type { Dataset, DatasetTemplate } from '@/types/analytics'
+import { listDatasets, deleteDataset, uploadExcel } from '@/api/analytics'
+import type { Dataset } from '@/types/analytics'
 import UploadDialog from './UploadDialog.vue'
 
 const router = useRouter()
 const { t } = useI18n()
 
 const loading = ref(false)
-const creating = ref(false)
 const datasets = ref<Dataset[]>([])
-const templates = ref<DatasetTemplate[]>([])
 
-const showCreateDialog = ref(false)
 const showUploadDialog = ref(false)
-const createFormRef = ref<FormInstance>()
-const activeDatasetId = ref<string>('')
+const appendInputRef = ref<HTMLInputElement>()
+const appendTargetId = ref<string>('')
 
-const createForm = reactive<{ name: string; templateId: string; description: string }>({
-  name: '',
-  templateId: '',
-  description: '',
-})
-const createRules: FormRules = {
-  name: [{ required: true, trigger: 'blur', message: t('analytics.datasetName') }],
-  templateId: [{ required: true, trigger: 'change', message: t('analytics.templateCode') }],
-}
+// Phase 3 will have the backend supply this; see the analytics simplification spec.
+const ANALYST_AGENT_ID = '1000000020'
 
 function workspaceId(): string {
   const raw = localStorage.getItem('mc-workspace-id')
@@ -126,44 +87,12 @@ function workspaceId(): string {
 async function loadData() {
   loading.value = true
   try {
-    const [dsRes, tplRes] = await Promise.all([
-      listDatasets({ workspaceId: workspaceId() }),
-      listTemplates({ workspaceId: workspaceId() }),
-    ])
-    datasets.value = dsRes.data
-    templates.value = tplRes.data
+    const res = await listDatasets({ workspaceId: workspaceId() })
+    datasets.value = res.data
   } catch (e: unknown) {
     ElMessage.error(e instanceof Error ? e.message : String(e))
   } finally {
     loading.value = false
-  }
-}
-
-function openCreateDialog() {
-  createForm.name = ''
-  createForm.templateId = ''
-  createForm.description = ''
-  showCreateDialog.value = true
-}
-
-async function handleCreate() {
-  const valid = await createFormRef.value?.validate().catch(() => false)
-  if (!valid) return
-  creating.value = true
-  try {
-    await createDataset({
-      workspaceId: workspaceId(),
-      templateId: createForm.templateId,
-      name: createForm.name,
-      description: createForm.description || undefined,
-    })
-    ElMessage.success(t('common.saved'))
-    showCreateDialog.value = false
-    await loadData()
-  } catch (e: unknown) {
-    ElMessage.error(e instanceof Error ? e.message : String(e))
-  } finally {
-    creating.value = false
   }
 }
 
@@ -186,9 +115,36 @@ async function handleDelete(row: Dataset) {
   }
 }
 
-function openUploadDialog(row: Dataset) {
-  activeDatasetId.value = row.id
-  showUploadDialog.value = true
+function openAppend(row: Dataset) {
+  appendTargetId.value = row.id
+  appendInputRef.value?.click()
+}
+
+async function onAppendFilePicked(e: Event) {
+  const input = e.target as HTMLInputElement
+  const file = input.files?.[0]
+  // Reset immediately so picking the same file twice still fires change.
+  input.value = ''
+  if (!file) return
+  try {
+    const res = await uploadExcel(appendTargetId.value, file)
+    const log = res.data
+    if (log.status === 'FAILED') {
+      ElMessage.error(log.errorSummary || t('analytics.ingestFailed'))
+      return
+    }
+    if (log.status === 'PARTIAL') {
+      ElMessage.warning(t('analytics.partialIngest', { ok: log.rowsInserted, bad: log.rowsRejected }))
+    } else if (log.status === 'SUCCESS') {
+      ElMessage.success(t('analytics.ingestOk', { ok: log.rowsInserted }))
+    } else {
+      ElMessage.error(t('analytics.ingestFailed'))
+      return
+    }
+    await loadData()
+  } catch (err: unknown) {
+    ElMessage.error(err instanceof Error ? err.message : String(err))
+  }
 }
 
 function goToPreview(row: Dataset) {
@@ -200,7 +156,12 @@ function goToUploadHistory(row: Dataset) {
 }
 
 function goToAnalysis(row: Dataset) {
-  router.push({ path: '/chat', query: { agentId: '1000000020' } })
+  router.push({ path: '/chat', query: { agentId: ANALYST_AGENT_ID, datasetId: row.id } })
+}
+
+function onCreated(datasetId: string) {
+  loadData()
+  router.push({ path: '/chat', query: { agentId: ANALYST_AGENT_ID, datasetId } })
 }
 
 onMounted(loadData)
@@ -227,6 +188,9 @@ onMounted(loadData)
 
 .table-wrap { padding: 0; overflow: hidden; }
 
+.empty-state { display: flex; flex-direction: column; align-items: center; gap: 14px; padding: 48px 0; }
+.empty-hint { font-size: 13px; color: var(--mc-text-tertiary); }
+
 .action-row { display: flex; gap: 6px; flex-wrap: wrap; }
 
 .action-btn {
@@ -245,5 +209,4 @@ onMounted(loadData)
 .action-btn.accent:hover { opacity: 0.85; }
 .action-btn.danger:hover { border-color: var(--mc-danger); color: var(--mc-danger); background: var(--mc-danger-bg); }
 
-.upload-result { margin-top: 16px; }
 </style>

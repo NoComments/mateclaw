@@ -21,8 +21,7 @@ public final class SqlGuard {
             .maxLimit(10_000)
             .tableAllowlist(Set.of(
                     "mate_dataset",
-                    "mate_dataset_template",
-                    "mate_dataset_template_field",
+                    "mate_dataset_field",
                     "mate_dataset_upload_log"
             ))
             .tableAllowPattern("dataset_")

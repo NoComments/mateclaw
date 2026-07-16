@@ -7,11 +7,9 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import vip.mate.analytics.dataset.Dataset;
+import vip.mate.analytics.dataset.DatasetField;
+import vip.mate.analytics.dataset.DatasetFieldRepository;
 import vip.mate.analytics.dataset.DatasetRepository;
-import vip.mate.analytics.template.DatasetTemplate;
-import vip.mate.analytics.template.DatasetTemplateField;
-import vip.mate.analytics.template.DatasetTemplateFieldRepository;
-import vip.mate.analytics.template.DatasetTemplateRepository;
 
 import java.util.List;
 
@@ -29,10 +27,7 @@ class AnalyticsSchemaToolTest {
     DatasetRepository datasetRepo;
 
     @Mock
-    DatasetTemplateRepository templateRepo;
-
-    @Mock
-    DatasetTemplateFieldRepository fieldRepo;
+    DatasetFieldRepository fieldRepo;
 
     @InjectMocks
     AnalyticsSchemaTool tool;
@@ -43,12 +38,13 @@ class AnalyticsSchemaToolTest {
         d1.setId(1L);
         d1.setName("家禽季报");
         d1.setRowCount(100);
-        d1.setTemplateId(10L);
+        d1.setPhysicalTable("dataset_1");
         when(datasetRepo.selectList(any(QueryWrapper.class))).thenReturn(List.of(d1));
 
         String result = tool.analyticsSchema(null);
 
-        assertThat(result).contains("id=1").contains("家禽季报").contains("rows=100");
+        assertThat(result).contains("id=1").contains("家禽季报").contains("rows=100")
+                .contains("physicalTable=dataset_1");
     }
 
     @Test
@@ -66,25 +62,22 @@ class AnalyticsSchemaToolTest {
         d.setId(2L);
         d.setName("测试");
         d.setRowCount(50);
-        d.setTemplateId(20L);
+        d.setPhysicalTable("dataset_2");
 
-        DatasetTemplate t = new DatasetTemplate();
-        t.setId(20L);
-        t.setPhysicalTable("dataset_test");
-
-        DatasetTemplateField f = new DatasetTemplateField();
+        DatasetField f = new DatasetField();
+        f.setDatasetId(2L);
         f.setFieldCode("end_stock");
         f.setFieldName("期末存栏");
         f.setFieldType("DECIMAL");
         f.setFieldUnit("只");
 
         when(datasetRepo.selectById(2L)).thenReturn(d);
-        when(templateRepo.selectById(20L)).thenReturn(t);
         when(fieldRepo.selectList(any(QueryWrapper.class))).thenReturn(List.of(f));
 
         String result = tool.analyticsSchema(2L);
 
-        assertThat(result).contains("end_stock").contains("DECIMAL").contains("单位:只").contains("期末存栏");
+        assertThat(result).contains("物理表=dataset_2").contains("end_stock").contains("DECIMAL")
+                .contains("单位:只").contains("期末存栏");
     }
 
     @Test

@@ -22,10 +22,6 @@
             <span class="meta-value">{{ dataset.name }}</span>
           </div>
           <div class="meta-row">
-            <span class="meta-label">{{ t('analytics.templateCode') }}</span>
-            <span class="meta-value">{{ dataset.templateId }}</span>
-          </div>
-          <div class="meta-row">
             <span class="meta-label">{{ t('analytics.rowsInserted') }}</span>
             <span class="meta-value">{{ dataset.rowCount }}</span>
           </div>

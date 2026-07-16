@@ -1,15 +1,11 @@
 import axios from 'axios'
 import { handleAuthFailure, updateTokenFromHeader } from '@/utils/auth'
 import type {
-  DatasetTemplate,
-  DatasetTemplateField,
   Dataset,
   DatasetUploadLog,
-  CreateTemplateRequest,
-  CreateTemplateFieldRequest,
-  UpdateTemplateFieldRequest,
-  CreateDatasetRequest,
   InspectResult,
+  InspectedField,
+  CreateDatasetResponse,
 } from '@/types/analytics'
 
 const analyticsHttp = axios.create({
@@ -60,71 +56,12 @@ analyticsHttp.interceptors.response.use(
   }
 )
 
-// ==================== Templates ====================
-
-export function listTemplates(params?: {
-  workspaceId?: string | number
-}): Promise<{ data: DatasetTemplate[] }> {
-  return analyticsHttp.get('/analytics/templates', { params })
-}
-
-export function createTemplate(
-  data: CreateTemplateRequest
-): Promise<{ data: DatasetTemplate }> {
-  return analyticsHttp.post('/analytics/templates', data)
-}
-
-export function getTemplate(id: string | number): Promise<{ data: DatasetTemplate }> {
-  return analyticsHttp.get(`/analytics/templates/${id}`)
-}
-
-export function deleteTemplate(id: string | number): Promise<{ data: void }> {
-  return analyticsHttp.delete(`/analytics/templates/${id}`)
-}
-
-// ==================== Template Fields ====================
-
-export function listTemplateFields(
-  templateId: string | number
-): Promise<{ data: DatasetTemplateField[] }> {
-  return analyticsHttp.get(`/analytics/templates/${templateId}/fields`)
-}
-
-export function createTemplateField(
-  templateId: string | number,
-  data: CreateTemplateFieldRequest
-): Promise<{ data: DatasetTemplateField }> {
-  return analyticsHttp.post(`/analytics/templates/${templateId}/fields`, data)
-}
-
-export function updateTemplateField(
-  templateId: string | number,
-  fieldId: string | number,
-  data: UpdateTemplateFieldRequest
-): Promise<{ data: void }> {
-  return analyticsHttp.patch(`/analytics/templates/${templateId}/fields/${fieldId}`, data)
-}
-
-export function deleteTemplateField(
-  templateId: string | number,
-  fieldId: string | number
-): Promise<{ data: void }> {
-  return analyticsHttp.delete(`/analytics/templates/${templateId}/fields/${fieldId}`)
-}
-
 // ==================== Datasets ====================
 
 export function listDatasets(params?: {
   workspaceId?: string | number
-  templateId?: string | number
 }): Promise<{ data: Dataset[] }> {
   return analyticsHttp.get('/analytics/datasets', { params })
-}
-
-export function createDataset(
-  data: CreateDatasetRequest
-): Promise<{ data: Dataset }> {
-  return analyticsHttp.post('/analytics/datasets', data)
 }
 
 export function getDataset(id: string | number): Promise<{ data: Dataset }> {
@@ -147,17 +84,31 @@ export function listDatasetUploads(
   return analyticsHttp.get(`/analytics/datasets/${id}/uploads`)
 }
 
-// ==================== Template Inspect ====================
-
-export function inspectExcel(
+export function inspectFile(
   file: File,
-  sheetName?: string
+  sheet?: string
 ): Promise<{ data: InspectResult }> {
   const formData = new FormData()
   formData.append('file', file)
-  return analyticsHttp.post('/analytics/templates/inspect-excel', formData, {
+  return analyticsHttp.post('/analytics/datasets/inspect', formData, {
     headers: { 'Content-Type': 'multipart/form-data' },
-    params: sheetName ? { sheetName } : undefined,
+    params: sheet ? { sheet } : undefined,
+  })
+}
+
+export function createDatasetFromFile(p: {
+  file: File
+  name: string
+  fields: InspectedField[]
+  sheet?: string
+}): Promise<{ data: CreateDatasetResponse }> {
+  const formData = new FormData()
+  formData.append('file', p.file)
+  formData.append('name', p.name)
+  formData.append('fields', JSON.stringify(p.fields))
+  return analyticsHttp.post('/analytics/datasets', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+    params: p.sheet ? { sheet: p.sheet } : undefined,
   })
 }
 
