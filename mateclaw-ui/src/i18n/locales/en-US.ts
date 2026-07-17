@@ -3491,6 +3491,7 @@ export default {
     dropFile: 'Drop an Excel file here, or click to choose',
     nextStep: 'Next',
     createAndAnalyze: 'Create and analyze',
+    createDataset: 'Create dataset',
     appendData: 'Append data',
     ingestOk: '{ok} rows ingested',
     ingestFailed: 'Import failed',

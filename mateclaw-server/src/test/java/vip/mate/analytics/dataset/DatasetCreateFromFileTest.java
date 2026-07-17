@@ -272,26 +272,54 @@ class DatasetCreateFromFileTest {
     }
 
     @Test
-    @DisplayName("digit-leading header returns 400 before creating a dataset")
-    void digitLeadingHeaderReturns400WithoutDataset() throws IOException {
-        long datasetsBefore = datasetRepo.selectCount(null);
-        long tablesBefore = dynamicTableCount();
-        AtomicReference<ResponseEntity<R<DatasetController.CreateDatasetResponse>>> response =
-                new AtomicReference<>();
+    @DisplayName("digit-leading header is prefixed with f_ and upload succeeds end to end")
+    void digitLeadingHeaderIsPrefixedAndUploadsSuccessfully() throws IOException {
+        ResponseEntity<R<DatasetController.CreateDatasetResponse>> response =
+                controller.createFromFile(
+                        xlsx(new String[]{"2024"}, new Object[][]{{100}}),
+                        "年度数据",
+                        "[{\"fieldName\":\"2024\",\"fieldType\":\"DECIMAL\",\"ordinal\":0}]",
+                        null, 9L, 42L);
 
-        Throwable failure = catchThrowable(() -> response.set(controller.createFromFile(
-                xlsx(new String[]{"2024"}, new Object[][]{{100}}),
-                "年度数据",
-                "[{\"fieldName\":\"2024\",\"fieldType\":\"DECIMAL\",\"ordinal\":0}]",
-                null, 9L, 42L)));
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        DatasetController.CreateDatasetResponse body = response.getBody().getData();
+        Dataset saved = datasetRepo.selectById(body.dataset().getId());
+
+        List<DatasetField> fields = fieldRepo.selectList(
+                new com.baomidou.mybatisplus.core.conditions.query.QueryWrapper<DatasetField>()
+                        .eq("dataset_id", saved.getId()));
+        assertThat(fields).hasSize(1);
+        assertThat(fields.get(0).getFieldCode()).isEqualTo("f_2024");
+        assertThat(body.uploadLog().getStatus()).isEqualTo("SUCCESS");
+
+        jdbc.execute("DROP TABLE IF EXISTS " + saved.getPhysicalTable());
+    }
+
+    @Test
+    @DisplayName("a non-numeric cell in an INT column skips only that row, upload is PARTIAL")
+    void unparseableCellIsolatesRowInsteadOfFailingWholeUpload() throws IOException {
+        // Column 数量 is INT; the second data row holds "无" (real-world "no data").
+        // Only that row must be rejected — the clean row still lands.
+        ResponseEntity<R<DatasetController.CreateDatasetResponse>> response =
+                controller.createFromFile(
+                        xlsx(new String[]{"数量"}, new Object[][]{{100}, {"无"}}),
+                        "存栏数据",
+                        "[{\"fieldName\":\"数量\",\"fieldType\":\"INT\",\"ordinal\":0}]",
+                        null, 9L, 42L);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        DatasetController.CreateDatasetResponse body = response.getBody().getData();
+        Dataset saved = datasetRepo.selectById(body.dataset().getId());
 
         assertAll(
-                () -> assertThat(failure).isNull(),
-                () -> assertThat(response.get()).isNotNull(),
-                () -> assertThat(response.get().getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST),
-                () -> assertThat(response.get().getBody().getMsg()).contains("Unsafe fieldCode '2024'"),
-                () -> assertThat(datasetRepo.selectCount(null)).isEqualTo(datasetsBefore),
-                () -> assertThat(dynamicTableCount()).isEqualTo(tablesBefore));
+                () -> assertThat(body.uploadLog().getStatus()).isEqualTo("PARTIAL"),
+                () -> assertThat(body.uploadLog().getRowsInserted()).isEqualTo(1),
+                () -> assertThat(body.uploadLog().getRowsRejected()).isEqualTo(1),
+                () -> assertThat(body.uploadLog().getErrorSummary()).contains("数量", "无"),
+                () -> assertThat(jdbc.queryForList(
+                        "SELECT * FROM " + saved.getPhysicalTable())).hasSize(1));
+
+        jdbc.execute("DROP TABLE IF EXISTS " + saved.getPhysicalTable());
     }
 
     @Test
@@ -315,11 +343,11 @@ class DatasetCreateFromFileTest {
     }
 
     @Test
-    @DisplayName("parse failure leaves no dataset or physical table")
-    void parseFailureLeavesNoOrphans() throws IOException {
-        long datasetsBefore = datasetRepo.selectCount(null);
-        long tablesBefore = dynamicTableCount();
-
+    @DisplayName("all rows unparseable: dataset is created with a FAILED log naming the bad cell")
+    void allRowsUnparseableCreateFailedLogNotA400() throws IOException {
+        // Every data row has a bad cell, so 0 rows ingest. This is the degenerate case
+        // of per-row isolation and matches the existing empty-sheet outcome: the dataset
+        // and its table are created (schema is valid) and the log is FAILED — not a 400.
         ResponseEntity<R<DatasetController.CreateDatasetResponse>> response =
                 controller.createFromFile(
                         xlsx(new String[]{"金额"}, new Object[][]{{"not-a-decimal"}}),
@@ -327,11 +355,17 @@ class DatasetCreateFromFileTest {
                         "[{\"fieldName\":\"金额\",\"fieldType\":\"DECIMAL\",\"ordinal\":0}]",
                         null, 9L, 42L);
 
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        DatasetController.CreateDatasetResponse body = response.getBody().getData();
+        Dataset saved = datasetRepo.selectById(body.dataset().getId());
+
         assertAll(
-                () -> assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST),
-                () -> assertThat(response.getBody().getMsg()).isNotBlank(),
-                () -> assertThat(datasetRepo.selectCount(null)).isEqualTo(datasetsBefore),
-                () -> assertThat(dynamicTableCount()).isEqualTo(tablesBefore));
+                () -> assertThat(body.uploadLog().getStatus()).isEqualTo("FAILED"),
+                () -> assertThat(body.uploadLog().getRowsInserted()).isEqualTo(0),
+                () -> assertThat(body.uploadLog().getRowsRejected()).isEqualTo(1),
+                () -> assertThat(body.uploadLog().getErrorSummary()).contains("金额", "not-a-decimal"));
+
+        jdbc.execute("DROP TABLE IF EXISTS " + saved.getPhysicalTable());
     }
 
     @Test

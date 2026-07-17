@@ -23,6 +23,7 @@ import vip.mate.analytics.upload.ExcelInspectService.InspectResult;
 import vip.mate.analytics.upload.ExcelParseService;
 import vip.mate.analytics.upload.IngestResult;
 import vip.mate.analytics.upload.ParsedRow;
+import vip.mate.analytics.upload.ParseResult;
 import vip.mate.common.result.R;
 
 import java.io.IOException;
@@ -107,13 +108,13 @@ public class DatasetController {
             @RequestHeader(value = "X-User-Id", required = false) Long userId) throws IOException {
 
         List<DatasetField> fields;
-        List<ParsedRow> rows;
+        ParseResult parsed;
         try {
             DatasetFileValidator.validate(file);
             fields = parseFields(fieldsJson);
             datasetService.prepareFields(fields);
             try (InputStream in = file.getInputStream()) {
-                rows = parse.parse(in, fields, sheet);
+                parsed = parse.parse(in, fields, sheet);
             }
         } catch (IllegalArgumentException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(R.fail(e.getMessage()));
@@ -150,24 +151,27 @@ public class DatasetController {
         uploadLogRepo.insert(uploadLog);
 
         try {
+            List<ParsedRow> rows = parsed.rows();
             IngestResult result = ingest.ingest(ds, fields, rows, uploadLog.getId());
 
-            uploadLog.setRowsReceived(rows.size());
+            int rejected = parsed.rejected() + result.rejected();
+            List<String> allErrors = new ArrayList<>();
+            allErrors.addAll(parsed.errors());
+            allErrors.addAll(result.errors());
+
+            uploadLog.setRowsReceived(rows.size() + parsed.rejected());
             uploadLog.setRowsInserted(result.inserted());
-            uploadLog.setRowsRejected(result.rejected());
+            uploadLog.setRowsRejected(rejected);
             if (result.inserted() == 0) {
                 uploadLog.setStatus("FAILED");
-                uploadLog.setErrorSummary(result.errors().isEmpty()
+                uploadLog.setErrorSummary(allErrors.isEmpty()
                         ? "No ingestable rows found in sheet"
-                        : String.join("; ", result.errors()));
-            } else if (result.rejected() == 0) {
+                        : String.join("; ", allErrors));
+            } else if (rejected == 0) {
                 uploadLog.setStatus("SUCCESS");
-            } else if (result.inserted() > 0) {
-                uploadLog.setStatus("PARTIAL");
-                uploadLog.setErrorSummary(String.join("; ", result.errors()));
             } else {
-                uploadLog.setStatus("FAILED");
-                uploadLog.setErrorSummary(String.join("; ", result.errors()));
+                uploadLog.setStatus("PARTIAL");
+                uploadLog.setErrorSummary(String.join("; ", allErrors));
             }
         } catch (IllegalArgumentException e) {
             uploadLog.setStatus("FAILED");
@@ -193,6 +197,12 @@ public class DatasetController {
 
     // ------------------------------------------------------------------ preview
 
+    /** One previewed column: physical {@code code} plus the human {@code name} shown as its header. */
+    public record PreviewColumn(String code, String name, String type) {}
+
+    /** Preview payload: ordered column metadata and the sampled rows keyed by column code. */
+    public record PreviewResponse(List<PreviewColumn> columns, List<Map<String, Object>> rows) {}
+
     @Operation(summary = "Preview the first N rows from the dataset's physical table")
     @GetMapping("/{id}/preview")
     public ResponseEntity<?> preview(
@@ -204,7 +214,7 @@ public class DatasetController {
         }
 
         if (ds.getPhysicalTable() == null || ds.getPhysicalTable().isBlank()) {
-            return ResponseEntity.ok(R.ok(List.of()));
+            return ResponseEntity.ok(R.ok(new PreviewResponse(List.of(), List.of())));
         }
 
         String physicalTable = ds.getPhysicalTable();
@@ -216,10 +226,27 @@ public class DatasetController {
                     .body(R.fail("Unsafe physical table name"));
         }
 
-        // Code-generated SQL — table name is validated above
+        // Select only the dataset's own field columns, in display order — never the
+        // internal id / upload_log_id plumbing. Headers carry the human field name.
+        List<DatasetField> fields = datasetService.listFields(id);
+        if (fields.isEmpty()) {
+            return ResponseEntity.ok(R.ok(new PreviewResponse(List.of(), List.of())));
+        }
+
+        List<PreviewColumn> columns = new ArrayList<>();
+        List<String> columnSql = new ArrayList<>();
+        for (DatasetField f : fields) {
+            // fieldCode is machine-generated, but validate before interpolating it into SQL.
+            DynamicTableService.validateName(f.getFieldCode(), "fieldCode");
+            columns.add(new PreviewColumn(f.getFieldCode(), f.getFieldName(), f.getFieldType()));
+            columnSql.add(f.getFieldCode());
+        }
+
+        // Code-generated SQL — table and column names are validated above
         List<Map<String, Object>> rows = jdbc.queryForList(
-                "SELECT * FROM " + physicalTable + " LIMIT ?", limit);
-        return ResponseEntity.ok(R.ok(rows));
+                "SELECT " + String.join(", ", columnSql) + " FROM " + physicalTable + " LIMIT ?",
+                limit);
+        return ResponseEntity.ok(R.ok(new PreviewResponse(columns, rows)));
     }
 
     // ------------------------------------------------------------------ upload log history

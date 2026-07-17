@@ -128,6 +128,20 @@ public class DatasetService {
     }
 
     /**
+     * Return a dataset's fields ordered by {@code ordinal} — the display order of
+     * its physical columns.
+     *
+     * @param datasetId owning dataset id
+     */
+    @Transactional(readOnly = true)
+    public List<DatasetField> listFields(Long datasetId) {
+        return fieldRepo.selectList(
+                new LambdaQueryWrapper<DatasetField>()
+                        .eq(DatasetField::getDatasetId, datasetId)
+                        .orderByAsc(DatasetField::getOrdinal));
+    }
+
+    /**
      * Soft-delete the dataset record and drop its dynamic physical table.
      *
      * <p>The physical table name is read directly from the dataset and validated
@@ -180,8 +194,17 @@ public class DatasetService {
         if (s == null) {
             return "";
         }
-        return s.toLowerCase()
+        String result = s.toLowerCase()
                 .replaceAll("[^a-z0-9]+", "_")
                 .replaceAll("^_+|_+$", "");
+        // fieldCode must start with a letter; prefix with "f_" when it starts with a digit
+        if (!result.isEmpty() && Character.isDigit(result.charAt(0))) {
+            result = "f_" + result;
+        }
+        // SAFE_NAME allows at most 63 characters; truncate and strip any trailing underscore
+        if (result.length() > 63) {
+            result = result.substring(0, 63).replaceAll("_+$", "");
+        }
+        return result;
     }
 }

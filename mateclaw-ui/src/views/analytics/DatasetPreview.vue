@@ -38,10 +38,11 @@
           >
             <el-table-column
               v-for="col in previewColumns"
-              :key="col"
-              :prop="col"
-              :label="col"
+              :key="col.code"
+              :prop="col.code"
+              :label="col.name"
               min-width="120"
+              show-overflow-tooltip
             />
           </el-table>
           <el-empty v-else description="暂无数据" />
@@ -79,7 +80,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { ElMessage } from 'element-plus'
 import { getDataset, previewDataset, listDatasetUploads } from '@/api/analytics'
-import type { Dataset, DatasetUploadLog, UploadStatus } from '@/types/analytics'
+import type { Dataset, DatasetUploadLog, PreviewColumn, UploadStatus } from '@/types/analytics'
 
 const route = useRoute()
 const router = useRouter()
@@ -90,7 +91,7 @@ const datasetId = (route.params['datasetId'] ?? route.params['id']) as string
 const dataset = ref<Dataset | null>(null)
 const previewLoading = ref(false)
 const uploadsLoading = ref(false)
-const previewColumns = ref<string[]>([])
+const previewColumns = ref<PreviewColumn[]>([])
 const previewRows = ref<Record<string, unknown>[]>([])
 const uploads = ref<DatasetUploadLog[]>([])
 
@@ -117,11 +118,8 @@ async function loadPreview() {
   previewLoading.value = true
   try {
     const res = await previewDataset(datasetId)
-    const rows = res.data
-    if (rows.length > 0) {
-      previewColumns.value = Object.keys(rows[0])
-      previewRows.value = rows
-    }
+    previewColumns.value = res.data.columns ?? []
+    previewRows.value = res.data.rows ?? []
   } catch {
     // Preview failure is non-fatal — table stays empty
   } finally {
