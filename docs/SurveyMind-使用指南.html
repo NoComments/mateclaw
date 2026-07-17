@@ -1,0 +1,936 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SurveyMind 使用指南</title>
+<style>
+  :root {
+    --primary: #4f46e5;
+    --primary-light: #e0e7ff;
+    --primary-dark: #3730a3;
+    --accent: #06b6d4;
+    --accent-light: #cffafe;
+    --bg: #f8fafc;
+    --surface: #ffffff;
+    --text: #1e293b;
+    --text-secondary: #64748b;
+    --border: #e2e8f0;
+    --success: #10b981;
+    --warning: #f59e0b;
+    --danger: #ef4444;
+    --code-bg: #f1f5f9;
+    --shadow: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.06);
+    --shadow-lg: 0 4px 14px rgba(0,0,0,0.1);
+    --radius: 12px;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans SC", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.7;
+    font-size: 15px;
+  }
+
+  /* ---- Hero ---- */
+  .hero {
+    background: linear-gradient(135deg, var(--primary) 0%, #7c3aed 50%, var(--accent) 100%);
+    color: #fff;
+    padding: 60px 24px 48px;
+    text-align: center;
+  }
+  .hero h1 { font-size: 2.4em; font-weight: 800; letter-spacing: -0.02em; }
+  .hero .subtitle { font-size: 1.15em; opacity: 0.9; margin-top: 10px; max-width: 600px; margin-inline: auto; }
+  .hero .badge {
+    display: inline-block;
+    background: rgba(255,255,255,0.2);
+    border: 1px solid rgba(255,255,255,0.3);
+    border-radius: 999px;
+    padding: 4px 16px;
+    font-size: 0.85em;
+    margin-top: 18px;
+    backdrop-filter: blur(6px);
+  }
+
+  /* ---- Layout ---- */
+  .container { max-width: 960px; margin: 0 auto; padding: 0 20px; }
+
+  /* ---- TOC ---- */
+  .toc-wrap {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    box-shadow: var(--shadow);
+  }
+  .toc {
+    display: flex;
+    gap: 4px;
+    overflow-x: auto;
+    padding: 10px 0;
+    scrollbar-width: none;
+  }
+  .toc::-webkit-scrollbar { display: none; }
+  .toc a {
+    flex-shrink: 0;
+    text-decoration: none;
+    color: var(--text-secondary);
+    font-size: 0.88em;
+    font-weight: 500;
+    padding: 6px 14px;
+    border-radius: 999px;
+    transition: all 0.2s;
+    white-space: nowrap;
+  }
+  .toc a:hover { background: var(--primary-light); color: var(--primary); }
+
+  /* ---- Chapter ---- */
+  .chapter {
+    margin: 40px 0;
+    background: var(--surface);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    overflow: hidden;
+  }
+  .chapter-header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 28px 32px 0;
+  }
+  .chapter-icon {
+    font-size: 2em;
+    width: 56px;
+    height: 56px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 14px;
+    flex-shrink: 0;
+  }
+  .chapter-header h2 { font-size: 1.5em; font-weight: 700; letter-spacing: -0.01em; }
+  .chapter-header p { color: var(--text-secondary); font-size: 0.92em; margin-top: 2px; }
+  .chapter-body { padding: 20px 32px 32px; }
+
+  /* Color accents per chapter */
+  .ch-agent .chapter-icon { background: #ede9fe; color: #7c3aed; }
+  .ch-wiki .chapter-icon  { background: #dbeafe; color: #2563eb; }
+  .ch-skill .chapter-icon { background: #fef3c7; color: #d97706; }
+  .ch-memory .chapter-icon { background: #d1fae5; color: #059669; }
+  .ch-cron .chapter-icon  { background: #ffe4e6; color: #e11d48; }
+  .ch-data .chapter-icon  { background: #cffafe; color: #0891b2; }
+
+  /* ---- Typography ---- */
+  h3 { font-size: 1.15em; font-weight: 600; margin: 28px 0 10px; color: var(--primary-dark); }
+  h4 { font-size: 1em; font-weight: 600; margin: 20px 0 8px; }
+  p { margin: 8px 0; }
+  ul, ol { margin: 8px 0 8px 22px; }
+  li { margin: 4px 0; }
+
+  /* ---- Steps ---- */
+  .steps { counter-reset: step; list-style: none; margin-left: 0; padding-left: 0; }
+  .steps > li {
+    counter-increment: step;
+    position: relative;
+    padding-left: 44px;
+    margin: 18px 0;
+  }
+  .steps > li::before {
+    content: counter(step);
+    position: absolute;
+    left: 0; top: 2px;
+    width: 30px; height: 30px;
+    background: var(--primary);
+    color: #fff;
+    font-size: 0.85em;
+    font-weight: 700;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .steps > li strong { display: block; margin-bottom: 4px; }
+
+  /* ---- Callout ---- */
+  .callout {
+    border-left: 4px solid var(--accent);
+    background: var(--accent-light);
+    border-radius: 0 8px 8px 0;
+    padding: 14px 18px;
+    margin: 16px 0;
+    font-size: 0.93em;
+  }
+  .callout.warn { border-left-color: var(--warning); background: #fffbeb; }
+  .callout.tip  { border-left-color: var(--success); background: #ecfdf5; }
+  .callout .callout-title { font-weight: 700; margin-bottom: 4px; }
+
+  /* ---- Code ---- */
+  code {
+    background: var(--code-bg);
+    padding: 2px 7px;
+    border-radius: 5px;
+    font-family: "JetBrains Mono", "Fira Code", "Menlo", monospace;
+    font-size: 0.9em;
+    color: var(--primary-dark);
+  }
+  pre {
+    background: #1e293b;
+    color: #e2e8f0;
+    border-radius: 10px;
+    padding: 16px 20px;
+    overflow-x: auto;
+    font-size: 0.88em;
+    margin: 12px 0;
+    line-height: 1.6;
+  }
+  pre code { background: none; color: inherit; padding: 0; font-size: inherit; }
+
+  /* ---- Table ---- */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 14px 0;
+    font-size: 0.93em;
+  }
+  th, td {
+    text-align: left;
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--border);
+  }
+  th { background: var(--code-bg); font-weight: 600; white-space: nowrap; }
+  tr:hover td { background: #f8fafc; }
+
+  /* ---- Diagram / flow ---- */
+  .flow {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin: 14px 0;
+  }
+  .flow-step {
+    background: var(--primary-light);
+    color: var(--primary-dark);
+    padding: 6px 16px;
+    border-radius: 999px;
+    font-size: 0.88em;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+  .flow-arrow { color: var(--text-secondary); font-size: 1.2em; }
+
+  /* ---- File tree ---- */
+  .file-tree {
+    background: var(--code-bg);
+    border-radius: 10px;
+    padding: 16px 20px;
+    font-family: "JetBrains Mono", "Fira Code", monospace;
+    font-size: 0.88em;
+    line-height: 1.8;
+    margin: 12px 0;
+  }
+  .file-tree .dir { color: var(--primary); font-weight: 600; }
+  .file-tree .file { color: var(--text-secondary); }
+  .file-tree .comment { color: #94a3b8; font-style: italic; }
+
+  /* ---- Mindset card ---- */
+  .mindset {
+    background: linear-gradient(135deg, #f0f9ff 0%, #ede9fe 100%);
+    border: 1px solid #c7d2fe;
+    border-radius: var(--radius);
+    padding: 24px 28px;
+    margin: 20px 0;
+  }
+  .mindset h4 { color: var(--primary-dark); margin-top: 0; }
+
+  /* ---- Footer ---- */
+  .footer {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--text-secondary);
+    font-size: 0.88em;
+  }
+
+  /* ---- Print ---- */
+  @media print {
+    .toc-wrap { position: static; box-shadow: none; }
+    .hero { padding: 30px; }
+    .chapter { box-shadow: none; border: 1px solid var(--border); }
+    pre { white-space: pre-wrap; }
+  }
+
+  /* ---- Mobile ---- */
+  @media (max-width: 640px) {
+    .hero h1 { font-size: 1.7em; }
+    .chapter-header { padding: 20px 18px 0; }
+    .chapter-body { padding: 14px 18px 24px; }
+    .chapter-header h2 { font-size: 1.25em; }
+    .flow { gap: 6px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ==================== Hero ==================== -->
+<section class="hero">
+  <h1>SurveyMind 使用指南</h1>
+  <p class="subtitle">从零开始掌握 AI 数字员工平台的核心能力：对话、知识库、技能、记忆、定时任务与数据分析</p>
+  <span class="badge">v1.3.0 · Trial Edition</span>
+</section>
+
+<!-- ==================== TOC ==================== -->
+<nav class="toc-wrap">
+  <div class="container">
+    <div class="toc">
+      <a href="#quick-start">快速开始</a>
+      <a href="#agent">数字员工</a>
+      <a href="#wiki">Wiki 知识库</a>
+      <a href="#skill">技能创建</a>
+      <a href="#memory">记忆功能</a>
+      <a href="#cron">定时任务</a>
+      <a href="#analytics">数据分析专家</a>
+      <a href="#mental-model">心智模型</a>
+    </div>
+  </div>
+</nav>
+
+<div class="container">
+
+<!-- ==================== Quick Start ==================== -->
+<section class="chapter" id="quick-start">
+  <div class="chapter-header ch-agent">
+    <div class="chapter-icon">&#x1F680;</div>
+    <div>
+      <h2>快速开始</h2>
+      <p>启动服务 → 配置模型 → 开始对话，三步进入工作状态</p>
+    </div>
+  </div>
+  <div class="chapter-body">
+    <ol class="steps">
+      <li>
+        <strong>启动服务</strong>
+        双击安装目录中的 <code>start.bat</code>，等待控制台出现 <code>Started MateClawApplication in X.XX seconds</code> 即启动成功。
+      </li>
+      <li>
+        <strong>访问系统</strong>
+        打开 Chrome 或 Edge 浏览器，访问 <code>http://localhost:18088</code>，使用默认账号登录：
+        <table>
+          <tr><th>用户名</th><td><code>admin</code></td></tr>
+          <tr><th>密码</th><td><code>admin123</code></td></tr>
+        </table>
+      </li>
+      <li>
+        <strong>配置 AI 模型</strong>
+        登录后进入侧边栏 <strong>设置 → 模型管理</strong>，点击要使用的模型提供商卡片，填入 API Key 并保存。系统会自动探测连接可用性。
+        <div class="callout tip">
+          <div class="callout-title">推荐</div>
+          首次使用建议选择通义千问（DashScope），注册后有免费额度；也支持 OpenAI、DeepSeek、Anthropic 等主流模型。
+        </div>
+      </li>
+    </ol>
+    <p>配置完成后，点击左侧的 <strong>「对话」</strong> 进入聊天界面，选择一个数字员工开始交流。</p>
+  </div>
+</section>
+
+<!-- ==================== 1. 数字员工 ==================== -->
+<section class="chapter ch-agent" id="agent">
+  <div class="chapter-header">
+    <div class="chapter-icon">&#x1F9D1;&#x200D;&#x1F4BB;</div>
+    <div>
+      <h2>场景一：数字员工</h2>
+      <p>招聘、训练、管理你的 AI 员工</p>
+    </div>
+  </div>
+  <div class="chapter-body">
+
+    <div class="mindset">
+      <h4>核心认知</h4>
+      <p><strong>一个数字员工 = 模型（大脑） + 技能（工作手册） + 工具（原子能力） + 提示词（工作守则） + 记忆（长期经验）</strong></p>
+      <p>把它当成一个你刚招来的新员工：你需要告诉它岗位是什么、该怎么做事、能用哪些工具、以前学到了什么。配置得越精确，它干活越靠谱。</p>
+    </div>
+
+    <h3>创建数字员工</h3>
+    <ol class="steps">
+      <li>
+        <strong>进入员工管理</strong>
+        侧边栏 → <strong>数字员工</strong>，点击 <strong>「新员工」</strong> 按钮。
+      </li>
+      <li>
+        <strong>选择岗位模板（可选）</strong>
+        系统提供预置岗位模板（如翻译专家、写作助手、客服等），选一个可以快速上手。也可以点 <strong>「从空白开始」</strong>。
+      </li>
+      <li>
+        <strong>填写基本信息</strong>
+        <table>
+          <tr><th>字段</th><th>说明</th><th>示例</th></tr>
+          <tr><td>名称</td><td>员工名字</td><td>数据分析师小王</td></tr>
+          <tr><td>岗位（Role）</td><td>一句话职业身份</td><td>数据分析师</td></tr>
+          <tr><td>目标（Goal）</td><td>它存在的理由</td><td>把数据变成可执行的业务洞察</td></tr>
+          <tr><td>背景（Backstory）</td><td>经验和原则（用户看不见但每次对话都能感受到）</td><td>在数据领域工作十年，信奉先问对问题再写 SQL</td></tr>
+          <tr><td>类型</td><td>ReAct（工具调用）或 Plan-and-Execute</td><td>ReAct</td></tr>
+          <tr><td>模型</td><td>留空跟随全局默认，也可单独指定</td><td>qwen-max</td></tr>
+        </table>
+      </li>
+      <li>
+        <strong>绑定技能和工具</strong>
+        切换到 <strong>「技能」</strong> 和 <strong>「工具」</strong> 标签页，勾选该员工可使用的技能和工具。留空则使用所有已启用的技能/工具。
+      </li>
+      <li>
+        <strong>保存并开始对话</strong>
+        保存后在员工卡片上点击 <strong>「对话」</strong>，即可开始聊天。
+      </li>
+    </ol>
+
+    <h3>与员工对话</h3>
+    <p>在 <strong>「对话」</strong> 页面：</p>
+    <ul>
+      <li>左上角下拉切换不同的数字员工</li>
+      <li>输入消息后按 <kbd>Enter</kbd> 发送，<kbd>Shift+Enter</kbd> 换行</li>
+      <li>支持拖拽上传文件（图片、PDF、文档等），员工会自动处理</li>
+      <li>点击消息气泡上的朗读按钮可以让 AI 语音朗读回答</li>
+      <li>开启 <strong>「深度思考」</strong> 开关可让模型进行更深入的推理</li>
+    </ul>
+
+    <h3>查看员工状态</h3>
+    <p>侧边栏 → <strong>员工状态</strong>，可以实时看到哪些员工正在工作、是否卡住、运行了多久。支持一键停止或强制结束。</p>
+
+    <div class="callout tip">
+      <div class="callout-title">技巧</div>
+      先在对话里跑通一个完整流程，确认员工能胜任后，再把同样的输入配置成定时任务或接入 IM 渠道——这是最稳的上线方式。
+    </div>
+  </div>
+</section>
+
+<!-- ==================== 2. Wiki 知识库 ==================== -->
+<section class="chapter ch-wiki" id="wiki">
+  <div class="chapter-header">
+    <div class="chapter-icon">&#x1F4DA;</div>
+    <div>
+      <h2>场景二：Wiki 知识库</h2>
+      <p>上传原始材料，AI 自动消化为结构化知识页面</p>
+    </div>
+  </div>
+  <div class="chapter-body">
+
+    <div class="mindset">
+      <h4>核心认知</h4>
+      <p>知识库不是简单的"文档搜索"。它的工作流程是：<strong>原始材料 → AI 消化 → 生成 Wiki 页面 → 建立知识图谱 → 注入 Agent 上下文</strong>。Agent 回答问题时会自动从知识库中检索相关页面。</p>
+    </div>
+
+    <h3>完整工作流</h3>
+    <div class="flow">
+      <span class="flow-step">创建知识库</span><span class="flow-arrow">&rarr;</span>
+      <span class="flow-step">上传材料</span><span class="flow-arrow">&rarr;</span>
+      <span class="flow-step">AI 生成页面</span><span class="flow-arrow">&rarr;</span>
+      <span class="flow-step">知识图谱</span><span class="flow-arrow">&rarr;</span>
+      <span class="flow-step">绑定 Agent</span>
+    </div>
+
+    <h3>创建知识库</h3>
+    <ol class="steps">
+      <li>
+        <strong>新建知识库</strong>
+        侧边栏 → <strong>Wiki 知识库</strong>，点击 <strong>「新建知识库」</strong>，输入名称和描述。
+      </li>
+      <li>
+        <strong>上传原始材料</strong>
+        进入知识库后切换到 <strong>「原始材料」</strong> 标签页。支持的方式：
+        <ul>
+          <li><strong>拖拽上传文件</strong>：PDF、Word、Excel、TXT、Markdown 等</li>
+          <li><strong>添加文本</strong>：手动粘贴内容</li>
+          <li><strong>扫描本地目录</strong>：输入目录路径批量导入</li>
+        </ul>
+      </li>
+      <li>
+        <strong>等待 AI 处理</strong>
+        上传后系统自动开始处理。处理过程包括：
+        <div class="flow">
+          <span class="flow-step">分析内容</span><span class="flow-arrow">&rarr;</span>
+          <span class="flow-step">生成 Wiki 页面</span><span class="flow-arrow">&rarr;</span>
+          <span class="flow-step">添加交叉链接</span><span class="flow-arrow">&rarr;</span>
+          <span class="flow-step">向量化索引</span>
+        </div>
+        处理状态会实时显示在材料旁边。
+      </li>
+      <li>
+        <strong>查看和编辑页面</strong>
+        切换到 <strong>「Wiki 页面」</strong> 标签页，可以看到 AI 生成的所有知识页面。点击任意页面查看详情，支持手动编辑和补充。
+      </li>
+    </ol>
+
+    <h3>知识图谱</h3>
+    <p>切换到 <strong>「知识图谱」</strong> 标签页，可以看到所有页面之间的关联关系可视化。关联类型包括：</p>
+    <table>
+      <tr><th>关联类型</th><th>含义</th></tr>
+      <tr><td>直接引用</td><td>页面间有明确的文字链接</td></tr>
+      <tr><td>共享片段</td><td>两个页面引用了同一段原始内容</td></tr>
+      <tr><td>共享来源</td><td>两个页面来自同一份原始材料</td></tr>
+      <tr><td>语义相近</td><td>通过向量相似度发现的隐含关联</td></tr>
+    </table>
+
+    <h3>加工器（Transformations）</h3>
+    <p>加工器是可复用的提示词模板，针对每份原始材料执行自定义分析。例如创建一个"合同风险点提取"加工器，自动对每份上传的合同文档进行风险分析。</p>
+    <p>进入知识库 → <strong>「加工器」</strong> 标签页 → <strong>「新建加工器」</strong>，配置提示词模板（可用 <code>{input_text}</code> 和 <code>{title}</code> 占位符），开启「默认运行」后，新材料处理完成会自动触发。</p>
+
+    <h3>绑定到 Agent</h3>
+    <p>知识库创建完成后，在数字员工的 <strong>「技能」</strong> 标签页中，可以看到与知识库相关的 Wiki 工具（如 wiki_search_pages、wiki_read_page 等）。Agent 在对话中会自动调用这些工具来检索知识库中的内容。</p>
+
+    <div class="callout">
+      <div class="callout-title">近况快照（Hot Cache）</div>
+      知识库支持自动生成"近况快照"——一段滚动更新的摘要，会被注入到 Agent 的系统提示中。这意味着 Agent 每次对话不必重新检索就能了解知识库最近发生了什么。在 <strong>「近况快照」</strong> 标签页中可以查看和手动重建。
+    </div>
+  </div>
+</section>
+
+<!-- ==================== 3. 技能创建 ==================== -->
+<section class="chapter ch-skill" id="skill">
+  <div class="chapter-header">
+    <div class="chapter-icon">&#x1F3AF;</div>
+    <div>
+      <h2>场景三：技能创建与管理</h2>
+      <p>为数字员工编写工作手册（SKILL.md）</p>
+    </div>
+  </div>
+  <div class="chapter-body">
+
+    <div class="mindset">
+      <h4>核心认知</h4>
+      <p><strong>技能 ≠ 工具</strong>。工具是一次性的原子操作（如"搜索网页"、"读取文件"），技能是一整套工作手册，教会 Agent 按流程完成一件复杂的事。技能内部可以声明需要哪些工具。</p>
+    </div>
+
+    <h3>创建技能的三种方式</h3>
+
+    <h4>方式一：使用模板向导（推荐新手）</h4>
+    <ol class="steps">
+      <li>
+        <strong>进入模板库</strong>
+        侧边栏 → <strong>技能</strong> → 右上角 <strong>「模板库」</strong>，或直接访问 <code>/skills/templates</code>。
+      </li>
+      <li>
+        <strong>选择模板</strong>
+        浏览预置模板（如 Claude Code 助手、Obsidian 笔记等），点击 <strong>「使用模板」</strong>。
+      </li>
+      <li>
+        <strong>填写参数并安装</strong>
+        按提示填写模板参数 → 预览生成的 SKILL.md → 点击 <strong>「安装 Skill」</strong>。
+      </li>
+    </ol>
+
+    <h4>方式二：通过对话创建（AI 辅助）</h4>
+    <p>在对话中找到 <strong>「技能创作者」</strong>（Skill Builder）这个数字员工，用自然语言描述你需要的技能，它会自动生成 SKILL.md 并安装。</p>
+
+    <h4>方式三：手动创建</h4>
+    <ol class="steps">
+      <li>
+        <strong>新建技能</strong>
+        侧边栏 → <strong>技能</strong> → 点击 <strong>「新建技能」</strong>，填写名称和描述。
+      </li>
+      <li>
+        <strong>编辑 SKILL.md</strong>
+        在技能详情面板的 <strong>「正文」</strong> 标签页中，编写 SKILL.md 内容。
+      </li>
+    </ol>
+
+    <h3>SKILL.md 结构说明</h3>
+    <pre><code>---
+name: my-skill
+version: 1.0.0
+description: 这个技能做什么
+author: your-name
+icon: &#x1F6E0;&#xFE0F;
+allowed-tools:
+  - search
+  - read_file
+  - execute_shell_command
+---
+
+# 技能名称
+
+## 触发条件
+当用户要求 XXX 时触发此技能。
+
+## 执行流程
+1. 第一步：分析用户需求
+2. 第二步：调用工具获取数据
+3. 第三步：整理输出结果
+
+## 输出格式
+- 使用 Markdown 格式
+- 包含标题和要点列表</code></pre>
+
+    <h3>技能文件存储位置</h3>
+    <div class="file-tree">
+      <span class="dir">~/.qingwenclaws/skills/</span> <span class="comment">← 技能根目录</span><br>
+      &nbsp;&nbsp;<span class="dir">my-skill/</span><br>
+      &nbsp;&nbsp;&nbsp;&nbsp;<span class="file">SKILL.md</span> <span class="comment">← 技能主文件（必须）</span><br>
+      &nbsp;&nbsp;&nbsp;&nbsp;<span class="file">LESSONS.md</span> <span class="comment">← AI 自动积累的经验（自动生成）</span><br>
+      &nbsp;&nbsp;&nbsp;&nbsp;<span class="dir">scripts/</span> <span class="comment">← 可选的脚本文件</span><br>
+      &nbsp;&nbsp;&nbsp;&nbsp;<span class="dir">references/</span> <span class="comment">← 可选的参考资料</span><br>
+      &nbsp;&nbsp;<span class="dir">another-skill/</span><br>
+      &nbsp;&nbsp;&nbsp;&nbsp;<span class="file">SKILL.md</span><br>
+    </div>
+    <p>在 Windows 环境下，完整路径为：<code>C:\Users\你的用户名\.qingwenclaws\skills\</code></p>
+
+    <h3>绑定技能到员工</h3>
+    <p>进入 <strong>数字员工 → 编辑 → 技能标签页</strong>，搜索并勾选需要绑定的技能。绑定后，该员工的 LLM 提示词中会自动注入技能内容。</p>
+
+    <h3>经验自进化（LESSONS.md）</h3>
+    <p>每个技能会自动积累使用经验。当 Agent 在使用技能过程中发现有用的模式或踩了坑，它会自动记录到 LESSONS.md 中。下次使用同一技能时，这些经验会被注入到提示词中，让 Agent 越用越熟练。</p>
+    <p>在技能详情面板的 <strong>「经验」</strong> 标签页中可以查看和管理经验。</p>
+
+    <div class="callout tip">
+      <div class="callout-title">技巧</div>
+      在对话中告诉 Agent「请把这条经验记录到 XX 技能下」，即可手动触发经验记录。
+    </div>
+  </div>
+</section>
+
+<!-- ==================== 4. 记忆功能 ==================== -->
+<section class="chapter ch-memory" id="memory">
+  <div class="chapter-header">
+    <div class="chapter-icon">&#x1F9E0;</div>
+    <div>
+      <h2>场景四：记忆功能</h2>
+      <p>让数字员工越用越懂你</p>
+    </div>
+  </div>
+  <div class="chapter-body">
+
+    <div class="mindset">
+      <h4>核心认知</h4>
+      <p>记忆是数字员工的"长期大脑"。没有记忆的 Agent 每次对话都从零开始；有了记忆，Agent 会记住你的偏好、你的项目上下文、上次没做完的事，让对话越来越流畅。</p>
+    </div>
+
+    <h3>四种记忆文件</h3>
+    <table>
+      <tr><th>文件名</th><th>作用</th><th>谁来维护</th></tr>
+      <tr><td><code>AGENTS.md</code></td><td>角色定义 — Agent 是谁、核心原则与边界</td><td>人工 + AI</td></tr>
+      <tr><td><code>PROFILE.md</code></td><td>用户画像 — Agent 对你的了解（职业、偏好等）</td><td>AI 自动抽取</td></tr>
+      <tr><td><code>SOUL.md</code></td><td>灵魂档案 — Agent 的信念、做事风格、深层性格</td><td>人工设定</td></tr>
+      <tr><td><code>MEMORY.md</code></td><td>日常记忆 — 事实、偏好、项目上下文、待办</td><td>AI 自动 + 人工编辑</td></tr>
+    </table>
+
+    <h3>查看和编辑记忆</h3>
+    <ol class="steps">
+      <li>
+        <strong>进入记忆页面</strong>
+        侧边栏 → <strong>记忆</strong>，在顶部下拉选择要查看的智能体。
+      </li>
+      <li>
+        <strong>浏览记忆内容</strong>
+        <ul>
+          <li><strong>长期记忆</strong> 标签页：查看 MEMORY.md、PROFILE.md、SOUL.md 等文件的内容概览</li>
+          <li><strong>整理时间线</strong> 标签页：查看记忆的整理历史（包括夜间自动整理和手动专题整理）</li>
+          <li><strong>事实库</strong> 标签页：查看从对话中抽取的结构化事实</li>
+        </ul>
+      </li>
+      <li>
+        <strong>手动编辑</strong>
+        侧边栏 → <strong>设置 → 智能体上下文</strong>，选择智能体后可以直接编辑任意 <code>.md</code> 文件的内容。
+      </li>
+    </ol>
+
+    <h3>记忆文件存储位置</h3>
+    <p>记忆文件以工作区为维度组织，存储在数据库中，可通过以下两个入口管理：</p>
+    <ul>
+      <li><strong>记忆页面</strong>（侧边栏 → 记忆）：可视化浏览和概览</li>
+      <li><strong>智能体上下文</strong>（设置 → 智能体上下文）：Markdown 编辑器，直接编辑内容</li>
+    </ul>
+
+    <h3>自动记忆抽取</h3>
+    <p>在对话过程中，Agent 会自动识别值得记住的信息并写入 MEMORY.md。例如：</p>
+    <ul>
+      <li>你提到的个人偏好（"我喜欢简洁的报告风格"）</li>
+      <li>项目关键信息（"我们的数据库用的是 PostgreSQL 14"）</li>
+      <li>待办事项（"下周一前完成数据迁移"）</li>
+    </ul>
+
+    <h3>夜间巩固（Dreaming）</h3>
+    <p>系统会定期自动整理记忆，包括：</p>
+    <ul>
+      <li><strong>去重</strong>：合并重复的记忆条目</li>
+      <li><strong>清理</strong>：移除过期或不再相关的内容</li>
+      <li><strong>整合</strong>：将零散的信息归纳成结构化条目</li>
+    </ul>
+    <p>整理结果可以在 <strong>「整理时间线」</strong> 中查看回顾。</p>
+
+    <h3>专题整理</h3>
+    <p>除了自动整理，你也可以手动触发专题整理：在记忆页面切换到 <strong>「整理时间线」</strong> 标签页，输入主题（如"项目架构"），点击 <strong>「开始整理」</strong>，Agent 会围绕该主题重新组织记忆。</p>
+
+    <div class="callout tip">
+      <div class="callout-title">技巧</div>
+      在对话中直接告诉 Agent："记住我平时不吃香菜""以后报告用英文"，它会自动将这些偏好写入 MEMORY.md。如果发现 Agent 记错了什么，去「设置 → 智能体上下文」手动修正。
+    </div>
+  </div>
+</section>
+
+<!-- ==================== 5. 定时任务 ==================== -->
+<section class="chapter ch-cron" id="cron">
+  <div class="chapter-header">
+    <div class="chapter-icon">&#x23F0;</div>
+    <div>
+      <h2>场景五：定时任务</h2>
+      <p>让数字员工按时自动执行工作</p>
+    </div>
+  </div>
+  <div class="chapter-body">
+
+    <div class="mindset">
+      <h4>核心认知</h4>
+      <p>定时任务的本质 = <strong>到点了，系统自动给员工发一条消息</strong>。触发后，员工照常走完整个对话流程（思考 → 调用工具 → 生成回答）。所以先在对话里跑通一遍，再设定时任务，最省心。</p>
+    </div>
+
+    <h3>创建定时任务</h3>
+    <ol class="steps">
+      <li>
+        <strong>进入定时任务页面</strong>
+        侧边栏 → <strong>定时任务</strong>，点击 <strong>「新建任务」</strong>。
+      </li>
+      <li>
+        <strong>基本配置</strong>
+        <table>
+          <tr><th>字段</th><th>说明</th></tr>
+          <tr><td>任务名称</td><td>给任务起个名字，便于识别</td></tr>
+          <tr><td>关联 Agent</td><td>选择哪个数字员工来执行</td></tr>
+          <tr><td>任务类型</td><td>文字消息 / 提醒 / Agent 目标</td></tr>
+        </table>
+      </li>
+      <li>
+        <strong>设置触发消息</strong>
+        <ul>
+          <li><strong>文字消息</strong>：相当于到时间自动给 Agent 发送这条消息，Agent 会正常处理并生成回答</li>
+          <li><strong>提醒</strong>：到点原样推送内容，不经过 LLM 改写</li>
+          <li><strong>Agent 目标</strong>：直接描述 Agent 要完成的目标</li>
+        </ul>
+      </li>
+      <li>
+        <strong>设置执行频率</strong>
+        <table>
+          <tr><th>频率</th><th>说明</th><th>示例</th></tr>
+          <tr><td>每小时</td><td>每小时的指定分钟执行</td><td>每小时第 30 分钟</td></tr>
+          <tr><td>每天</td><td>每天固定时间执行</td><td>每天 9:00</td></tr>
+          <tr><td>每周</td><td>指定星期几和时间执行</td><td>每周一至周五 9:00</td></tr>
+          <tr><td>自定义</td><td>使用 Cron 表达式</td><td><code>0 9 * * 1-5</code></td></tr>
+        </table>
+      </li>
+      <li>
+        <strong>保存并启用</strong>
+        勾选 <strong>「立即启用」</strong> 并保存。也可以先创建后手动启用。
+      </li>
+    </ol>
+
+    <h3>Cron 表达式速查</h3>
+    <pre><code>┌──── 分钟 (0-59)
+│ ┌──── 小时 (0-23)
+│ │ ┌──── 日 (1-31)
+│ │ │ ┌──── 月 (1-12)
+│ │ │ │ ┌──── 星期 (0-7, 0和7都是周日)
+│ │ │ │ │
+* * * * *
+
+常用示例：
+0 9 * * *       每天 9:00
+0 9 * * 1-5     工作日 9:00
+0 */2 * * *     每 2 小时
+30 8 1 * *      每月 1 号 8:30
+0 9,18 * * *    每天 9:00 和 18:00</code></pre>
+
+    <h3>管理任务</h3>
+    <ul>
+      <li><strong>立即执行</strong>：在任务列表点击「立即执行」，不必等到下次触发时间</li>
+      <li><strong>启用/停用</strong>：通过开关随时控制任务状态</li>
+      <li><strong>查看执行结果</strong>：执行后在 <strong>「对话」</strong> 页面可以找到以 <code>cron_</code> 开头的自动对话</li>
+    </ul>
+
+    <div class="callout warn">
+      <div class="callout-title">注意</div>
+      定时任务触发后等价于"有人发了一条消息"，员工照常完成对话流程。多实例部署场景下有分布式锁保护，同一任务只会执行一次。
+    </div>
+  </div>
+</section>
+
+<!-- ==================== 6. 数据分析专家 ==================== -->
+<section class="chapter ch-data" id="analytics">
+  <div class="chapter-header">
+    <div class="chapter-icon">&#x1F4CA;</div>
+    <div>
+      <h2>场景六：数据分析专家</h2>
+      <p>上传 Excel 或连接数据库，用自然语言做数据分析</p>
+    </div>
+  </div>
+  <div class="chapter-body">
+
+    <div class="mindset">
+      <h4>核心认知</h4>
+      <p>数据分析专家让你<strong>用说话代替写 SQL</strong>。你只需要把数据准备好（上传 Excel 或连接数据库），然后用自然语言提问，Agent 会自动生成查询、执行分析、输出结果。</p>
+    </div>
+
+    <h3>两种数据接入方式</h3>
+
+    <h4>方式一：上传 Excel 文件</h4>
+    <ol class="steps">
+      <li>
+        <strong>创建数据集模板</strong>
+        侧边栏 → <strong>数据分析</strong> → <strong>数据集模板</strong> → <strong>「新建模板」</strong>。手动定义字段，或直接 <strong>「从 Excel 导入」</strong> 自动识别字段结构。
+        <div class="callout tip">
+          <div class="callout-title">推荐</div>
+          使用"从 Excel 导入"方式——上传一份示例 Excel，系统会自动解析列名、类型，一键生成模板。
+        </div>
+      </li>
+      <li>
+        <strong>配置字段语义</strong>
+        在模板的字段管理中，为每个字段填写 <strong>「语义」</strong> 描述。这段文字会告诉数据分析专家这一列的业务含义，是准确分析的关键。
+        <table>
+          <tr><th>字段属性</th><th>说明</th></tr>
+          <tr><td>角色</td><td>维度（分组字段）/ 度量（计算字段）/ 时间键</td></tr>
+          <tr><td>聚合方式</td><td>SUM / AVG / COUNT / MAX / MIN 等</td></tr>
+          <tr><td>时间粒度</td><td>日 / 周 / 月 / 季 / 年</td></tr>
+          <tr><td>语义</td><td>业务含义说明（如"客户下单金额，单位：元"）</td></tr>
+        </table>
+      </li>
+      <li>
+        <strong>创建数据集并上传数据</strong>
+        <strong>数据集</strong> → <strong>「新建数据集」</strong>，选择刚才的模板，然后点击 <strong>「上传 Excel」</strong> 上传 <code>.xlsx</code> 文件。
+      </li>
+      <li>
+        <strong>开始分析</strong>
+        在数据集页面点击 <strong>「分析」</strong>，进入与数据分析专家的对话界面。
+      </li>
+    </ol>
+
+    <h4>方式二：连接外部数据库</h4>
+    <ol class="steps">
+      <li>
+        <strong>添加数据源</strong>
+        <strong>数据分析</strong> → <strong>外部数据源</strong> → <strong>「添加数据源」</strong>。
+      </li>
+      <li>
+        <strong>填写连接信息</strong>
+        <table>
+          <tr><th>字段</th><th>说明</th></tr>
+          <tr><td>数据库类型</td><td>MySQL / PostgreSQL / ClickHouse 等</td></tr>
+          <tr><td>主机和端口</td><td>数据库服务器地址</td></tr>
+          <tr><td>数据库名</td><td>要连接的数据库</td></tr>
+          <tr><td>用户名 / 密码</td><td>数据库凭证</td></tr>
+        </table>
+      </li>
+      <li>
+        <strong>测试连接</strong>
+        点击 <strong>「测试连接」</strong>，显示"连接成功"后保存。
+      </li>
+      <li>
+        <strong>在对话中使用</strong>
+        与绑定了 <code>query_datasource</code> 工具的数字员工对话，它会自动根据你的问题生成 SQL 查询并执行。
+      </li>
+    </ol>
+
+    <h3>提问示例</h3>
+    <table>
+      <tr><th>自然语言提问</th><th>Agent 会做什么</th></tr>
+      <tr><td>"上个月销售额最高的前 10 个产品是什么？"</td><td>生成 SQL 查询 → 执行 → 返回排名表格</td></tr>
+      <tr><td>"按月统计今年的客户增长趋势"</td><td>聚合查询 → 返回月度数据</td></tr>
+      <tr><td>"对比 Q1 和 Q2 各区域的业绩"</td><td>多维交叉查询 → 对比分析</td></tr>
+      <tr><td>"这份数据里有没有异常值？"</td><td>统计分析 → 识别离群点</td></tr>
+    </table>
+
+    <div class="callout tip">
+      <div class="callout-title">技巧</div>
+      字段的「语义」描述越精准，分析结果越准确。比如同样是"金额"字段，写上"客户订单金额（含税），单位：人民币元"比空着好得多。
+    </div>
+  </div>
+</section>
+
+<!-- ==================== Mental Model ==================== -->
+<section class="chapter" id="mental-model">
+  <div class="chapter-header ch-agent">
+    <div class="chapter-icon">&#x1F4A1;</div>
+    <div>
+      <h2>心智模型：把平台当成一家公司</h2>
+      <p>理解各模块之间的关系</p>
+    </div>
+  </div>
+  <div class="chapter-body">
+
+    <p>SurveyMind 的设计哲学可以类比为经营一家公司：</p>
+
+    <table>
+      <tr><th>公司类比</th><th>平台对应</th><th>你要做的</th></tr>
+      <tr>
+        <td><strong>招聘员工</strong></td>
+        <td>创建数字员工</td>
+        <td>定义岗位、职责、工作原则</td>
+      </tr>
+      <tr>
+        <td><strong>培训手册</strong></td>
+        <td>编写 Skill（技能）</td>
+        <td>写好 SOP 流程，员工照手册执行</td>
+      </tr>
+      <tr>
+        <td><strong>公司知识库</strong></td>
+        <td>Wiki 知识库</td>
+        <td>把文档、资料上传，让员工能查阅</td>
+      </tr>
+      <tr>
+        <td><strong>员工笔记本</strong></td>
+        <td>记忆系统</td>
+        <td>员工自己记录工作经验和用户偏好</td>
+      </tr>
+      <tr>
+        <td><strong>排班表</strong></td>
+        <td>定时任务</td>
+        <td>安排员工每天几点做什么事</td>
+      </tr>
+      <tr>
+        <td><strong>数据分析部门</strong></td>
+        <td>数据分析专家</td>
+        <td>把数据给他，用说话代替写 SQL</td>
+      </tr>
+      <tr>
+        <td><strong>办公工具</strong></td>
+        <td>工具（Tools）</td>
+        <td>搜索引擎、文件处理、生成图表等原子能力</td>
+      </tr>
+      <tr>
+        <td><strong>安保部门</strong></td>
+        <td>安全（工具防护 + 审批流）</td>
+        <td>设置哪些操作需要审批、哪些工具禁止使用</td>
+      </tr>
+    </table>
+
+    <h3>推荐上手路径</h3>
+    <div class="flow">
+      <span class="flow-step">1. 配模型</span><span class="flow-arrow">&rarr;</span>
+      <span class="flow-step">2. 建员工</span><span class="flow-arrow">&rarr;</span>
+      <span class="flow-step">3. 对话跑通</span><span class="flow-arrow">&rarr;</span>
+      <span class="flow-step">4. 建知识库</span><span class="flow-arrow">&rarr;</span>
+      <span class="flow-step">5. 写技能</span><span class="flow-arrow">&rarr;</span>
+      <span class="flow-step">6. 设定时任务</span>
+    </div>
+
+    <div class="callout tip">
+      <div class="callout-title">核心原则</div>
+      <p><strong>先跑通再自动化</strong>：在对话中手动验证 Agent 能完成任务后，再配置定时任务或接入 IM 渠道。</p>
+      <p><strong>先粗后细</strong>：从预置模板和内置技能开始，等理解了系统能力后再写自定义 Skill。</p>
+      <p><strong>喂数据就是喂能力</strong>：知识库内容越丰富、字段语义越清晰，Agent 的回答越准确。</p>
+    </div>
+  </div>
+</section>
+
+</div><!-- /.container -->
+
+<footer class="footer">
+  <p>SurveyMind v1.3.0 Trial Edition &middot; 如需技术支持请联系供应商</p>
+</footer>
+
+<script>
+// Smooth scroll for TOC links
+document.querySelectorAll('.toc a').forEach(a => {
+  a.addEventListener('click', e => {
+    e.preventDefault();
+    const target = document.querySelector(a.getAttribute('href'));
+    if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  });
+});
+</script>
+</body>
+</html>

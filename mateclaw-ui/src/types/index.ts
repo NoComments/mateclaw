@@ -875,6 +875,15 @@ export interface ProviderModelInfo {
    * toggle should gate on.
    */
   supportsThinking?: boolean
+  /** Numeric mate_model_config.id backing this model - lets the UI call per-model update
+   *  endpoints (e.g. PUT /models/{id}/modalities). Undefined for ad-hoc entries. */
+  configId?: number
+  /** Explicit modalities declaration (JSON array string, e.g. '["vision"]') stored on the
+   *  config row, or null when deferring to heuristics. Drives the "multimodal" checkbox. */
+  modalities?: string | null
+  /** Effective modality set resolved by the backend (explicit > heuristic). Uppercase names
+   *  TEXT/VISION/VIDEO/AUDIO. Drives the effective-capability badge. */
+  resolvedModalities?: string[]
 }
 
 /**

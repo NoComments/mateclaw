@@ -16,6 +16,20 @@
           </button>
         </div>
 
+        <PageIntro
+          storage-key="mc.channels.introHidden.v1"
+          :title="t('channels.intro.title')"
+          :body="t('channels.intro.body')"
+          :features="[
+            { icon: '🔌', text: t('channels.intro.bullets.a') },
+            { icon: '🛡️', text: t('channels.intro.bullets.b') },
+            { icon: '📜', text: t('channels.intro.bullets.c') },
+          ]"
+          :footer="t('channels.intro.footer')"
+          :hide-label="t('channels.intro.hide')"
+          :reopen-label="t('channels.intro.show')"
+        />
+
         <!-- Loading skeleton (initial fetch) -->
         <div v-if="isInitialLoading" class="channel-grid">
           <div v-for="i in 3" :key="i" class="channel-card mc-surface-card channel-card-skeleton">
@@ -172,6 +186,7 @@ import { ref, computed, defineAsyncComponent, onMounted, onUnmounted, onActivate
 import { useI18n } from 'vue-i18n'
 import { mcToast } from '@/composables/useMcToast'
 import { mcConfirm } from '@/components/common/useConfirm'
+import PageIntro from '@/components/common/PageIntro.vue'
 import { channelApi, agentApi } from '@/api'
 import type { Channel, Agent } from '@/types'
 

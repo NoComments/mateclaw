@@ -40,7 +40,7 @@ import java.sql.Connection;
     com.alibaba.cloud.ai.autoconfigure.dashscope.DashScopeAgentAutoConfiguration.class,
 })
 @EnableScheduling
-@MapperScan("vip.mate.**.repository")
+@MapperScan({"vip.mate.**.repository", "vip.mate.analytics.**"})
 public class MateClawApplication {
 
     @Autowired

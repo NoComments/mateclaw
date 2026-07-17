@@ -1,0 +1,19 @@
+{
+  "id": "port-130-delta-to-official",
+  "title": "Port source branch changes since 1.3.0 into official checkout",
+  "status": "completed",
+  "orchestrator": "codex-cli",
+  "planner": "claude",
+  "executor": "opencode-fallback-codex",
+  "acceptor": "codex-cli",
+  "taskType": "git",
+  "complexity": "L",
+  "risk": "medium",
+  "worktreeRequired": false,
+  "currentPhase": "completed",
+  "nextAction": "none",
+  "workdir": "D:\\粮食局需求\\mateclaw-official\\mateclaw",
+  "worktreePath": "",
+  "worktreeBranch": "",
+  "sourceBranch": "target dev@22a61e6; source brand-rename-surveymind@cb6a834 relative to origin/baseline/v1.3.0@d3ffd60"
+}

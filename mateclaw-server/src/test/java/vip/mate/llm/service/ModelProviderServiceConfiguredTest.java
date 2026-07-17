@@ -32,6 +32,7 @@ class ModelProviderServiceConfiguredTest {
 
     private ModelProviderMapper providerMapper;
     private ModelConfigService modelConfigService;
+    private ModelCapabilityService modelCapabilityService;
     private ApplicationEventPublisher eventPublisher;
     private ObjectProvider<ClaudeCodeOAuthService> claudeCodeOAuthProvider;
     private ClaudeCodeOAuthService claudeCodeOAuthService;
@@ -47,6 +48,7 @@ class ModelProviderServiceConfiguredTest {
     void setUp() {
         providerMapper = mock(ModelProviderMapper.class);
         modelConfigService = mock(ModelConfigService.class);
+        modelCapabilityService = mock(ModelCapabilityService.class);
         eventPublisher = mock(ApplicationEventPublisher.class);
         claudeCodeOAuthProvider = mock(ObjectProvider.class);
         claudeCodeOAuthService = mock(ClaudeCodeOAuthService.class);
@@ -61,7 +63,7 @@ class ModelProviderServiceConfiguredTest {
         // Default: every provider has been probed so liveness is computed normally.
         when(initProbe.hasBeenProbed(any())).thenReturn(true);
 
-        service = new ModelProviderService(providerMapper, modelConfigService, eventPublisher,
+        service = new ModelProviderService(providerMapper, modelConfigService, modelCapabilityService, eventPublisher,
                 claudeCodeOAuthProvider, pool, healthTracker, initProbeProvider);
     }
 

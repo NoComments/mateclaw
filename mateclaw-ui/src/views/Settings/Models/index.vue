@@ -150,6 +150,7 @@
       :applying-models="applyingModels"
       :all-new-selected="allNewSelected"
       :testing-model-id="testingModelId"
+      :toggling-model-id="togglingModelId"
       :model-test-results="modelTestResults"
       :is-extra-model="isExtraModel"
       :is-active-model="isActiveModel"
@@ -164,6 +165,7 @@
       @set-active="onSetActiveModel"
       @remove-model="onRemoveProviderModel"
       @add-model="onAddProviderModel"
+      @toggle-multimodal="onToggleMultimodal"
     />
 
     <!-- RFC-074 PR-2: Add Provider Drawer (catalog of opt-in built-ins). -->
@@ -191,6 +193,7 @@
 <script setup lang="ts">
 import { computed, defineAsyncComponent, onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { ElMessage } from 'element-plus'
 import { mcToast } from '@/composables/useMcToast'
 import { mcConfirm } from '@/components/common/useConfirm'
 import { useRoute, useRouter } from 'vue-router'
@@ -230,6 +233,7 @@ const {
   connectionTestingId,
   connectionResults,
   testingModelId,
+  togglingModelId,
   modelTestResults,
   providerForm,
   providerModelForm,
@@ -261,6 +265,7 @@ const {
   handleApplyModels,
   handleTestConnection,
   handleTestModel,
+  updateModelMultimodal,
   providerStatus,
   getProviderIcon,
   onIconError,
@@ -386,6 +391,15 @@ async function onSetActiveModel(model: ProviderModelInfo) {
     showSavedTip(t('settings.model.activeChanged'))
   } catch (error) {
     mcToast.error(error instanceof Error ? error.message : t('settings.model.activeChangeFailed'))
+  }
+}
+
+async function onToggleMultimodal(model: ProviderModelInfo, newModalities: string | null) {
+  try {
+    await updateModelMultimodal(model, newModalities)
+    showSavedTip(t('settings.model.multimodalUpdated'))
+  } catch (error) {
+    ElMessage.error(error instanceof Error ? error.message : t('settings.model.multimodalUpdateFailed'))
   }
 }
 

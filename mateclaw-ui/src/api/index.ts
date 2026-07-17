@@ -65,6 +65,11 @@ http.interceptors.response.use(
         handleAuthFailure()
         return Promise.reject(new Error(data.msg || 'Unauthorized'))
       }
+      // LICENSE_EXPIRED — trial license no longer valid
+      if (data.code === 403 && data.msg === 'LICENSE_EXPIRED') {
+        // Don't show generic error — TrialBanner overlay handles the UI
+        return Promise.reject(new Error('LICENSE_EXPIRED'))
+      }
       return Promise.reject(new Error(data.msg || 'Request failed'))
     }
     return data
@@ -561,6 +566,10 @@ export const modelApi = {
   getDefault: () => http.get('/models/default'),
   create: (data: any) => http.post('/models', data),
   update: (id: string | number, data: any) => http.put(`/models/${id}`, data),
+  /** Update only the explicit modalities declaration (model-management "multimodal" checkbox).
+   *  Pass a JSON array string like '["vision"]' to override, or null to clear/defer. */
+  updateModelModalities: (id: string | number, modalities: string | null) =>
+    http.put(`/models/${id}/modalities`, { modalities }),
   delete: (id: string | number) => http.delete(`/models/${id}`),
   setDefault: (id: string | number) => http.post(`/models/${id}/default`),
   updateProviderConfig: (providerId: string, data: any) =>
@@ -1213,6 +1222,17 @@ export interface WorkflowSummary {
   updateTime: string
 }
 
+export interface WorkflowRevision {
+  id: number
+  workflowId: number
+  revision: number
+  graphJson: string
+  schemaVersion: string
+  publishedNote?: string
+  publishedBy?: number
+  createTime: string
+}
+
 export interface WorkflowCompileError {
   code: string
   path: string
@@ -1306,6 +1326,10 @@ export const workflowApi = {
     http.post(`/workflows/${id}/publish`,
       note ? { note } : {},
       { params: userId ? { userId } : {} }),
+  /** Fetch the latest published revision's graph_json — used to repopulate
+   *  the canvas when a workflow has no inline draft (publish clears it). */
+  getLatestRevision: (id: number) =>
+    http.get<WorkflowRevision>(`/workflows/${id}/revisions/latest`),
   runs: (id: number, limit = 50) =>
     http.get<WorkflowRun[]>(`/workflows/${id}/runs`, { params: { limit } }),
   runDetail: (runId: number) =>

@@ -1,0 +1,16 @@
+#!/bin/bash
+# 保护主开发分支：禁止直接提交，必须通过 feature 分支 + PR 合入
+BRANCH=$(git symbolic-ref HEAD 2>/dev/null | sed 's|refs/heads/||')
+PROTECTED="baseline/v1.3.0"
+
+if [ "$BRANCH" = "$PROTECTED" ]; then
+  echo ""
+  echo "❌ 禁止直接提交到 '$PROTECTED'"
+  echo ""
+  echo "   请先切出 feature 分支，例如："
+  echo "   git checkout -b feat/your-feature"
+  echo ""
+  echo "   完成后通过 PR 合入 $PROTECTED"
+  echo ""
+  exit 1
+fi

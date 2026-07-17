@@ -142,12 +142,12 @@ function onManage() {
 
 <style scoped>
 .workspace-switcher {
-  padding: 8px 12px;
+  flex: 1;
   position: relative;
 }
 
 .workspace-switcher.collapsed {
-  padding: 8px 6px;
+  flex: 1;
   display: flex;
   justify-content: center;
 }

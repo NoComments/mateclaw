@@ -100,6 +100,22 @@
             <div>
               <div class="model-list-name">{{ model.name }}</div>
               <div class="model-list-id">{{ model.id }}</div>
+              <div class="model-list-multimodal">
+                <label
+                  class="multimodal-toggle"
+                  :class="{ disabled: !model.configId || togglingModelId === model.id }"
+                  :title="t('settings.model.fields.multimodalHint')"
+                >
+                  <input
+                    type="checkbox"
+                    :checked="isVisionDeclared(model)"
+                    :disabled="!model.configId || togglingModelId === model.id"
+                    @change="$emit('toggleMultimodal', model, nextModalities(model))"
+                  />
+                  {{ t('settings.model.fields.multimodal') }}
+                </label>
+                <span v-if="effectiveVision(model)" class="modality-badge">{{ t('settings.model.fields.effectiveVision') }}</span>
+              </div>
               <div v-if="modelTestResults[model.id]" class="model-test-result" :class="modelTestResults[model.id].success ? 'success' : 'error'">
                 <span v-if="modelTestResults[model.id].success">
                   {{ t('settings.model.discovery.modelOk') }} · {{ t('settings.model.discovery.latency', { ms: modelTestResults[model.id].latencyMs }) }}
@@ -177,6 +193,7 @@ const props = defineProps<{
   allNewSelected: boolean
   testingModelId: string | null
   modelTestResults: Record<string, TestResult>
+  togglingModelId: string | null
   isExtraModel: (modelId: string) => boolean
   isActiveModel: (model: ProviderModelInfo) => boolean
   getProviderIcon: (providerId: string) => string
@@ -190,6 +207,26 @@ const discoveredUnavailable = computed(() => {
   return all.filter(m => m && m.probeOk === false)
 })
 
+// "Multimodal (vision)" checkbox: checked = explicit ["vision"] override on the config
+// row; unchecked = null (defer to backend heuristics). The effective-capability badge
+// (effectiveVision) is separate - it shows what the model actually supports at runtime,
+// including heuristic-detected vision on an unchecked box.
+function isVisionDeclared(model: ProviderModelInfo): boolean {
+  if (!model.modalities) return false
+  try {
+    const arr = JSON.parse(model.modalities) as unknown
+    return Array.isArray(arr) && arr.some(m => typeof m === 'string' && m.toLowerCase() === 'vision')
+  } catch {
+    return false
+  }
+}
+function nextModalities(model: ProviderModelInfo): string | null {
+  return isVisionDeclared(model) ? null : JSON.stringify(['vision'])
+}
+function effectiveVision(model: ProviderModelInfo): boolean {
+  return !!model.resolvedModalities?.includes('VISION')
+}
+
 defineEmits<{
   close: []
   discover: []
@@ -200,6 +237,7 @@ defineEmits<{
   setActive: [model: ProviderModelInfo]
   removeModel: [model: ProviderModelInfo]
   addModel: []
+  toggleMultimodal: [model: ProviderModelInfo, newModalities: string | null]
 }>()
 </script>
 
@@ -291,6 +329,11 @@ defineEmits<{
 .model-list-item { display: flex; justify-content: space-between; gap: 12px; align-items: center; padding: 12px 14px; border: 1px solid var(--mc-border); border-radius: 12px; }
 .model-list-name { font-weight: 600; color: var(--mc-text-primary); }
 .model-list-id { font-size: 12px; color: var(--mc-text-secondary); }
+.model-list-multimodal { display: flex; align-items: center; gap: 8px; margin-top: 6px; }
+.multimodal-toggle { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; color: var(--mc-text-secondary); cursor: pointer; user-select: none; }
+.multimodal-toggle.disabled { opacity: 0.5; cursor: not-allowed; }
+.multimodal-toggle input { cursor: pointer; }
+.modality-badge { font-size: 10px; font-weight: 600; padding: 1px 6px; border-radius: 4px; background: var(--mc-primary-bg); color: var(--mc-primary); }
 .model-list-actions { display: flex; align-items: center; gap: 8px; }
 .model-add-box { margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--mc-border-light); }
 .form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }

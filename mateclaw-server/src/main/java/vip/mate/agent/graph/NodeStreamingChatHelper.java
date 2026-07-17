@@ -420,14 +420,27 @@ public class NodeStreamingChatHelper {
      */
     private static ErrorType classifyError(Throwable error) {
         String msg = extractFullErrorChain(error);
+        String msgLower = msg.toLowerCase(); // 用于大小写不敏感的匹配
+
         // PTL: prompt too long / context length exceeded
+        // FIX: 增强32K上下文窗口超限的检测（内网环境错误消息可能不标准）
         if (msg.contains("prompt is too long")
                 || msg.contains("context_length_exceeded")
                 || msg.contains("context length exceeded")
                 || msg.contains("maximum context length")
                 || msg.contains("token limit")
                 || msg.contains("This model's maximum context length")
-                || msg.contains("请求体中的 input tokens 总数超出了模型允许")) {
+                || msg.contains("请求体中的 input tokens 总数超出了模型允许")
+                // 内网环境增强匹配：400错误 + 上下文相关关键词
+                || (msg.contains("400") && (msg.contains("32768") || msgLower.contains("32k")))
+                || (msg.contains("400") && msgLower.contains("tokens") && (msgLower.contains("exceed") || msg.contains("超出") || msg.contains("超过")))
+                || (msg.contains("400") && (msg.contains("输入") || msgLower.contains("input")) && (msg.contains("超出") || msgLower.contains("exceed")))
+                || msg.contains("输入超出模型")
+                || msg.contains("超出模型允许")
+                || msg.contains("上下文长度超出")
+                || msg.contains("对话长度超出")
+                || (msgLower.contains("bad request") && msgLower.contains("context"))
+                || (msgLower.contains("invalid_request_error") && msgLower.contains("token"))) {
             return ErrorType.PROMPT_TOO_LONG;
         }
         // Auth errors — keys, certs, DNS, TLS infrastructure. These will not

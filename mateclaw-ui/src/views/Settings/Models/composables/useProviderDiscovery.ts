@@ -33,6 +33,8 @@ export function useProviderDiscovery(deps: ListDeps) {
   const connectionResults = ref<Record<string, TestResult>>({})
   const testingModelId = ref<string | null>(null)
   const modelTestResults = ref<Record<string, TestResult>>({})
+  /** Model whose "multimodal" checkbox is being persisted - disables the box while in flight. */
+  const togglingModelId = ref<string | null>(null)
 
   const allNewSelected = computed(() => {
     if (!discoverResult.value || discoverResult.value.newCount === 0) return false
@@ -158,6 +160,25 @@ export function useProviderDiscovery(deps: ListDeps) {
     }
   }
 
+  /**
+   * Persist the model-management "multimodal" checkbox. The checkbox is one-way
+   * (:checked), so we always re-sync from the server in finally - on success the
+   * box shows the new state, on failure it reverts to truth. Errors propagate to
+   * the caller (index.vue) for the toast.
+   */
+  async function updateModelMultimodal(model: ProviderModelInfo, newModalities: string | null) {
+    if (!model.configId) return
+    togglingModelId.value = model.id
+    try {
+      await modelApi.updateModelModalities(model.configId, newModalities)
+    } finally {
+      if (deps.currentProvider.value) {
+        await deps.refreshCurrentProvider(deps.currentProvider.value.id)
+      }
+      togglingModelId.value = null
+    }
+  }
+
   return {
     showManageModelsModal,
     providerModelForm,
@@ -169,6 +190,7 @@ export function useProviderDiscovery(deps: ListDeps) {
     connectionResults,
     testingModelId,
     modelTestResults,
+    togglingModelId,
     allNewSelected,
     openManageModelsModal,
     closeManageModelsModal,
@@ -180,5 +202,6 @@ export function useProviderDiscovery(deps: ListDeps) {
     handleApplyModels,
     handleTestConnection,
     handleTestModel,
+    updateModelMultimodal,
   }
 }

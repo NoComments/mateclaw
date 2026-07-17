@@ -223,9 +223,7 @@ const router = createRouter({
             },
             {
               path: 'datasources',
-              name: 'SettingsDatasources',
-              component: () => import('@/views/Datasources.vue'),
-              meta: { title: 'Settings - Datasources', requiredCapability: 'manage:models' },
+              redirect: '/analytics/datasources',
             },
             {
               path: 'mcp-servers',
@@ -320,6 +318,40 @@ const router = createRouter({
           component: () => import('@/views/Forbidden.vue'),
           meta: { title: 'Forbidden' },
         },
+        // ==================== Analytics ====================
+        {
+          path: 'analytics',
+          name: 'Analytics',
+          component: () => import('@/views/analytics/index.vue'),
+          redirect: '/analytics/datasets',
+          meta: { title: 'Analytics', requiredCapability: 'manage:models' },
+          children: [
+            {
+              path: 'datasets',
+              name: 'AnalyticsDatasets',
+              component: () => import('@/views/analytics/DatasetList.vue'),
+              meta: { title: 'Analytics - Datasets', requiredCapability: 'manage:models' },
+            },
+            {
+              path: 'datasets/:datasetId/preview',
+              name: 'AnalyticsDatasetPreview',
+              component: () => import('@/views/analytics/DatasetPreview.vue'),
+              meta: { title: 'Analytics - Dataset Preview', requiredCapability: 'manage:models' },
+            },
+            {
+              path: 'datasets/:datasetId/uploads',
+              name: 'AnalyticsDatasetUploads',
+              component: () => import('@/views/analytics/DatasetUploadHistory.vue'),
+              meta: { title: 'Analytics - Upload History', requiredCapability: 'manage:models' },
+            },
+            {
+              path: 'datasources',
+              name: 'AnalyticsDatasources',
+              component: () => import('@/views/analytics/DatasourceList.vue'),
+              meta: { title: 'Analytics - External Sources', requiredCapability: 'manage:models' },
+            },
+          ],
+        },
         // ==================== Sessions admin ====================
         // Cross-channel conversation manager. Surfaced from ChatConsole's
         // header overflow menu so the user can audit / switch model per
@@ -341,7 +373,7 @@ const router = createRouter({
         { path: 'cron-jobs', redirect: '/settings/scheduler' },
         { path: 'settings/cron-jobs', redirect: '/settings/scheduler' },
         { path: 'settings/triggers', redirect: { path: '/settings/scheduler', query: { tab: 'triggers' } } },
-        { path: 'datasources', redirect: '/settings/datasources' },
+        { path: 'datasources', redirect: '/analytics/datasources' },
         { path: 'mcp-servers', redirect: '/settings/mcp-servers' },
         { path: 'token-usage', redirect: '/settings/token-usage' },
         // RFC-090 Phase 1: Tools 顶层降级到 Settings

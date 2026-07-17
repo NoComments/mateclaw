@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>方案 A — 青瓷智境</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --celadon-deep:    #0D1F1A;
+    --celadon-mid:     #132B24;
+    --celadon-panel:   #1A3830;
+    --celadon-border:  rgba(126, 202, 192, 0.15);
+    --jade:            #7ECAC0;
+    --jade-dim:        #4DA89E;
+    --jade-glow:       rgba(126, 202, 192, 0.18);
+    --cream:           #EEE9E0;
+    --cream-dim:       rgba(238, 233, 224, 0.55);
+    --cream-subtle:    rgba(238, 233, 224, 0.25);
+    --danger:          #E07C7C;
+  }
+
+  body {
+    min-height: 100vh;
+    background: var(--celadon-deep);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Lato', sans-serif;
+    overflow: hidden;
+    position: relative;
+  }
+
+  /* Noise grain overlay */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* Atmospheric glow */
+  body::after {
+    content: '';
+    position: fixed;
+    top: -20%;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 700px;
+    height: 500px;
+    background: radial-gradient(ellipse, rgba(126, 202, 192, 0.07) 0%, transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* Decorative corner lines */
+  .corner {
+    position: fixed;
+    width: 80px;
+    height: 80px;
+    pointer-events: none;
+    z-index: 1;
+  }
+  .corner--tl { top: 32px; left: 32px; border-top: 1px solid var(--celadon-border); border-left: 1px solid var(--celadon-border); }
+  .corner--br { bottom: 32px; right: 32px; border-bottom: 1px solid var(--celadon-border); border-right: 1px solid var(--celadon-border); }
+
+  .wrap {
+    position: relative;
+    z-index: 2;
+    width: 100%;
+    max-width: 420px;
+    padding: 24px;
+    animation: rise 0.8s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+
+  @keyframes rise {
+    from { opacity: 0; transform: translateY(20px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* Brand */
+  .brand {
+    text-align: center;
+    margin-bottom: 48px;
+  }
+
+  .brand-mark {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 64px;
+    height: 64px;
+    border-radius: 18px;
+    background: var(--celadon-panel);
+    border: 1px solid var(--celadon-border);
+    margin-bottom: 20px;
+    box-shadow: 0 0 40px var(--jade-glow);
+  }
+
+  .brand-mark svg { width: 32px; height: 32px; }
+
+  .brand-name {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 36px;
+    font-weight: 600;
+    color: var(--cream);
+    letter-spacing: 0.02em;
+    line-height: 1;
+  }
+
+  .brand-name em {
+    font-style: italic;
+    color: var(--jade);
+  }
+
+  .brand-sub {
+    margin-top: 8px;
+    font-size: 11px;
+    font-weight: 300;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--cream-dim);
+  }
+
+  /* Card */
+  .card {
+    background: var(--celadon-panel);
+    border: 1px solid var(--celadon-border);
+    border-radius: 20px;
+    padding: 36px 32px;
+    backdrop-filter: blur(20px);
+    box-shadow:
+      0 32px 80px rgba(0, 0, 0, 0.4),
+      inset 0 1px 0 rgba(126, 202, 192, 0.08);
+  }
+
+  .card-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 22px;
+    font-weight: 400;
+    color: var(--cream);
+    margin-bottom: 6px;
+  }
+
+  .card-hint {
+    font-size: 13px;
+    color: var(--cream-dim);
+    font-weight: 300;
+    margin-bottom: 28px;
+  }
+
+  /* Fields */
+  .field { margin-bottom: 14px; position: relative; }
+
+  .field label {
+    display: block;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--jade-dim);
+    margin-bottom: 6px;
+  }
+
+  .field input {
+    width: 100%;
+    padding: 13px 16px;
+    background: rgba(13, 31, 26, 0.6);
+    border: 1px solid var(--celadon-border);
+    border-radius: 10px;
+    font-size: 14px;
+    font-family: 'Lato', sans-serif;
+    font-weight: 300;
+    color: var(--cream);
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    -webkit-appearance: none;
+  }
+
+  .field input::placeholder { color: rgba(238, 233, 224, 0.2); }
+
+  .field input:focus {
+    border-color: rgba(126, 202, 192, 0.45);
+    box-shadow: 0 0 0 3px rgba(126, 202, 192, 0.08);
+  }
+
+  .field-eye {
+    position: absolute;
+    right: 12px;
+    bottom: 13px;
+    color: var(--cream-dim);
+    cursor: pointer;
+    line-height: 0;
+  }
+
+  /* Submit */
+  .btn {
+    width: 100%;
+    margin-top: 6px;
+    padding: 14px;
+    background: linear-gradient(135deg, var(--jade-dim), var(--jade));
+    border: none;
+    border-radius: 10px;
+    font-family: 'Lato', sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--celadon-deep);
+    cursor: pointer;
+    transition: opacity 0.2s, transform 0.15s, box-shadow 0.2s;
+    box-shadow: 0 8px 24px rgba(77, 168, 158, 0.25);
+  }
+
+  .btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 12px 32px rgba(77, 168, 158, 0.35);
+  }
+
+  .btn:active { transform: translateY(0); }
+
+  /* Footer hint */
+  .foot-hint {
+    margin-top: 20px;
+    text-align: center;
+    font-size: 12px;
+    color: var(--cream-subtle);
+    font-weight: 300;
+  }
+
+  .foot-hint code {
+    font-family: 'Lato', monospace;
+    background: rgba(126, 202, 192, 0.08);
+    color: var(--jade);
+    padding: 1px 6px;
+    border-radius: 4px;
+    font-size: 11px;
+  }
+
+  /* Label tag */
+  .design-label {
+    position: fixed;
+    top: 24px;
+    right: 24px;
+    background: rgba(126, 202, 192, 0.1);
+    border: 1px solid var(--celadon-border);
+    color: var(--jade);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 6px 14px;
+    border-radius: 999px;
+    z-index: 99;
+  }
+</style>
+</head>
+<body>
+
+<div class="corner corner--tl"></div>
+<div class="corner corner--br"></div>
+<div class="design-label">方案 A · 青瓷智境</div>
+
+<div class="wrap">
+  <div class="brand">
+    <div class="brand-mark">
+      <svg viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M16 4C9.373 4 4 9.373 4 16s5.373 12 12 12 12-5.373 12-12S22.627 4 16 4z" stroke="#7ECAC0" stroke-width="1.5" fill="none"/>
+        <path d="M11 16c0-2.761 2.239-5 5-5s5 2.239 5 5" stroke="#7ECAC0" stroke-width="1.5" stroke-linecap="round"/>
+        <circle cx="16" cy="20" r="2" fill="#7ECAC0" opacity="0.6"/>
+      </svg>
+    </div>
+    <div class="brand-name">Qingwen<em>Claws</em></div>
+    <div class="brand-sub">Enterprise Intelligence Platform</div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">欢迎回来</div>
+    <div class="card-hint">请输入您的账号凭证以继续</div>
+
+    <div class="field">
+      <label>账号</label>
+      <input type="text" placeholder="用户名" value="admin">
+    </div>
+
+    <div class="field">
+      <label>密码</label>
+      <input type="password" placeholder="••••••••" value="password">
+      <span class="field-eye">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+      </span>
+    </div>
+
+    <button class="btn">登录系统</button>
+
+    <p class="foot-hint">默认账号 <code>admin</code> / <code>admin123</code></p>
+  </div>
+</div>
+
+</body>
+</html>

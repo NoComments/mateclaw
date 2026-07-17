@@ -11,6 +11,7 @@ export {}
 /* prettier-ignore */
 declare module 'vue' {
   export interface GlobalComponents {
+    ElAlert: typeof import('element-plus/es/components/alert/index')['ElAlert']
     ElButton: typeof import('element-plus/es/components/button/index')['ElButton']
     ElConfigProvider: typeof import('element-plus/es/components/config-provider/index')['ElConfigProvider']
     ElDatePicker: typeof import('element-plus/es/components/date-picker/index')['ElDatePicker']
@@ -20,8 +21,11 @@ declare module 'vue' {
     ElDropdownItem: typeof import('element-plus/es/components/dropdown/index')['ElDropdownItem']
     ElDropdownMenu: typeof import('element-plus/es/components/dropdown/index')['ElDropdownMenu']
     ElEmpty: typeof import('element-plus/es/components/empty/index')['ElEmpty']
+    ElForm: typeof import('element-plus/es/components/form/index')['ElForm']
+    ElFormItem: typeof import('element-plus/es/components/form/index')['ElFormItem']
     ElIcon: typeof import('element-plus/es/components/icon/index')['ElIcon']
     ElImageViewer: typeof import('element-plus/es/components/image-viewer/index')['ElImageViewer']
+    ElInput: typeof import('element-plus/es/components/input/index')['ElInput']
     ElOption: typeof import('element-plus/es/components/select/index')['ElOption']
     ElPagination: typeof import('element-plus/es/components/pagination/index')['ElPagination']
     ElPopover: typeof import('element-plus/es/components/popover/index')['ElPopover']
@@ -31,7 +35,11 @@ declare module 'vue' {
     ElTableColumn: typeof import('element-plus/es/components/table/index')['ElTableColumn']
     ElTabPane: typeof import('element-plus/es/components/tabs/index')['ElTabPane']
     ElTabs: typeof import('element-plus/es/components/tabs/index')['ElTabs']
+    ElTag: typeof import('element-plus/es/components/tag/index')['ElTag']
+    ElTimeline: typeof import('element-plus/es/components/timeline/index')['ElTimeline']
+    ElTimelineItem: typeof import('element-plus/es/components/timeline/index')['ElTimelineItem']
     ElTooltip: typeof import('element-plus/es/components/tooltip/index')['ElTooltip']
+    ElUpload: typeof import('element-plus/es/components/upload/index')['ElUpload']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
   }

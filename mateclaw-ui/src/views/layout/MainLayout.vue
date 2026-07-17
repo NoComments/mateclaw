@@ -1,5 +1,6 @@
 <template>
   <div class="app-layout">
+    <TrialBanner />
     <!-- 移动端背景遮罩 -->
     <Transition name="fade">
       <div v-if="isMobile && mobileMenuOpen" class="sidebar-backdrop" @click="mobileMenuOpen = false"></div>
@@ -240,6 +241,7 @@ import { useWorkspaceStore } from '@/stores/useWorkspaceStore'
 import { applyLocale, currentLocale, type AppLocale } from '@/i18n'
 import { SwitchButton, Lock, Unlock } from '@element-plus/icons-vue'
 import ChangePasswordDialog from '@/components/ChangePasswordDialog.vue'
+import TrialBanner from './TrialBanner.vue'
 
 const router = useRouter()
 const route = useRoute()
@@ -498,6 +500,12 @@ const navGroups = computed(() => [
         icon: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18"/><path d="M5 21V7l7-4 7 4v14"/><path d="M9 9h.01"/><path d="M9 12h.01"/><path d="M9 15h.01"/><path d="M9 18h.01"/><path d="M15 9h.01"/><path d="M15 12h.01"/><path d="M15 15h.01"/><path d="M15 18h.01"/></svg>`,
         requiredCapability: 'manage:agents',
       },
+      {
+        path: '/analytics',
+        label: t('nav.dataManagement'),
+        icon: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>`,
+        requiredCapability: 'manage:models',
+      },
     ] as NavItem[]),
   },
   {
@@ -580,6 +588,9 @@ function isNavItemActive(item: { path: string; label: string }) {
   }
   if (item.path === '/docs') {
     return route.path.startsWith('/docs')
+  }
+  if (item.path === '/analytics') {
+    return route.path.startsWith('/analytics')
   }
   return route.path === item.path
 }

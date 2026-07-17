@@ -159,8 +159,9 @@ async function testConnection() {
   try {
     // Save key first so test can use it
     await modelApi.updateProviderConfig(selectedProvider.value, { apiKey: apiKey.value })
-    await modelApi.testConnection(selectedProvider.value)
-    testResult.value = 'success'
+    const res: any = await modelApi.testConnection(selectedProvider.value)
+    const connectionOk = res?.data?.success !== false
+    testResult.value = connectionOk ? 'success' : 'failed'
   } catch {
     testResult.value = 'failed'
   } finally {
