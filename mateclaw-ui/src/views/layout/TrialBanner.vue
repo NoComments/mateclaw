@@ -32,6 +32,10 @@ interface LicenseStatus {
   message: string
 }
 
+interface ApiEnvelope<T> {
+  data: T
+}
+
 const { t } = useI18n()
 const status = ref<LicenseStatus | null>(null)
 
@@ -74,7 +78,8 @@ const overlayMessage = computed(() => {
 async function fetchLicenseStatus() {
   try {
     const res = await http.get('/license/status')
-    status.value = (res as any).data || res as LicenseStatus
+    const payload = res as unknown as ApiEnvelope<LicenseStatus>
+    status.value = payload.data
   } catch {
     // License endpoint not available — assume no license system
   }
