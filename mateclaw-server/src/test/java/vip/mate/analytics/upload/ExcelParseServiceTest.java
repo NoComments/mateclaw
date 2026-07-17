@@ -75,7 +75,7 @@ class ExcelParseServiceTest {
     void parse_returnsAllDataRows() throws IOException {
         ExcelParseService svc = new ExcelParseService();
         try (InputStream in = Files.newInputStream(tempXlsx)) {
-            List<ParsedRow> rows = svc.parse(in, FIELDS, SHEET_NAME);
+            List<ParsedRow> rows = svc.parse(in, FIELDS, SHEET_NAME).rows();
             // null row (row index 3) should be skipped → exactly 2 data rows
             assertEquals(2, rows.size());
         }
@@ -85,7 +85,7 @@ class ExcelParseServiceTest {
     void parse_mapsFieldCodesCorrectly() throws IOException {
         ExcelParseService svc = new ExcelParseService();
         try (InputStream in = Files.newInputStream(tempXlsx)) {
-            List<ParsedRow> rows = svc.parse(in, FIELDS, SHEET_NAME);
+            List<ParsedRow> rows = svc.parse(in, FIELDS, SHEET_NAME).rows();
 
             ParsedRow first = rows.get(0);
             assertEquals("4101001", first.values().get("farm_code"));
@@ -99,8 +99,86 @@ class ExcelParseServiceTest {
         ExcelParseService svc = new ExcelParseService();
         try (InputStream in = Files.newInputStream(tempXlsx)) {
             // should not throw — sheet "家禽" exists
-            List<ParsedRow> rows = svc.parse(in, FIELDS, SHEET_NAME);
+            List<ParsedRow> rows = svc.parse(in, FIELDS, SHEET_NAME).rows();
             assertFalse(rows.isEmpty());
+        }
+    }
+
+    @Test
+    void parse_isolatesRowWithUnparseableCellInsteadOfAborting() throws IOException {
+        // A DECIMAL column ("期末存栏（只）") whose second data row holds the text "无"
+        // must skip only that row and report it — not fail the whole sheet.
+        Path badXlsx = Files.createTempFile("excel-parse-bad-", ".xlsx");
+        try (XSSFWorkbook wb = new XSSFWorkbook()) {
+            XSSFSheet sheet = wb.createSheet(SHEET_NAME);
+            Row header = sheet.createRow(0);
+            header.createCell(0).setCellValue("养殖场编码");
+            header.createCell(1).setCellValue("期末存栏（只）");
+            header.createCell(2).setCellValue("是否代养");
+
+            Row good = sheet.createRow(1);
+            good.createCell(0).setCellValue("4101001");
+            good.createCell(1).setCellValue(325600.0);
+            good.createCell(2).setCellValue(0.0);
+
+            Row bad = sheet.createRow(2);
+            bad.createCell(0).setCellValue("4101002");
+            bad.createCell(1).setCellValue("无");   // not a number
+            bad.createCell(2).setCellValue(1.0);
+
+            try (FileOutputStream fos = new FileOutputStream(badXlsx.toFile())) {
+                wb.write(fos);
+            }
+        }
+
+        ExcelParseService svc = new ExcelParseService();
+        try (InputStream in = Files.newInputStream(badXlsx)) {
+            ParseResult result = svc.parse(in, FIELDS, SHEET_NAME);
+
+            assertEquals(1, result.rows().size(), "the clean row survives");
+            assertEquals(1, result.rejected(), "the bad row is counted as rejected");
+            assertEquals(1, result.errors().size());
+            String msg = result.errors().get(0);
+            assertTrue(msg.contains("期末存栏（只）") && msg.contains("无"),
+                    "error should name the column and the offending value: " + msg);
+        }
+    }
+
+    @Test
+    void parse_rejectsFractionalValueInIntColumnInsteadOfTruncating() throws IOException {
+        // is_contract is INT; a row with 1.5 must be rejected, not silently truncated to 1.
+        Path badXlsx = Files.createTempFile("excel-parse-frac-", ".xlsx");
+        try (XSSFWorkbook wb = new XSSFWorkbook()) {
+            XSSFSheet sheet = wb.createSheet(SHEET_NAME);
+            Row header = sheet.createRow(0);
+            header.createCell(0).setCellValue("养殖场编码");
+            header.createCell(1).setCellValue("期末存栏（只）");
+            header.createCell(2).setCellValue("是否代养");
+
+            Row good = sheet.createRow(1);
+            good.createCell(0).setCellValue("4101001");
+            good.createCell(1).setCellValue(325600.0);
+            good.createCell(2).setCellValue(1.0);   // whole → 1L, fine
+
+            Row bad = sheet.createRow(2);
+            bad.createCell(0).setCellValue("4101002");
+            bad.createCell(1).setCellValue(0.0);
+            bad.createCell(2).setCellValue(1.5);    // fractional in INT column
+
+            try (FileOutputStream fos = new FileOutputStream(badXlsx.toFile())) {
+                wb.write(fos);
+            }
+        }
+
+        ExcelParseService svc = new ExcelParseService();
+        try (InputStream in = Files.newInputStream(badXlsx)) {
+            ParseResult result = svc.parse(in, FIELDS, SHEET_NAME);
+
+            assertEquals(1, result.rows().size());
+            assertEquals(1L, result.rows().get(0).values().get("is_contract"));
+            assertEquals(1, result.rejected());
+            assertTrue(result.errors().get(0).contains("是否代养"),
+                    "error should name the INT column: " + result.errors().get(0));
         }
     }
 

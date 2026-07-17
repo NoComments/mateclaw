@@ -42,14 +42,14 @@ public class ExcelParseService {
      * @param in        input stream of an .xlsx file; caller is responsible for closing it
      * @param fields    field definitions from the dataset
      * @param sheetName name of the sheet to read; if {@code null} the first sheet is used
-     * @return ordered list of parsed rows (header row excluded)
+     * @return parsed rows plus a count and messages for any rows skipped on a bad cell
      * @throws IOException              if the stream cannot be read
      * @throws IllegalArgumentException if {@code sheetName} is non-null but not found,
      *                                  or if a required header column is missing
      */
-    public List<ParsedRow> parse(InputStream in,
-                                 List<DatasetField> fields,
-                                 @Nullable String sheetName) throws IOException {
+    public ParseResult parse(InputStream in,
+                             List<DatasetField> fields,
+                             @Nullable String sheetName) throws IOException {
 
         try (XSSFWorkbook wb = new XSSFWorkbook(in)) {
             XSSFSheet sheet = resolveSheet(wb, sheetName);
@@ -60,11 +60,14 @@ public class ExcelParseService {
 
             Map<Integer, String> colToField = ExcelHeaderMatcher.match(headers, fields);
 
-            // field code → FieldType for O(1) lookup during row iteration
+            // field code → FieldType / display header for O(1) lookup during row iteration
             Map<String, FieldType> typeByCode = buildTypeIndex(fields);
+            Map<String, String> headerByCode = buildHeaderIndex(fields);
 
             // ── data rows ────────────────────────────────────────────────────
             List<ParsedRow> result = new ArrayList<>();
+            List<String> errors = new ArrayList<>();
+            int rejected = 0;
             int lastRow = sheet.getLastRowNum();
 
             for (int r = 1; r <= lastRow; r++) {
@@ -73,7 +76,16 @@ public class ExcelParseService {
                     continue; // sparse row — skip
                 }
 
-                Map<String, Object> values = buildRowValues(row, colToField, typeByCode);
+                Map<String, Object> values;
+                try {
+                    values = buildRowValues(row, colToField, typeByCode, headerByCode);
+                } catch (IllegalArgumentException badCell) {
+                    // Isolate the offending row instead of aborting the whole upload,
+                    // mirroring ExcelIngestService's batch-level isolation.
+                    rejected++;
+                    errors.add("行 " + r + ": " + badCell.getMessage());
+                    continue;
+                }
 
                 if (isBlankRow(values)) {
                     continue;
@@ -82,7 +94,7 @@ public class ExcelParseService {
                 result.add(new ParsedRow(r, values));
             }
 
-            return result;
+            return new ParseResult(result, rejected, errors);
         }
     }
 
@@ -122,18 +134,48 @@ public class ExcelParseService {
         return index;
     }
 
+    /** field code → the header shown to the user (excelHeader, falling back to fieldCode). */
+    private Map<String, String> buildHeaderIndex(List<DatasetField> fields) {
+        Map<String, String> index = new HashMap<>();
+        for (DatasetField f : fields) {
+            String header = f.getExcelHeader() != null ? f.getExcelHeader() : f.getFieldCode();
+            index.put(f.getFieldCode(), header);
+        }
+        return index;
+    }
+
     private Map<String, Object> buildRowValues(Row row,
                                                Map<Integer, String> colToField,
-                                               Map<String, FieldType> typeByCode) {
+                                               Map<String, FieldType> typeByCode,
+                                               Map<String, String> headerByCode) {
         Map<String, Object> values = new HashMap<>();
         for (Map.Entry<Integer, String> entry : colToField.entrySet()) {
             int colIdx = entry.getKey();
             String fieldCode = entry.getValue();
             Cell cell = row.getCell(colIdx);
             FieldType type = typeByCode.get(fieldCode);
-            values.put(fieldCode, convertCell(cell, type));
+            try {
+                values.put(fieldCode, convertCell(cell, type));
+            } catch (IllegalArgumentException | IllegalStateException e) {
+                // Rethrow with column context so the caller can name the bad cell.
+                throw new IllegalArgumentException(
+                        "「" + headerByCode.get(fieldCode) + "」的值「" + rawCellText(cell)
+                                + "」无法转换为 " + type);
+            }
         }
         return values;
+    }
+
+    /** Best-effort raw text of a cell for error messages; never throws. */
+    private String rawCellText(@Nullable Cell cell) {
+        if (cell == null) {
+            return "";
+        }
+        try {
+            return cell.toString().trim();
+        } catch (RuntimeException e) {
+            return "";
+        }
     }
 
     /**
@@ -164,7 +206,13 @@ public class ExcelParseService {
 
     private String convertToString(Cell cell) {
         return switch (cell.getCellType()) {
-            case NUMERIC -> String.valueOf((long) cell.getNumericCellValue());
+            // Render a whole number as "100" (not "100.0") but keep fractional digits.
+            case NUMERIC -> {
+                double v = cell.getNumericCellValue();
+                yield v == Math.floor(v) && !Double.isInfinite(v)
+                        ? String.valueOf((long) v)
+                        : String.valueOf(v);
+            }
             case STRING  -> cell.getStringCellValue();
             default      -> cell.toString();
         };
@@ -173,7 +221,15 @@ public class ExcelParseService {
     @Nullable
     private Long convertToInt(Cell cell) {
         return switch (cell.getCellType()) {
-            case NUMERIC -> (long) cell.getNumericCellValue();
+            case NUMERIC -> {
+                double v = cell.getNumericCellValue();
+                // A real fractional value in an INT column is a type mismatch — reject it
+                // (the caller isolates the row) rather than silently truncating to (long).
+                if (v != Math.floor(v) || Double.isInfinite(v)) {
+                    throw new IllegalArgumentException("小数不能存入整数列");
+                }
+                yield (long) v;
+            }
             case STRING  -> {
                 String s = cell.getStringCellValue().trim();
                 yield s.isEmpty() ? null : Long.parseLong(s);

@@ -116,15 +116,14 @@ class DatasetServiceTest {
     }
 
     @Test
-    void prepareFields_rejectsUnsafeGeneratedCodeWithoutDatabaseAccess() {
+    void prepareFields_prefixesDigitLeadingFieldNameWithF() {
         DatasetField field = new DatasetField();
         field.setFieldName("2024");
         field.setFieldType("DECIMAL");
 
-        assertThatIllegalArgumentException()
-                .isThrownBy(() -> service.prepareFields(List.of(field)))
-                .withMessage("Unsafe fieldCode '2024': must match ^[a-z][a-z0-9_]{0,62}$");
+        service.prepareFields(List.of(field));
 
+        assertThat(field.getFieldCode()).isEqualTo("f_2024");
         verifyNoInteractions(datasetRepo, fieldRepo, jdbc);
     }
 

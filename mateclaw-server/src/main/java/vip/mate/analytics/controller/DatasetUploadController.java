@@ -20,10 +20,12 @@ import vip.mate.analytics.upload.ExcelIngestService;
 import vip.mate.analytics.upload.ExcelParseService;
 import vip.mate.analytics.upload.IngestResult;
 import vip.mate.analytics.upload.ParsedRow;
+import vip.mate.analytics.upload.ParseResult;
 import vip.mate.common.result.R;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
@@ -111,27 +113,30 @@ public class DatasetUploadController {
 
         // ── 5 + 6. Parse then ingest (log update always runs in finally) ──────
         try {
-            List<ParsedRow> rows = parse.parse(file.getInputStream(), fields, sheet);
+            ParseResult parsed = parse.parse(file.getInputStream(), fields, sheet);
+            List<ParsedRow> rows = parsed.rows();
 
             IngestResult result = ingest.ingest(ds, fields, rows, uploadLog.getId());
 
-            uploadLog.setRowsReceived(rows.size());
+            int rejected = parsed.rejected() + result.rejected();
+            List<String> allErrors = new ArrayList<>();
+            allErrors.addAll(parsed.errors());
+            allErrors.addAll(result.errors());
+
+            uploadLog.setRowsReceived(rows.size() + parsed.rejected());
             uploadLog.setRowsInserted(result.inserted());
-            uploadLog.setRowsRejected(result.rejected());
+            uploadLog.setRowsRejected(rejected);
 
             if (result.inserted() == 0) {
                 uploadLog.setStatus("FAILED");
-                uploadLog.setErrorSummary(result.errors().isEmpty()
+                uploadLog.setErrorSummary(allErrors.isEmpty()
                         ? "No ingestable rows found in sheet"
-                        : String.join("; ", result.errors()));
-            } else if (result.rejected() == 0) {
+                        : String.join("; ", allErrors));
+            } else if (rejected == 0) {
                 uploadLog.setStatus("SUCCESS");
-            } else if (result.inserted() > 0) {
-                uploadLog.setStatus("PARTIAL");
-                uploadLog.setErrorSummary(String.join("; ", result.errors()));
             } else {
-                uploadLog.setStatus("FAILED");
-                uploadLog.setErrorSummary(String.join("; ", result.errors()));
+                uploadLog.setStatus("PARTIAL");
+                uploadLog.setErrorSummary(String.join("; ", allErrors));
             }
 
         } catch (IOException e) {

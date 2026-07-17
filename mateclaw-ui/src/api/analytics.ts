@@ -6,6 +6,7 @@ import type {
   InspectResult,
   InspectedField,
   CreateDatasetResponse,
+  PreviewResponse,
 } from '@/types/analytics'
 
 const analyticsHttp = axios.create({
@@ -74,7 +75,7 @@ export function deleteDataset(id: string | number): Promise<{ data: void }> {
 
 export function previewDataset(
   id: string | number
-): Promise<{ data: Record<string, unknown>[] }> {
+): Promise<{ data: PreviewResponse }> {
   return analyticsHttp.get(`/analytics/datasets/${id}/preview`)
 }
 

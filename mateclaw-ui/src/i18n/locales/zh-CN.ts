@@ -3588,6 +3588,7 @@ export default {
     dropFile: '拖入 Excel 文件，或点击选择',
     nextStep: '下一步',
     createAndAnalyze: '创建并分析',
+    createDataset: '创建数据集',
     appendData: '追加数据',
     ingestOk: '已入库 {ok} 行',
     ingestFailed: '导入失败',

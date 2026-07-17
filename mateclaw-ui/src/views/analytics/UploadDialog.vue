@@ -100,7 +100,7 @@
         :disabled="!datasetName.trim() || !editableFields.length"
         @click="handleCreate"
       >
-        {{ t('analytics.createAndAnalyze') }}
+        {{ t('analytics.createDataset') }}
       </el-button>
     </template>
   </el-dialog>

@@ -51,6 +51,19 @@ export interface CreateDatasetResponse {
   uploadLog: DatasetUploadLog
 }
 
+/** One previewed column: physical `code` plus the human `name` shown as its header. */
+export interface PreviewColumn {
+  code: string
+  name: string
+  type: FieldType
+}
+
+/** Response of GET /analytics/datasets/{id}/preview — ordered columns and sampled rows. */
+export interface PreviewResponse {
+  columns: PreviewColumn[]
+  rows: Record<string, unknown>[]
+}
+
 // ==================== Pagination ====================
 
 /** Mirrors backend IPage<T> */

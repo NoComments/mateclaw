@@ -36,6 +36,33 @@ class ExcelInspectServiceTest {
         }
     }
 
+    /** Build an in-memory .xlsx with multiple data rows. */
+    private byte[] xlsxRows(String sheetName, String[] headers, Object[][] rows) throws IOException {
+        try (XSSFWorkbook wb = new XSSFWorkbook()) {
+            Sheet sheet = wb.createSheet(sheetName);
+            Row h = sheet.createRow(0);
+            for (int i = 0; i < headers.length; i++) h.createCell(i).setCellValue(headers[i]);
+            for (int r = 0; r < rows.length; r++) {
+                Row row = sheet.createRow(r + 1);
+                for (int c = 0; c < rows[r].length; c++) {
+                    Object v = rows[r][c];
+                    if (v instanceof Number n) row.createCell(c).setCellValue(n.doubleValue());
+                    else if (v instanceof String s) row.createCell(c).setCellValue(s);
+                }
+            }
+            ByteArrayOutputStream out = new ByteArrayOutputStream();
+            wb.write(out);
+            return out.toByteArray();
+        }
+    }
+
+    private String typeOf(ExcelInspectService.InspectResult result, String fieldName) {
+        return result.suggestedFields().stream()
+                .filter(f -> f.fieldName().equals(fieldName))
+                .map(ExcelInspectService.InspectedField::fieldType)
+                .findFirst().orElseThrow();
+    }
+
     // ── tests ─────────────────────────────────────────────────────────────────
 
     @Test
@@ -58,6 +85,32 @@ class ExcelInspectServiceTest {
                           .containsEntry("头数", "INT")
                           .containsEntry("日增重", "DECIMAL")
                           .containsEntry("备注", "STRING");
+    }
+
+    @Test
+    void inspect_widensIntToDecimalWhenLaterRowHasFraction() throws IOException {
+        // First data row is a whole number; a later row is fractional → column is DECIMAL,
+        // not INT. This is the money-column case that used to truncate silently.
+        byte[] data = xlsxRows("Sheet1",
+                new String[]{"金额"},
+                new Object[][]{{100}, {200}, {1234.56}});
+
+        var result = service.inspect(new ByteArrayInputStream(data), null);
+
+        assertThat(typeOf(result, "金额")).isEqualTo("DECIMAL");
+    }
+
+    @Test
+    void inspect_widensToStringWhenLaterRowHasText() throws IOException {
+        // Numeric first rows, then a real-world "无" → STRING, so the whole upload no
+        // longer hinges on that one cell being numeric.
+        byte[] data = xlsxRows("Sheet1",
+                new String[]{"数量"},
+                new Object[][]{{100}, {200}, {"无"}});
+
+        var result = service.inspect(new ByteArrayInputStream(data), null);
+
+        assertThat(typeOf(result, "数量")).isEqualTo("STRING");
     }
 
     @Test

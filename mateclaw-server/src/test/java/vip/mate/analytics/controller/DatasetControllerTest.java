@@ -10,6 +10,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.mock.web.MockMultipartFile;
 import vip.mate.analytics.dataset.Dataset;
+import vip.mate.analytics.dataset.DatasetField;
 import vip.mate.analytics.dataset.DatasetService;
 import vip.mate.analytics.dataset.DatasetUploadLog;
 import vip.mate.analytics.dataset.DatasetUploadLogRepository;
@@ -18,6 +19,7 @@ import vip.mate.analytics.upload.ExcelIngestService;
 import vip.mate.analytics.upload.ExcelInspectService;
 import vip.mate.analytics.upload.ExcelParseService;
 import vip.mate.analytics.upload.IngestResult;
+import vip.mate.analytics.upload.ParseResult;
 import vip.mate.common.result.R;
 
 import java.io.IOException;
@@ -26,6 +28,7 @@ import java.util.List;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.tuple;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
@@ -129,7 +132,8 @@ class DatasetControllerTest {
             log.setId(20L);
             return 1;
         }).when(uploadLogRepo).insert((DatasetUploadLog) any());
-        when(parse.parse(any(InputStream.class), anyList(), isNull())).thenReturn(List.of());
+        when(parse.parse(any(InputStream.class), anyList(), isNull()))
+                .thenReturn(new ParseResult(List.of(), 0, List.of()));
         when(ingest.ingest(any(Dataset.class), anyList(), anyList(), eq(20L)))
                 .thenReturn(new IngestResult(0, 0, List.of()));
 
@@ -230,20 +234,23 @@ class DatasetControllerTest {
     }
 
     @Test
-    @DisplayName("GET /api/analytics/datasets/{id}/preview returns 200 with rows")
+    @DisplayName("preview selects only field columns and labels them with the human field name")
     void preview_returnsRowsFromPhysicalTable() {
         Dataset ds = new Dataset();
         ds.setId(1L);
         ds.setPhysicalTable("dataset_1");
 
         when(datasetService.getById(1L)).thenReturn(ds);
+        when(datasetService.listFields(1L)).thenReturn(List.of(
+                field("animal_id", "动物编号", "STRING", 0)));
 
+        // Only the field column is selected — never id / upload_log_id.
         List<Map<String, Object>> fakeRows = List.of(
-                Map.of("id", 1, "upload_log_id", 10L, "animal_id", "A001"),
-                Map.of("id", 2, "upload_log_id", 10L, "animal_id", "A002")
+                Map.of("animal_id", "A001"),
+                Map.of("animal_id", "A002")
         );
         when(jdbc.queryForList(
-                eq("SELECT * FROM dataset_1 LIMIT ?"),
+                eq("SELECT animal_id FROM dataset_1 LIMIT ?"),
                 eq(100)
         )).thenReturn(fakeRows);
 
@@ -251,11 +258,24 @@ class DatasetControllerTest {
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         @SuppressWarnings("unchecked")
-        R<List<Map<String, Object>>> body = (R<List<Map<String, Object>>>) response.getBody();
+        R<DatasetController.PreviewResponse> body =
+                (R<DatasetController.PreviewResponse>) response.getBody();
         assertThat(body).isNotNull();
-        assertThat(body.getData()).hasSize(2);
-        verify(jdbc).queryForList(
-                "SELECT * FROM dataset_1 LIMIT ?", 100);
+        assertThat(body.getData().columns())
+                .extracting(DatasetController.PreviewColumn::code,
+                        DatasetController.PreviewColumn::name)
+                .containsExactly(tuple("animal_id", "动物编号"));
+        assertThat(body.getData().rows()).hasSize(2);
+        verify(jdbc).queryForList("SELECT animal_id FROM dataset_1 LIMIT ?", 100);
+    }
+
+    private static DatasetField field(String code, String name, String type, int ordinal) {
+        DatasetField f = new DatasetField();
+        f.setFieldCode(code);
+        f.setFieldName(name);
+        f.setFieldType(type);
+        f.setOrdinal(ordinal);
+        return f;
     }
 
     @Test
@@ -281,9 +301,11 @@ class DatasetControllerTest {
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         @SuppressWarnings("unchecked")
-        R<List<?>> body = (R<List<?>>) response.getBody();
+        R<DatasetController.PreviewResponse> body =
+                (R<DatasetController.PreviewResponse>) response.getBody();
         assertThat(body).isNotNull();
-        assertThat(body.getData()).isEmpty();
+        assertThat(body.getData().columns()).isEmpty();
+        assertThat(body.getData().rows()).isEmpty();
         verifyNoInteractions(jdbc);
     }
 

@@ -159,9 +159,10 @@ function goToAnalysis(row: Dataset) {
   router.push({ path: '/chat', query: { agentId: ANALYST_AGENT_ID, datasetId: row.id } })
 }
 
-function onCreated(datasetId: string) {
+function onCreated(_datasetId: string) {
+  // Uploading only creates the dataset; analyzing is a separate, opt-in action
+  // (the per-row "分析" button). Do not force-navigate into the chat here.
   loadData()
-  router.push({ path: '/chat', query: { agentId: ANALYST_AGENT_ID, datasetId } })
 }
 
 onMounted(loadData)
